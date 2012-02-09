@@ -1,0 +1,62 @@
+
+#########################################################
+#
+# Using this file:
+#
+# Edit --USERNAME-- and replace with your bastion user name
+# EDIT --KEYNAME-- and replace with the name of your key file (verify that the path is correct)
+# Place this file in ~/.ssh/config
+#
+#########################################################
+
+
+
+Host bastion
+  HostName bastion-21.network.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ControlMaster auto
+  ControlPath /tmp/ssh_mux_%h_%p_%r
+  ForwardAgent yes
+  IdentityFile ~/.ssh/--KEYNAME--
+
+Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-*
+  ProxyCommand ssh bastion nc %h %p
+  HostName %h.prod.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/id_dsa
+
+Host srv-*
+  ProxyCommand ssh bastion nc %h %p
+  HostName %h.devcloud.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/--KEYNAME--
+
+Host bal-*.prod bal-*.devcloud
+  ProxyCommand ssh bastion nc %h %p
+  HostName %h.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/--KEYNAME--
+
+Host managed-*
+  ProxyCommand ssh bastion nc %h %p
+  HostName %h.gardens.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/--KEYNAME--

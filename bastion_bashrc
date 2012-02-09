@@ -1,0 +1,114 @@
+#####################################################################
+#
+#  Acquia Hosting Login Aliases
+#
+#####################################################################
+#
+#  Usage:
+#
+#    PREFIX NUMBER [ CMD file1 file2 ]
+#
+#  Where "PREFIX" is a server prefix: ded, web, fsdb, srv, or bal
+#  And "NUMBER" is the server number, e.g. "srv 6"
+#
+#  You can also provide CMD arguments "up" or "dl" to scp files.
+#
+#  For example to log into srv-6.devcloud.hosting.acquia.com
+#    $ srv 6
+#
+#  To download a file from srv-6
+#    $ srv 6 dl /path/to/remote/file /path/to/local/file
+#
+#  To upload a file to srv-6
+#    $ srv 6 up /path/to/local/file /path/to/remote/file
+#
+#  Managed Cloud Prefix Legend
+#    db     dbmaster-NNN.prod.hosting.acquia.com
+#    ded    ded-NNN.prod.hosting.acquia.com
+#    web    web-NNN.prod.hosting.acquia.com
+#    stg    staging-NNN.prod.hosting.acquia.com
+#    bal    bal-NNN.prod.hosting.acquia.com
+#    fsdb   fsdb-NNN.prod.hosting.acquia.com
+#    fsdbm  fsdbmesh-NNN.prod.hosting.acquia.com
+#
+#  Dev Cloud Prefix Legend
+#    srv    srv-NNN.devcloud.hosting.acquia.com
+#    bald   bal-NNN.devcloud.hosting.acquia.com
+#
+#####################################################################
+#
+#  Configuration
+#
+#####################################################################
+#
+#  Minimally you will need to change the following:
+#
+#  1. Change AH_BASTION to the bastion host you connect to
+#
+#  2. Change AH_SSH_USER to your bastion username
+#
+#####################################################################
+
+export AH_SSH=/usr/bin/ssh
+export AH_SCP=/usr/bin/scp
+export AH_SSH_USER=bastion_username
+export AH_RSA_KEY=/Users/local_username/.ssh/bastion_username_rsa
+export AH_BASTION=bastion-21
+export AH_PROXY_COMMAND="ssh $AH_BASTION nc %h %p"
+export AH_DEST_PORT=40506
+
+#
+# SSH via bastion conenction
+#
+function _ah_ssh_to() {
+  $AH_SSH -A -o StrictHostKeyChecking=no -o ProxyCommand="$AH_PROXY_COMMAND" -i $AH_RSA_KEY -p $AH_DEST_PORT $AH_SSH_USER@$1.hosting.acquia.com ;
+}
+
+#
+# SCP upload via bastion
+#
+function _ah_scp_ul {
+  $AH_SCP -o StrictHostKeyChecking=no -o ProxyCommand="$AH_PROXY_COMMAND" -i $AH_RSA_KEY -P $AH_DEST_PORT $2 $AH_SSH_USER@$1.hosting.acquia.com:$3
+#  $AH_SCP $2 $AH_SSH_USER@$1.hosting.acquia.com:$3 ;
+}
+
+#
+# SCP download via bastion
+#
+function _ah_scp_dl {
+  $AH_SCP -o StrictHostKeyChecking=no -o ProxyCommand="$AH_PROXY_COMMAND" -i $AH_RSA_KEY -P $AH_DEST_PORT $AH_SSH_USER@$1.hosting.acquia.com:$2 $3
+#  $AH_SCP $AH_SSH_USER@$1.hosting.acquia.com:$2 $3 ;
+}
+
+#
+# Command line parser
+#
+function _ah_cmd_router {
+  AH_HOST=$1
+  AH_CMD_OP0=$2
+  AH_CMD_OP1=$3
+  AH_CMD_OP2=$4
+
+  if [ -z "$AH_CMD_OP0" ]; then
+    _ah_ssh_to $AH_HOST
+  elif [ $AH_CMD_OP0 = "ul" ] || [ $AH_CMD_OP0 = "up" ]; then
+    _ah_scp_ul $AH_HOST $AH_CMD_OP1 $AH_CMD_OP2
+  elif [ $AH_CMD_OP0 = "dl" ]; then
+    _ah_scp_dl $AH_HOST $AH_CMD_OP1 $AH_CMD_OP2
+  else
+    echo no command could be routed for: $AH_HOST $AH_CMD_OP0 $AH_CMD_OP1 $AH_CMD_OP2
+  fi
+}
+
+#
+# Function aliases
+#
+function db   { _ah_cmd_router dbmaster-$1.prod $2 $3 $4 ; }
+function ded  { _ah_cmd_router ded-$1.prod $2 $3 $4 ; }
+function web  { _ah_cmd_router web-$1.prod $2 $3 $4 ; }
+function stg  { _ah_cmd_router staging-$1.prod $2 $3 $4 ; }
+function bal  { _ah_cmd_router bal-$1.prod $2 $3 $4 ; }
+function fsdb { _ah_cmd_router fsdb-$1.prod $2 $3 $4 ; }
+function fsdbm { _ah_cmd_router fsdbmesh-$1.prod $2 $3 $4 ; }
+function srv  { _ah_cmd_router srv-$1.devcloud $2 $3 $4 ; }
+function bald  { _ah_cmd_router bal-$1.devcloud $2 $3 $4 ; }
