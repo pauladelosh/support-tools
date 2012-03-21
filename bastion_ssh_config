@@ -21,19 +21,28 @@ Host bastion
   ForwardAgent yes
   IdentityFile ~/.ssh/--KEYNAME--
 
-Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-*
-  ProxyCommand ssh bastion nc %h %p
-  HostName %h.prod.hosting.acquia.com
+Host bastion-21 bastion-22
+  HostName %h.network.hosting.acquia.com
   User --USERNAME--
   Port 40506
   ServerAliveInterval 60
+  ControlMaster auto
+  ControlPath /tmp/ssh_mux_%h_%p_%r
+  ForwardAgent yes
+  IdentityFile ~/.ssh/--KEYNAME--
+
+Host svn-*.prod.hosting.acquia.com
+  HostName %h
+  User thilliard
+  Port 22
+  ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/id_dsa
+  IdentityFile ~/.ssh/--KEYNAME--
 
-Host srv-*
+Host *.hosting.acquia.com
   ProxyCommand ssh bastion nc %h %p
-  HostName %h.devcloud.hosting.acquia.com
+  HostName %h
   User --USERNAME--
   Port 40506
   ServerAliveInterval 60
@@ -41,9 +50,29 @@ Host srv-*
   StrictHostKeyChecking no
   IdentityFile ~/.ssh/--KEYNAME--
 
-Host bal-*.prod bal-*.devcloud
+Host dbmaster-*.network ded-*.network web-*.netowrk staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
   ProxyCommand ssh bastion nc %h %p
-  HostName %h.hosting.acquia.com
+  HostName %h.prod.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/--KEYNAME--
+
+Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-* bal-*
+  ProxyCommand ssh bastion nc %h %p
+  HostName %h.prod.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/--KEYNAME--
+
+Host srv-*
+  ProxyCommand ssh bastion nc %h %p
+  HostName %h.devcloud.hosting.acquia.com
   User --USERNAME--
   Port 40506
   ServerAliveInterval 60
