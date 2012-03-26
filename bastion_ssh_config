@@ -50,9 +50,9 @@ Host *.hosting.acquia.com
   StrictHostKeyChecking no
   IdentityFile ~/.ssh/--KEYNAME--
 
-Host dbmaster-*.network ded-*.network web-*.netowrk staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
+Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
   ProxyCommand ssh bastion nc %h %p
-  HostName %h.prod.hosting.acquia.com
+  HostName %h.network.hosting.acquia.com
   User --USERNAME--
   Port 40506
   ServerAliveInterval 60
