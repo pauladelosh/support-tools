@@ -1,4 +1,16 @@
-# Module security update, based on Georg Cassie's script for updating modules, modified by MGM for additional variables (module, module version#, ticket#
+############################################################################################
+# Module security updates
+# based on Georg Cassie's script for updating modules, modified by MGM for additional variables.
+# 
+# Instructions:
+# 1.  cd to folder where the module lives.
+# 2.  pick your function name (message varies a bit for each): [git/svn]-mupdate[-sec/add/blank]
+# 3.  Enter variables, in this order: module module-version# ticket#
+# 4.  Example: git-mupdate-sec ctools 7.x-2.3 15066-333333
+# 
+# Remember: CHANGE 'MGM' to your initials!
+############################################################################################
+# SVN Module Security Update
 function svn-mupdate-sec {
 if [ ! -n "$1+x" ]; then
   echo $1 is not set
@@ -11,14 +23,14 @@ if [ ! -n "$2+x" ]; then
   echo exiting
   exit 1
 fi
-
 svn rm "$1"
 svn ci -m "MGM@acquia, $3: Module Security Update, cleanup, removing $1 module"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
 svn ci -m "MGM@acquia, $3: Module Security Update, adding $1-$2"
 }
-# Update a module, SVN, variables (module, module version#, ticket#)
+
+# SVN Module Update
 function svn-mupdate {
 if [ ! -n "$1+x" ]; then
   echo $1 is not set
@@ -31,14 +43,14 @@ if [ ! -n "$2+x" ]; then
   echo exiting
   exit 1
 fi
-
 svn rm "$1"
 svn ci -m "MGM@acquia, $3: Module Update, cleanup, removing $1 module."
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
 svn ci -m "MGM@acquia, $3: Module Update, adding $1-$2."
 }
-# Install New Module, variables (module, module version#, ticket#)
+
+# SVN Add a New Module
 function svn-mupdate-add {
 if [ ! -n "$1+x" ]; then
   echo $1 is not set
@@ -56,60 +68,55 @@ curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
 svn ci -m "MGM@acquia, $3: Module Install.  Adding $1-$2."
 }
-# GIT update scripts 
-# Module security update, variables (module, module version#, ticket#
+
+# GIT Module Security Update
 function git-mupdate-sec {
 if [ ! -n "$1+x" ]; then
   echo $1 is not set
   echo exiting
   exit 1
 fi
-
 if [ ! -n "$2+x" ]; then
   echo $2 is not set
   echo exiting
   exit 1
 fi
-
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
 git ci -am "MGM@acquia, $3: Security Update, adding $1-$2"
 }
-# Module update, variables (module, module-url, module version#, ticket#
+
+# GIT Module Update
 function git-mupdate {
 if [ ! -n "$1+x" ]; then
   echo $1 is not set
   echo exiting
   exit 1
 fi
-
 if [ ! -n "$2+x" ]; then
   echo $2 is not set
   echo exiting
   exit 1
 fi
-
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
 git ci -am "MGM@acquia, $3: Module Update, adding $1-$2"
 }
 
-# Module update, variables (module, module version#, ticket#
-function git-mupdate-test {
+# GIT Add a New Module
+function git-mupdate-add {
 if [ ! -n "$1+x" ]; then
   echo $1 is not set
   echo exiting
   exit 1
 fi
-
 if [ ! -n "$2+x" ]; then
   echo $2 is not set
   echo exiting
   exit 1
 fi
-
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
