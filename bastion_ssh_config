@@ -1,4 +1,3 @@
-
 #########################################################
 #
 # Using this file:
@@ -33,7 +32,7 @@ Host bastion-21 bastion-22
 
 Host svn-*.prod.hosting.acquia.com
   HostName %h
-  User thilliard
+  User --USERNAME--
   Port 22
   ServerAliveInterval 60
   ForwardAgent yes
