@@ -1,6 +1,6 @@
 ############################################################################################
 # Module security updates
-# based on Georg Cassie's script for updating modules, modified by MGM for additional variables.
+# based on George Cassie's script for updating modules, modified by MGM for additional variables.
 # 
 # Instructions:
 # 1.  cd to folder where the module lives.
