@@ -3,7 +3,7 @@
 $script = array_shift($argv);
 foreach ($argv as &$tmp_arg) {
   if (preg_match('|\s|', $tmp_arg)) {
-    $tmp_arg = '"' . $tmp_arg . '"';
+    $tmp_arg = '\"' . $tmp_arg . '\"';
   }
 }
 $command = 'ssh -q bastion "/vol/ebs1/ahsupport/support_bin/ah ahdc ' . implode(' ', $argv) . '"';
