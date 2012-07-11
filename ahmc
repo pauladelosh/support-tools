@@ -6,10 +6,20 @@ foreach ($argv as &$tmp_arg) {
     $tmp_arg = '\"' . $tmp_arg . '\"';
   }
 }
-$command = 'ssh -q bastion "/vol/ebs1/ahsupport/support_bin/ah ahmc ' . implode(' ', $argv) . '"';
+
+// Trying to export the columns using stty.
+exec('stty size 2>&1', $columns_output, $columns_status);
+if (!$columns_status) $columns = preg_replace('/\d+\s(\d+)/', '$1', $columns_output[0], -1, $columns_count);
+
+// Failling back to default columns value
+if (empty($columns)) {
+  $columns = 80;
+}
+
+$command = 'ssh -tq bastion "/vol/ebs1/ahsupport/support_bin/ah ahmc ' . $columns . ' ' . implode(' ', $argv) . '"';
 $result=`$command`;
 if (preg_match('/^(ssh|rsync)\b/',$result) && !in_array('--pipe',$argv)) {
-  passthru($result);
+  passthru(trim($result));
 }
 else {
   echo $result;
