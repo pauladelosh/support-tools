@@ -22,9 +22,9 @@ SSH Config
 ### Installation
 
 1. Copy the file bastion_ssh_config to ~/.ssh/ (cp bastion_ssh_config ~/.ssh/config)
-2. Replace --USERNAME-- with your bastion username. (perl -pi -e s,--USERNAME--,myname,g ~/.ssh/config)
-3. Replace --KEYNAME-- with your ssh key name. (perl -pi -e s,--KEYNAME--,id_rsa,g ~/.ssh/config)
+2. To replace --USERNAME-- with your bastion username, run this command after replacing 'myname' with your bastion username: (perl -pi -e s,--USERNAME--,myname,g ~/.ssh/config)
+3. To replace --KEYNAME-- with your ssh key name, run this command after replacing 'id_rsa' with your ssh private key name: (perl -pi -e s,--KEYNAME--,id_rsa,g ~/.ssh/config)
 
 ### Upgrading
 
-Unfortunately upgrading is not as simple as doing a git pull. After you have done a git pull you will need to follow the installation instructions again and overwrite your existing ~/.ssh/config file.
+Unfortunately upgrading is not as simple as doing a git pull.  After you have done a git pull you will need to follow the installation instructions again and overwrite your existing ~/.ssh/config file.
