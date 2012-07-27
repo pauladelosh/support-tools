@@ -27,4 +27,4 @@ SSH Config
 
 ### Upgrading
 
-Unfortunately upgrading is not as simple as doing a git pull. After you have done a git pull you will need to follow the installation instructions again and overwrite your existing ~/.ssh/config file.
+Unfortunately upgrading is not as simple as doing a git pull.  After you have done a git pull you will need to follow the installation instructions again and overwrite your existing ~/.ssh/config file.
