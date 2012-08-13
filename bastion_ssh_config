@@ -30,7 +30,7 @@ Host bastion-21 bastion-22
   ForwardAgent yes
   IdentityFile ~/.ssh/--KEYNAME--
 
-Host svn-*.prod.hosting.acquia.com
+Host svn-*.prod.hosting.acquia.com svn-*.devcloud.hosting.acquia.com
   HostName %h
   User --USERNAME--
   Port 22
