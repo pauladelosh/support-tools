@@ -12,17 +12,34 @@ if [ -e /usr/local/bin/ahdc ]
     sudo rm /usr/local/bin/ahdc
 fi
 
-if ! grep -q '# set PATH so it includes Support-Tools bin' ~/.profile
+profile_file=''
+# are we using .profile or .bash_profile
+if [ -e ~/.bash_profile ]
+  then
+    profile_file=~/.bash_profile
+elif [ -e ~/.bash_login ]
+  then
+    profile_file=~/.bash_login
+elif [ -e ~/.profile ]
+  then
+    profile_file=~/.profile
+else
+    touch ~/.profile
+    profile_file=~/.profile
+fi
+
+
+if ! grep -q '# set PATH so it includes Support-Tools bin' ${profile_file}
   then
     echo "
 
 # set PATH so it includes Support-Tools bin
 if [ -d \"$DIR/bin\" ] ; then
     PATH=\"$DIR/bin:\$PATH\"
-fi" >> ~/.profile
+fi" >> $profile_file
 fi
 
-if ! grep -q '# set bastion function to use' ~/.profile
+if ! grep -q '# set bastion function to use' $profile_file
   then
     same=''
     while [ "$same" != "yes" ] && [ "$same" != "no" ]
@@ -40,16 +57,16 @@ if ! grep -q '# set bastion function to use' ~/.profile
       echo "
 # set bastion function to use
 function bastion { mywik ; }
-" >> ~/.profile
+" >> $profile_file
   else
       echo "
 # set bastion function to use
 function bastion { mywik2 ; }
-" >> ~/.profile
+" >> $profile_file
   fi
 fi
 
-source ~/.profile
+source $profile_file
 
 install_ssh=''
 while [ "$install_ssh" != "yes" ] && [ "$install_ssh" != "no" ]
@@ -82,7 +99,17 @@ if [ "$install_ssh" == "yes" ]
         acquia_private_key="~/.ssh/id_rsa"
     fi
 
+    current_datetime=`date "+%Y%m%d_%H%M%S"`
+    if [ -e ~/.ssh/config ]
+      then
+        mv ~/.ssh/config ~/.ssh/config_${current_datetime}
+    fi
     cp -f $DIR/lib/acquia_ssh_config ~/.ssh/config
     perl -pi -e s,--USERNAME--,$acquia_username,g ~/.ssh/config
     perl -pi -e s,--KEYNAME--,$acquia_private_key,g ~/.ssh/config
+
+    if [ -e ~/.ssh/config_${current_datetime} ] && diff -q ~/.ssh/config_${current_datetime} ~/.ssh/config > /dev/null
+      then
+        rm ~/.ssh/config_${current_datetime}
+    fi
 fi
