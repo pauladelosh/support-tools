@@ -7,10 +7,6 @@
 #
 # Set the WIKIDPATH environment variable to the jar path containing wikid.
 
-# Always run from $HOME so wikid uses the correct token file.
-cd 
-cd .WiKID
-
 # Read the wikid token password and pin. This script assumes the SSH key 
 # password is the same as the wikid token password.
 stty -echo
@@ -29,7 +25,7 @@ set pin $expect_out(1,string)
 stty echo
 
 # Retrieve the wikid passcode.
-spawn -noecho java -cp $::env(PWD)/../lib/wikidtoken-3.1.15.jar com.wikidsystems.jw.JWcl 050019123119
+spawn -noecho wikid
 expect {
     "Enter passphrase: " { 
     send "$wikid\n"
