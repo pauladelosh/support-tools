@@ -7,7 +7,7 @@ AH Tools
 ### Installation
 
 1. Clone the repository to your home directory or some other location you want to keep the repository. (git clone git@github.com:acquia/Support-Tools.git)
-2. Symlink the ahmc and ahdc files to your /usr/local/bin directory. (ln -s /path/to/ahmc /usr/local/bin/ && ln -s /path/to/ahdc /usr/local/bin/)
+2. Execute the install.sh script which is inside the root of the repo. (/path/to/repo/install.sh)
 3. Use the commands by simply typing ahmc or ahdc. The commands are self documenting.
 
 ### Upgrading

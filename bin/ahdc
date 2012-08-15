@@ -1,0 +1,30 @@
+#!/usr/bin/env php
+<?php
+$result_dir = $_SERVER['HOME'] . '/.ah';
+@mkdir($result_dir, 0777, TRUE);
+$result_file = $result_dir . '/ah_' . rand(0,9999999);
+$script = array_shift($argv);
+foreach ($argv as &$tmp_arg) {
+  if (preg_match('|\s|', $tmp_arg)) {
+    $tmp_arg = '\"' . $tmp_arg . '\"';
+  }
+}
+
+// Trying to export the columns using stty.
+exec('stty size 2>&1', $columns_output, $columns_status);
+if (!$columns_status) $columns = preg_replace('/\d+\s(\d+)/', '$1', $columns_output[0], -1, $columns_count);
+
+// Failling back to default columns value
+if (empty($columns)) {
+  $columns = 80;
+}
+
+$command = 'ssh -tq bastion "/vol/ebs1/ahsupport/support_bin/ah ahdc ' . $columns . ' ' . implode(' ', $argv) . '" | tee ' . $result_file;
+passthru($command);
+$result = '';
+$result = @file_get_contents($result_file);
+@unlink($result_file);
+
+if (preg_match('/^(ssh|rsync|git)\b/',$result) && !in_array('--pipe',$argv)) {
+  passthru(trim($result));
+}
