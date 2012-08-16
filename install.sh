@@ -35,7 +35,7 @@ if ! grep -q '# set PATH so it includes Support-Tools bin' ${profile_file}
 
 # set PATH so it includes Support-Tools bin
 if [ -d \"$DIR/bin\" ] ; then
-    PATH=\"$DIR/bin:\$PATH\"
+    export PATH=\"$DIR/bin:\$PATH\"
 fi" >> $profile_file
 fi
 
