@@ -30,6 +30,32 @@ Host bastion-21 bastion-22
   ForwardAgent yes
   IdentityFile ~/.ssh/--KEYNAME--
 
+Host bastion-3
+  HostName %h.castle.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  IdentityFile ~/.ssh/--KEYNAME--
+
+Host *.castle
+  ProxyCommand ssh bastion-3 nc %h %p
+  HostName %h.hosting.acquia.com
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+
+Host *.castle.hosting.acquia.com
+  ProxyCommand ssh bastion-3 nc %h %p
+  HostName %h
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+
 Host svn-*.prod.hosting.acquia.com svn-*.devcloud.hosting.acquia.com
   HostName %h
   User --USERNAME--
