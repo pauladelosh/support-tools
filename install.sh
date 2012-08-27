@@ -66,6 +66,15 @@ function bastion { mywik2 ; }
   fi
 fi
 
+if ! grep -q '# set ahtools autocomplete' $profile_file
+  then
+    echo "
+# set ahtools autocomplete
+complete -W '\$($DIR/ahmc --autocomplete)' ahmc
+complete -W '\$($DIR/ahdc --autocomplete)' ahdc
+" >> $profile_file
+fi
+
 source $profile_file
 
 install_ssh=''
