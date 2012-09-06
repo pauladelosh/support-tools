@@ -15,3 +15,7 @@ AH Tools
 1. Go to the directory where you cloned the repository in step 1 of the AH Tools installation.
 2. Git pull the changes. (git pull origin master)
 3. Run the install.sh script again after.
+
+### Extra
+
+If you have extra entries that you would like added to your ~/.ssh/config file you can add them to ~/.ssh/myconfig and they will automatically be appended to the ~/.ssh/config file.
