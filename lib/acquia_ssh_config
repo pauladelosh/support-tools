@@ -18,7 +18,7 @@ Host bastion
   ControlPath /tmp/ssh_mux_%h_%p_%r
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host bastion-21 bastion-22
   HostName %h.network.hosting.acquia.com
@@ -29,7 +29,7 @@ Host bastion-21 bastion-22
   ControlPath /tmp/ssh_mux_%h_%p_%r
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host bastion-3
   HostName %h.castle.hosting.acquia.com
@@ -40,7 +40,7 @@ Host bastion-3
   ControlPath /tmp/ssh_mux_%h_%p_%r
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host svn-*.hosting.acquia.com
   HostName %h
@@ -48,7 +48,7 @@ Host svn-*.hosting.acquia.com
   Port 22
   ServerAliveInterval 60
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host *.castle
   ProxyCommand ssh bastion-3 nc %h %p
@@ -58,7 +58,7 @@ Host *.castle
   ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host *.castle.hosting.acquia.com
   ProxyCommand ssh bastion-3 nc %h %p
@@ -68,7 +68,7 @@ Host *.castle.hosting.acquia.com
   ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host *.hosting.acquia.com
   ProxyCommand ssh bastion nc %h %p
@@ -78,7 +78,7 @@ Host *.hosting.acquia.com
   ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
   ProxyCommand ssh bastion nc %h %p
@@ -88,7 +88,7 @@ Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.net
   ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-* bal-*
   ProxyCommand ssh bastion nc %h %p
@@ -98,7 +98,7 @@ Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-* bal-*
   ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host srv-*
   ProxyCommand ssh bastion nc %h %p
@@ -108,7 +108,7 @@ Host srv-*
   ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--
 
 Host managed-*
   ProxyCommand ssh bastion nc %h %p
@@ -118,4 +118,4 @@ Host managed-*
   ServerAliveInterval 60
   ForwardAgent yes
   StrictHostKeyChecking no
-  IdentityFile ~/.ssh/--KEYNAME--
+  IdentityFile --KEYNAME--

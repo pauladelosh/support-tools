@@ -94,18 +94,28 @@ done
 
 if [ "$install_ssh" == "yes" ]
   then
-    echo -n "What is your acquia hosting username? [$USER]: "
+    existing_user=$USER
+    if [ -e ~/.ssh/config ]
+      then
+        existing_user=`grep -A 10 'Host bastion' ~/.ssh/config | grep -m 1 User | grep -o '[a-zA-Z0-9]\+$'`
+    fi
+    echo -n "What is your acquia hosting username? [$existing_user]: "
     read acquia_username
     if [ "$acquia_username" == "" ]
       then
-        acquia_username=$USER
+        acquia_username=$existing_user
     fi
 
-    echo -n "Where is your private key located? [~/.ssh/id_rsa]: "
+    existing_key='~/.ssh/id_rsa'
+    if [ -e ~/.ssh/config ]
+      then
+        existing_key=`grep -A 10 'Host bastion' ~/.ssh/config | grep -m 1 IdentityFile | grep -o '[^ ]\+$'`
+    fi
+    echo -n "Where is your private key located? [$existing_key]: "
     read acquia_private_key
     if [ "$acquia_private_key" == "" ]
       then
-        acquia_private_key="~/.ssh/id_rsa"
+        acquia_private_key=$existing_key
     fi
 
     current_datetime=`date "+%Y%m%d_%H%M%S"`
@@ -114,6 +124,18 @@ if [ "$install_ssh" == "yes" ]
         mv ~/.ssh/config ~/.ssh/config_${current_datetime}
     fi
     cp -f $DIR/lib/acquia_ssh_config ~/.ssh/config
+
+    # append any custom rules from myconfig to the end of the file
+    if [ -e ~/.ssh/myconfig ]
+      then
+        echo "
+
+### Additional config appended from ~/.ssh/myconfig ###
+" >> ~/.ssh/config
+        cat ~/.ssh/myconfig >> ~/.ssh/config
+    fi
+
+    # replace the username and private key variables
     perl -pi -e s,--USERNAME--,$acquia_username,g ~/.ssh/config
     perl -pi -e s,--KEYNAME--,$acquia_private_key,g ~/.ssh/config
 
