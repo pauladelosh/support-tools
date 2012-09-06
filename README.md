@@ -18,4 +18,4 @@ AH Tools
 
 ### Extra
 
-If you have extra entries that you would like added to your ~/.ssh/config file you can add them to ~/.ssh/myconfig and they will automatically be appended to the ~/.ssh/config file.
+If you have extra entries that you would like added to your ~/.ssh/config file you can add them to ~/.ssh/myconfig and they will automatically be appended to the ~/.ssh/config file when running the install.sh script.
