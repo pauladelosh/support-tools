@@ -4,9 +4,37 @@ $result_dir = $_SERVER['HOME'] . '/.ah';
 @mkdir($result_dir, 0777, TRUE);
 $result_file = $result_dir . '/ah_' . rand(0,9999999);
 $script = array_shift($argv);
-foreach ($argv as &$tmp_arg) {
-  if (preg_match('|\s|', $tmp_arg)) {
+$cache = FALSE;
+$clear = FALSE;
+foreach ($argv as $arg_key => &$tmp_arg) {
+  if ($tmp_arg == '--cache') {
+    $cache = TRUE;
+    unset($argv[$arg_key]);
+  }
+  else if ($tmp_arg == '--cache-clear') {
+    $cache = TRUE;
+    $clear = TRUE;
+    unset($argv[$arg_key]);
+  }
+  else if ($tmp_arg == '--autocomplete') {
+    $cache = TRUE;
+  }
+  else if (preg_match('|\s|', $tmp_arg)) {
     $tmp_arg = '\"' . $tmp_arg . '\"';
+  }
+}
+
+if ($cache) {
+  $key = sha1(json_encode(array('ahdc', $argv)));
+  $result_file = $result_dir . '/ah_' . $key;
+  
+  if ($clear) {
+    @unlink($result_file);
+  }
+  
+  if (file_exists($result_file) && filemtime($result_file) < (time() + 86400)) {
+    echo file_get_contents($result_file);
+    exit;
   }
 }
 
@@ -23,7 +51,9 @@ $command = 'ssh -tq bastion "/vol/ebs1/ahsupport/support_bin/ah ahdc ' . $column
 passthru($command);
 $result = '';
 $result = @file_get_contents($result_file);
-@unlink($result_file);
+if (!$cache) {
+  @unlink($result_file);
+}
 
 if (preg_match('/^(ssh|rsync|git)\b/',$result) && !in_array('--pipe',$argv)) {
   passthru(trim($result));
