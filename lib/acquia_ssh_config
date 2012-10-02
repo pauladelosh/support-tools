@@ -100,7 +100,7 @@ Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-* bal-*
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
 
-Host srv-*
+Host srv-* free-*
   ProxyCommand ssh bastion nc %h %p
   HostName %h.devcloud.hosting.acquia.com
   User --USERNAME--
