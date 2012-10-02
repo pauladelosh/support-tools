@@ -55,6 +55,6 @@ if (!$cache) {
   @unlink($result_file);
 }
 
-if (preg_match('/^(ssh|rsync|git)\b/',$result) && !in_array('--pipe',$argv)) {
+if (preg_match('/^(rsync|git)\b/',$result) && !in_array('--pipe',$argv)) {
   passthru(trim($result));
 }

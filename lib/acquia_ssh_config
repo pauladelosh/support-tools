@@ -119,3 +119,13 @@ Host managed-*
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+
+Host *.e2a.us
+  ProxyCommand ssh bastion nc %h %p
+  HostName %h
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile --KEYNAME
