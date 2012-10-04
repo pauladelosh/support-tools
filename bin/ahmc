@@ -20,7 +20,7 @@ foreach ($argv as $arg_key => &$tmp_arg) {
     $cache = TRUE;
   }
   else if (preg_match('|\s|', $tmp_arg)) {
-    $tmp_arg = '\"' . $tmp_arg . '\"';
+    //$tmp_arg = '\"' . $tmp_arg . '\"';
   }
 }
 
@@ -47,14 +47,6 @@ if (empty($columns)) {
   $columns = 80;
 }
 
-$command = 'ssh -tq bastion "/vol/ebs1/ahsupport/support_bin/ah ahmc ' . $columns . ' ' . implode(' ', $argv) . '" | tee ' . $result_file;
-passthru($command);
-$result = '';
-$result = @file_get_contents($result_file);
-if (!$cache) {
-  @unlink($result_file);
-}
-
-if (preg_match('/^(rsync|git)\b/',$result) && !in_array('--pipe',$argv)) {
-  passthru(trim($result));
-}
+$command = 'ssh -tq bastion /vol/ebs1/ahsupport/support_bin/ah ahmc ' . $columns . ' ' . implode(' ', $argv);
+passthru($command, $return_code);
+exit($return_code);
