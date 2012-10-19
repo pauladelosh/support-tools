@@ -20,18 +20,18 @@ foreach ($argv as $arg_key => &$tmp_arg) {
     $cache = TRUE;
   }
   else if (preg_match('|\s|', $tmp_arg)) {
-    //$tmp_arg = '\"' . $tmp_arg . '\"';
+    $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
   }
 }
 
 if ($cache) {
   $key = sha1(json_encode(array('ahdc', $argv)));
   $result_file = $result_dir . '/ah_' . $key;
-  
+
   if ($clear) {
     @unlink($result_file);
   }
-  
+
   if (file_exists($result_file) && filemtime($result_file) < (time() + 86400)) {
     echo file_get_contents($result_file);
     exit;

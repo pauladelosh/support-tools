@@ -20,7 +20,7 @@ foreach ($argv as $arg_key => &$tmp_arg) {
     $cache = TRUE;
   }
   else if (preg_match('|\s|', $tmp_arg)) {
-    //$tmp_arg = '\"' . $tmp_arg . '\"';
+    $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
   }
 }
 
