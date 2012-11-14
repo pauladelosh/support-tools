@@ -70,9 +70,7 @@ if ! grep -q '# set ahtools autocomplete' $profile_file
   then
     echo "
 # set ahtools autocomplete
-complete -W '\$($DIR/ahmc --autocomplete)' ahmc
-complete -W '\$($DIR/ahdc --autocomplete)' ahdc
-complete -W '\$($DIR/ahdc --autocomplete)' aht
+complete -W '\$($DIR/aht --autocomplete)' aht
 " >> $profile_file
 fi
 
