@@ -1,5 +1,9 @@
 #!/bin/bash
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && cd ../lib && pwd )"
-cd ~/.WiKID
+cd ~
+if [ ! -d ".WiKID" ]; then
+  mkdir .WiKID
+fi
+cd .WiKID
 java -cp $DIR/wikidtoken-3.1.15.jar com.wikidsystems.jw.JWcl 050019123119

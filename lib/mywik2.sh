@@ -7,14 +7,14 @@
 #
 # Set the WIKIDPATH environment variable to the jar path containing wikid.
 
-# Read the wikid token password and pin. This script assumes the SSH key 
+# Read the wikid token password and pin. This script assumes the SSH key
 # password is the same as the wikid token password.
 stty -echo
 send_user "SSH Password: "
 expect_user -re "(.*)\n"
 send_user "\n"
 set password $expect_out(1,string)
-send_user "WiKiD Password: "
+send_user "WiKID Password: "
 expect_user -re "(.*)\n"
 send_user "\n"
 set wikid $expect_out(1,string)
@@ -26,27 +26,37 @@ stty echo
 
 # Retrieve the wikid passcode.
 spawn -noecho wikid
+log_user 0
 expect {
-    "Enter passphrase: " { 
-    send "$wikid\n"
+    "Enter passphrase: " {
+        send "$wikid\n"
     }
 }
 expect {
-    "Enter passphrase: " { 
-    send_user "Password incorrect.\n"
-    exit
+    "Enter passphrase: " {
+        send_user "Password incorrect.\n"
+        stty -echo
+        send_user "WiKID Password: "
+        set timeout -1
+        expect_user -re "(.*)\n"
+        send_user "\n"
+        set wikid $expect_out(1,string)
+        set timeout 10
+        stty echo
+        send "$wikid\n"
+        exp_continue
     }
     "Enter PIN for the acquia domain: " {
-    send "$pin\n"
+        send "$pin\n"
+        exp_continue
     }
-}
-expect {
-    "Enter PIN for the acquia domain: " {
-    send_user "PIN incorrect.\n"
-    exit
+    "Passcode: Failed" {
+        close
+        send_user "Acquia PIN Incorrect.\n"
+        exit
     }
     -re "Passcode: (.*)\n" {
-    set passcode $expect_out(1,string)
+        set passcode $expect_out(1,string)
     }
 }
 close
@@ -56,16 +66,24 @@ wait
 spawn -noecho ssh bastion
 expect {
     "Password:" {
-    send "$passcode\n"
-    exp_continue
+        send "$passcode\n"
+        exp_continue
     }
     "SSH passphrase:" {
-    send "$password\n"
+        send "$password\n"
+        log_user 1
+    }
+}
+expect {
+    "Password:" {
+        send_user "Authentication failed.\n"
+        exit
+    }
+    "Welcome" {
+        # Let the user interact directly with SSH.
+        interact
     }
 }
 
-# Let the user interact directly with SSH.
-interact
-
 # Oddly, expect does not exit when it hits the end of the script.
-exit	
+exit
