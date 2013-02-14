@@ -1,13 +1,13 @@
 ############################################################################################
 # Module security updates
 # based on George Cassie's script for updating modules, modified by MGM for additional variables.
-# 
+#
 # Instructions:
 # 1.  cd to folder where the module lives.
-# 2.  pick your function name (message varies a bit for each): [git/svn]-mupdate[-sec/add/blank]
+# 2.  pick your function name (message varies a bit for each): [git/svn]-mupdate[-sec/add/rev/blank]
 # 3.  Enter variables, in this order: module module-version# ticket#
 # 4.  Example: git-mupdate-sec ctools 7.x-2.3 15066-333333
-# 
+#
 # Remember: CHANGE 'MGM' to your initials!
 ############################################################################################
 # SVN Module Security Update
