@@ -2,7 +2,7 @@
 # Module security updates
 # based on George Cassie's script for updating modules, modified by MGM for additional variables.
 #
-# Instructions:
+# Usage Instructions:
 # 1.  cd to folder where the module lives.
 # 2.  pick your function name (message varies a bit for each): [git/svn]-mupdate[-sec/add/rev/blank]
 # 3.  Enter variables, in this order: module module-version# ticket#
@@ -24,10 +24,10 @@ if [ ! -n "$2+x" ]; then
   exit 1
 fi
 svn rm "$1"
-svn ci -m "MGM@acquia, $3: Module Security Update, cleanup, removing $1 module"
+svn commit -m "MGM@acquia, $3: Module Security Update, cleanup, removing $1 module"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
-svn ci -m "MGM@acquia, $3: Module Security Update, adding $1-$2"
+svn commit -m "MGM@acquia, $3: Module Security Update, adding $1-$2"
 }
 
 # SVN Module Update
@@ -44,10 +44,10 @@ if [ ! -n "$2+x" ]; then
   exit 1
 fi
 svn rm "$1"
-svn ci -m "MGM@acquia, $3: Module Update, cleanup, removing $1 module."
+svn commit -m "MGM@acquia, $3: Module Update, cleanup, removing $1 module."
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
-svn ci -m "MGM@acquia, $3: Module Update, adding $1-$2."
+svn commit -m "MGM@acquia, $3: Module Update, adding $1-$2."
 }
 
 # SVN Add a New Module
@@ -66,7 +66,7 @@ fi
 
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
-svn ci -m "MGM@acquia, $3: Module Install.  Adding $1-$2."
+svn commit -m "MGM@acquia, $3: Module Install.  Adding $1-$2."
 }
 
 # GIT Module Security Update
@@ -84,7 +84,7 @@ fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
-git ci -am "MGM@acquia, $3: Security Update, adding $1-$2"
+git commit -am "MGM@acquia, $3: Security Update, adding $1-$2"
 }
 
 # GIT Module Update
@@ -102,7 +102,7 @@ fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
-git ci -am "MGM@acquia, $3: Module Update, adding $1-$2"
+git commit -am "MGM@acquia, $3: Module Update, adding $1-$2"
 }
 
 # GIT Add a New Module
@@ -120,5 +120,5 @@ fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
-git ci -am "MGM@acquia, $3: Module Update, adding $1-$2"
+git commit -am "MGM@acquia, $3: Module Update, adding $1-$2"
 }
