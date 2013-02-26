@@ -13,9 +13,9 @@ In order to use the functions, do the following:
 
 # cd to folder where the module lives (sites/all/modules)
 # pick your function name based on VCStype-mupdate-updatetype (message varies a bit for each): [git/svn]-mupdate[-sec/add/rev/blank]
-# Enter variables, in this order: module module-version# ticket#
+# Enter variables, in this order: current-version new-version ticket#
 
-Example: git-mupdate-sec ctools 7.x-2.3 15066-333333.  This will update the ctools module to 7.x-2.3, and add a message which includes a security note and the ticket number 15066-333333.
+Example: git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-333333.  This will update the ctools module to 7.x-2.3, and add a message which includes a security note and the ticket number 15066-333333.
 
 RA Scans
 --------------------
