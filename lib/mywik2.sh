@@ -11,6 +11,7 @@
 # password is the same as the wikid token password.
 stty -echo
 send_user "SSH Password: "
+set timeout -1
 expect_user -re "(.*)\n"
 send_user "\n"
 set password $expect_out(1,string)
@@ -22,6 +23,7 @@ send_user "Acquia PIN: "
 expect_user -re "(.*)\n"
 send_user "\n"
 set pin $expect_out(1,string)
+set timeout 60
 stty echo
 
 # Retrieve the wikid passcode.

@@ -19,7 +19,7 @@ send_user "Acquia PIN: "
 expect_user -re "(.*)\n"
 send_user "\n"
 set pin $expect_out(1,string)
-set timeout 10
+set timeout 60
 stty echo
 
 # Retrieve the wikid passcode.

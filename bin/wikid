@@ -6,4 +6,4 @@ if [ ! -d ".WiKID" ]; then
   mkdir .WiKID
 fi
 cd .WiKID
-java -cp $DIR/wikidtoken-3.1.15.jar com.wikidsystems.jw.JWcl 050019123119
+java -cp $DIR/wikidtoken-3.1.23.jar com.wikidsystems.jw.JWcl 050019123119
