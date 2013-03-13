@@ -39,12 +39,14 @@ if ($cache) {
 }
 
 $ahtools_path = getenv('AHTPATH');
+$ahtools_envs = getenv('AHSTAGES');
+$stages = empty($ahtools_envs) ? '' : "--stages={$ahtools_envs}";
 if (empty($ahtools_path)) {
   $ahtools_path = 'support_bin';
 }
 elseif (strtolower($ahtools_path) == 'test') {
   $ahtools_path = 'support_bin_test';
 }
-$command = "ssh -tq bastion /vol/ebs1/ahsupport/{$ahtools_path}/ahtools " . implode(' ', $argv);
+$command = "ssh -tq bastion /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$stages} " . implode(' ', $argv);
 passthru($command, $return_code);
 exit($return_code);
