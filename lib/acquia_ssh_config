@@ -93,7 +93,7 @@ Host *.hosting.acquia.com
 
 Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
   ProxyCommand ssh bastion nc %h %p
-  HostName %h.network.hosting.acquia.com
+  HostName %h.hosting.acquia.com
   User --USERNAME--
   Port 40506
   ServerAliveInterval 60
