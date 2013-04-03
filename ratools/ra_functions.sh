@@ -7,13 +7,13 @@
 #
 # add the two following lines to your .bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
-# source ~/<path-to-repo>/beta_functions
+# source ~/<path-to-repo>/ra_functions.sh
 #
 # Instructions:
 # 1.  cd to docroot for core updates, or the folder where the module lives for module updates.
 # 2.  pick your function name and enter variables as required:
-#       Check site distribution and version (dvcheck @<docroot>.<environment>)"
-#       RA Audit (ra-audit @<docroot>.<environment>)"
+#       Check site distribution and version (dvcheck @<docroot>.<environment>)
+#       RA Update Audit (ra-audit-beta @<docroot>.<environment>)
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
@@ -59,7 +59,6 @@ function ra-audit-beta {
 echo -e "\033[1;33;148m[ Distribution/Version Check ]\033[39m"
 tput sgr0
 aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-echo
 aht $1 drush vget install_profile
 echo
 echo -e "\033[1;33;148m[Drush Status ]\033[39m"
@@ -139,9 +138,21 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
   done
 fi
 if echo ${PWD##*/} | grep docroot
-  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+  then :;
+  else while true; do
+    read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
 fi
+patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
+#if echo ${PWD##*/} | grep docroot
+#  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+#  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+#fi
 read -p "Press return to continue, or ctrl-c to stop..."
 
 # find and print out rej/orig files, then exit if any are found
@@ -369,9 +380,21 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
   done
 fi
 if echo ${PWD##*/} | grep docroot
-  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+  then :;
+  else while true; do
+    read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
 fi
+patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
+#if echo ${PWD##*/} | grep docroot
+#  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+#  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+#fi
 read -p "Press return to continue, or ctrl-c to stop..."
 
 # find and print out rej/orig files, then exit if any are found
