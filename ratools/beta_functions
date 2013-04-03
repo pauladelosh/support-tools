@@ -60,6 +60,8 @@ echo -e "\033[1;33;148m[ Distribution/Version Check ]\033[39m"
 tput sgr0
 aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
 echo
+aht $1 drush vget install_profile
+echo
 echo -e "\033[1;33;148m[Drush Status ]\033[39m"
 tput sgr0
 aht $1 drush status
