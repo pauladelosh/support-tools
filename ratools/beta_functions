@@ -1,0 +1,539 @@
+############################################################################################
+# remote admin bash functions
+#
+# based on George Cassie's script for updating modules
+# modified by MGM for additional variables
+# rewritten, cleaned up and core update scripts added by Matt Lavoie
+#
+# add the two following lines to your .bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
+# RA_INITIALS="XYZ"
+# source ~/<path-to-repo>/beta_functions
+#
+# Instructions:
+# 1.  cd to docroot for core updates, or the folder where the module lives for module updates.
+# 2.  pick your function name and enter variables as required:
+#       Check site distribution and version (dvcheck @<docroot>.<environment>)"
+#       RA Audit (ra-audit @<docroot>.<environment>)"
+#       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
+#       SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
+#       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
+#       SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
+#       SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
+#       Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
+#       Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)
+#       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)
+#       Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
+#       Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
+# 3.  example: cd to docroot/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
+#
+############################################################################################
+
+# Help
+function ra-help-beta {
+echo ""
+echo "Remote Administration Scripts Help:"
+echo ""
+echo "1. cd to docroot for core updates, or the folder where the module lives for module updates:"
+echo "2. pick your function name and enter variables as required:"
+echo "      Check site distribution and version (dvcheck @<docroot>.<environment>)"
+echo "      RA Update Audit (ra-audit-beta @<docroot>.<environment>)"
+echo "      SVN, Core Update (svn-cupdate-beta <distribution> <source version> <target version> <ticket number>)"
+echo "      SVN, Module Security Update (svn-mupdate-sec-beta <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Module Update (svn-mupdate-beta <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Add New Module (svn-mupdate-add-beta <module> <version> <ticket number>)"
+echo "      SVN, Revert Module (svn-mupdate-rev-beta <module> <source version> <target version> <ticket number>)"
+echo "      Git, Core Update (git-cupdate-beta <distribution> <source version> <target version> <ticket number>)"
+echo "      Git, Module Security Update (git-mupdate-sec-beta <module> <source version> <target version> <ticket number>)"
+echo "      Git, Module Update (git-mupdate-beta <module> <source-version> <target version> <ticket number>)"
+echo "      Git, Add New Module (git-mupdate-add-beta <module> <version> <ticket number>)"
+echo "      Git, Revert Module (git-mupdate-rev-beta <module> <source version> <target version> <ticket number>)"
+echo "3. example: cd to docroot/modules/, git-mupdate-sec-beta ctools 7.x-2.1 7.x-2.3 15066-3333"
+echo ""
+}
+
+# Check site distribution and version (dvcheck-beta @<docroot>.<environment>)
+function dvcheck-beta { aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; }
+
+# RA Update Audit (ra-audit-beta @<docroot>.<environment>)
+function ra-audit-beta {
+echo -e "\033[1;33;148m[ Distribution/Version Check ]\033[39m"
+tput sgr0
+aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+echo
+echo -e "\033[1;33;148m[Drush Status ]\033[39m"
+tput sgr0
+aht $1 drush --uri=$2 status
+echo
+echo -e "\033[1;33;148m[ Current Code ]\033[39m"
+tput sgr0
+aht $1 repo
+echo
+echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"
+tput sgr0
+aht $1 sites
+echo
+echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
+tput sgr0
+aht $1 drush --uri=$2 upc --pipe --security-only
+echo
+echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
+tput sgr0
+aht $1 drush --uri=$2 upc --pipe
+echo
+}
+
+# SVN, Core Update (svn-cupdate-beta <distribution> <source version> <target version> <ticket number>)
+function svn-cupdate-beta {
+# check if we have all variables
+echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
+if [ -z "$1" ]
+  then echo -e "\033[0;31;148mmissing distribution: exiting\033[39m" && return
+  else echo -e "\033[0;32;148mdistribution: $1\033[39m"
+fi
+if [ -z "$2" ]
+  then echo -e "\033[0;31;148mmissing source version: exiting\033[39m" && return
+  else echo -e "\033[0;32;148msource version: $2\033[39m"
+fi
+if [ -z "$3" ]
+  then echo -e "\033[0;31;148mmissing target version: exiting\033[39m" && return
+  else echo -e "\033[0;32;148msource version:  $3\033[39m"
+fi
+if [ -z "$4" ]
+  then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
+  else echo -e "\033[0;32;148mticket number:  $4\033[39m"
+fi
+
+# detection code to see if a valid patch exists (also helps sanitize the inputs further)
+if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
+  then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
+  else echo -e "\033[0;31;148mno suitable patch found (tried to find ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
+fi
+tput sgr0
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# run the patch, but check if we are in trunk or a docroot first
+echo
+echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"
+tput sgr0
+if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
+  then while true; do
+    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+if echo ${PWD##*/} | grep docroot
+  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+fi
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# find and print out rej/orig files, then exit if any are found
+echo
+echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
+tput sgr0
+svn status --no-ignore | grep rej
+svn status --no-ignore | grep orig
+if svn status --no-ignore | grep -q rej
+  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
+  else echo -e "\033[0;32;148mno reject files found\033[39m"
+fi
+if svn status --no-ignore | grep -q orig
+  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
+  else echo -e "\033[0;32;148mno original files found\033[39m"
+fi
+tput sgr0
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# remove version numbers
+echo
+echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
+tput sgr0
+~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# add changes to svn
+echo
+echo -e "\033[1;33;148m[ adding changes to svn ]\033[39m"
+tput sgr0
+svn status | grep '\?' | awk '{print $2}' | xargs svn add
+svn status | grep '\!' | awk '{print $2}' | xargs svn rm
+svn status --no-ignore
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# commit
+echo
+echo -e "\033[1;33;148m[ commiting changes ]\033[39m"
+tput sgr0
+while true; do
+    read -p "commit \"$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3.\" now? (y/n) " yn
+    case $yn in
+        [Yy]* ) svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
+        [Nn]* ) echo -e "\033[0;31;148mchanges not commited\033[39m"; break;;
+        * ) echo "invalid response, try again";;
+    esac
+done
+}
+
+# SVN, Module Security Update (svn-mupdate-sec-beta <module> <source version> <target version> <ticket number>)
+function svn-mupdate-sec-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing source version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing target version, exiting" && return
+fi
+if [ -z "$4" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep $1
+then echo "found $1"
+else echo "$1 not found: exiting" && return
+fi
+if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
+  then while true; do
+    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+svn rm "$1"
+svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 module"
+curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+svn add --force "$1"
+svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
+}
+
+# SVN, Module Update (svn-mupdate-beta <module> <source version> <target version> <ticket number>)
+function svn-mupdate-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing source version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing target version, exiting" && return
+fi
+if [ -z "$4" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep -w $1
+then echo "found $1"
+else echo "$1 not found: exiting" && return
+fi
+if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
+  then while true; do
+    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+svn rm "$1"
+svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 module."
+curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+svn add --force "$1"
+svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
+}
+
+# SVN, Add New Module (svn-mupdate-add-beta <module> <version> <ticket number>)
+function svn-mupdate-add-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep -w $1
+  then echo "$1 already exists: exiting" && return
+fi
+if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
+  then while true; do
+    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
+svn add --force "$1"
+svn commit -m "$RA_INITIALS@Acquia, Ticket #$3: Module Install, adding $1-$2."
+}
+
+# SVN, Revert Module (svn-mupdate-rev-beta <module> <source version> <target version> <ticket number>)
+function svn-mupdate-rev-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing source version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing target version, exiting" && return
+fi
+if [ -z "$4" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep -w $1
+then echo "found $1"
+else echo "$1 not found: exiting" && return
+fi
+if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
+  then while true; do
+    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+svn rm "$1"
+svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, cleanup, removing $1-$2 module."
+curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+svn add --force "$1"
+svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, reverting to $1-$3 from $2."
+}
+
+# Git, Core Update (git-cupdate-beta <distribution> <source version> <target version> <ticket number>)
+function git-cupdate-beta {
+# check if we have all variables
+echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
+if [ -z "$1" ]
+  then echo -e "\033[0;31;148mmissing distribution: exiting\033[39m" && return
+  else echo -e "\033[0;32;148mdistribution: $1\033[39m"
+fi
+if [ -z "$2" ]
+  then echo -e "\033[0;31;148mmissing source version: exiting\033[39m" && return
+  else echo -e "\033[0;32;148msource version: $2\033[39m"
+fi
+if [ -z "$3" ]
+  then echo -e "\033[0;31;148mmissing target version: exiting\033[39m" && return
+  else echo -e "\033[0;32;148msource version:  $3\033[39m"
+fi
+if [ -z "$4" ]
+  then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
+  else echo -e "\033[0;32;148mticket number:  $4\033[39m"
+fi
+
+# detection code to see if a valid patch exists (also helps sanitize the inputs further)
+if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
+  then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
+  else echo -e "\033[0;31;148mno suitable patch found (tried to find ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
+fi
+tput sgr0
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# run the patch, but check if we are in master or a docroot first
+echo
+echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"
+tput sgr0
+if git status | grep branch | cut -f4 -d" " | grep -w master
+  then while true; do
+    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+if echo ${PWD##*/} | grep docroot
+  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+fi
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# find and print out rej/orig files, then exit if any are found
+echo
+echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
+tput sgr0
+git status | grep rej
+git status | grep orig
+if git status | grep -q rej
+  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
+  else echo -e "\033[0;32;148mno reject files found\033[39m"
+fi
+if git status | grep -q orig
+  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
+  else echo -e "\033[0;32;148mno original files found\033[39m"
+fi
+tput sgr0
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# remove version numbers
+echo
+echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
+tput sgr0
+~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# add changes to git
+echo
+echo -e "\033[1;33;148m[ adding changes to git ]\033[39m"
+tput sgr0
+git add -A
+git status
+read -p "Press return to continue, or ctrl-c to stop..."
+
+# commit
+echo
+echo -e "\033[1;33;148m[ commiting changes ]\033[39m"
+tput sgr0
+while true; do
+    read -p "commit \"$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3.\" now? (y/n) " yn
+    case $yn in
+        [Yy]* ) git commit -m "$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
+        [Nn]* ) echo -e "\033[0;31;148mchanges not commited\033[39m"; break;;
+        * ) echo "invalid response, try again";;
+    esac
+done
+}
+
+# Git, Module Security Update (git-mupdate-sec-beta <module> <source version> <target version> <ticket number>)
+function git-mupdate-sec-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing source version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing target version, exiting" && return
+fi
+if [ -z "$4" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep -w $1
+then echo "found $1"
+else echo "$1 not found: exiting" && return
+fi
+if git status | grep branch | cut -f4 -d" " | grep -w master
+  then while true; do
+    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+git rm -rf "$1"
+curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+git add "$1"
+git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
+}
+
+# Git, Module Update (git-mupdate-beta <module> <source version> <target version> <ticket number>)
+function git-mupdate-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing source version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing target version, exiting" && return
+fi
+if [ -z "$4" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep -w $1
+then echo "found $1"
+else echo "$1 not found: exiting" && return
+fi
+if git status | grep branch | cut -f4 -d" " | grep -w master
+  then while true; do
+    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+git rm -rf "$1"
+curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+git add "$1"
+git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
+}
+
+# Git, Add New Module (git-mupdate-add-beta <module> <version> <ticket number>)
+function git-mupdate-add-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep -w $1
+  then echo "$1 already exists: exiting" && return
+fi
+if git status | grep branch | cut -f4 -d" " | grep -w master
+  then while true; do
+    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
+git add "$1"
+git commit -am "$RA_INITIALS@Acquia, Ticket #$3: Module Install, adding $1-$2."
+}
+
+# Git, Revert Module (git-mupdate-rev-beta <module> <source version> <target version> <ticket number>)
+function git-mupdate-rev-beta {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then echo "missing source version, exiting" && return
+fi
+if [ -z "$3" ]
+  then echo "missing target version, exiting" && return
+fi
+if [ -z "$4" ]
+  then echo "missing ticket number, exiting" && return
+fi
+if ls | grep -w $1
+then echo "found $1"
+else echo "$1 not found: exiting" && return
+fi
+if git status | grep branch | cut -f4 -d" " | grep -w master
+  then while true; do
+    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+git rm -rf "$1"
+curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+git add "$1"
+git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, reverting to $1-$3 from $2."
+}
