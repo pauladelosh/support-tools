@@ -74,11 +74,16 @@ aht $1 sites
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
-aht $1 drush --uri=$2 upc --pipe --security-only
+#aht $1 drush --uri=$2 upc --pipe --security-only
+ASUDOCROOT=$1; aht $ASUDOCROOT sites | sed 's/^\(.*\)$/aht '${ASUDOCROOT}' drush upc --pipe --security-only 2>\/dev\/null <\/dev\/null --uri=\1/' | xargs -L1 command | sort | uniq
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
-aht $1 drush --uri=$2 upc --pipe
+#aht $1 drush --uri=$2 upc --pipe
+ASUDOCROOT=$1; aht $ASUDOCROOT sites | sed 's/^\(.*\)$/aht '${ASUDOCROOT}' drush upc --pipe 2>\/dev\/null <\/dev\/null --uri=\1/' | xargs -L1 command | sort | uniq
+echo
+echo "not unique versions:"
+ASUDOCROOT=$1; aht $ASUDOCROOT sites | sed 's/^\(.*\)$/aht '${ASUDOCROOT}' drush upc --pipe 2>\/dev\/null <\/dev\/null --uri=\1/' | xargs -L1 command | sort
 echo
 }
 
