@@ -7,13 +7,13 @@
 #
 # add the two following lines to your .bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
-# source ~/<path-to-repo>/ra_functions.sh
+# source ~/<path-to-repo>/beta_functions
 #
 # Instructions:
 # 1.  cd to docroot for core updates, or the folder where the module lives for module updates.
 # 2.  pick your function name and enter variables as required:
-#       Check site distribution and version (dvcheck @<docroot>.<environment>)
-#       RA Update Audit (ra-audit-beta @<docroot>.<environment>)
+#       Check site distribution and version (dvcheck @<docroot>.<environment>)"
+#       RA Audit (ra-audit @<docroot>.<environment>)"
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
@@ -56,7 +56,7 @@ function dvcheck-beta { aht $1 drush php-eval 'echo (function_exists("drupal_pag
 
 # RA Update Audit (ra-audit-beta @<docroot>.<environment> --raw (optional, shows common output on update checks))
 function ra-audit-beta {
-echo -e "\033[1;33;148m[ Distribution/Version Check ]\033[39m"
+echo -e "\033[1;33;148m[ Distribution/Version/Profile Check ]\033[39m"
 tput sgr0
 aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
 aht $1 drush vget install_profile
@@ -76,21 +76,33 @@ echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"
 tput sgr0
 rm -f ~/updates.tmp
+
 for site in `aht $1 sites`; do echo $site; aht $1 drush upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
-egrep -v 'warning|error' ~/updates.tmp | grep SECURITY-UPDATE-available | sort | uniq | if egrep -v 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi
+grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available security updates:"; egrep -v 'warning|error' ~/updates.tmp | grep SECURITY-UPDATE-available | sort | if egrep -v 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo
+  then echo "raw (all common) available security updates:"; grep SECURITY-UPDATE-available ~/updates.tmp | sort; echo
 fi
+
+echo -e "\033[1;33;148m[ Other Available Suggested Updates (BETA!) ]\033[39m"
+tput sgr0
+egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | grep -v Installed-version-not-supported | sort | uniq
+echo
+if [ "$2" = "--raw" ]
+  then echo "raw (all common) available suggested updates:"; egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | grep -v Installed-version-not-supported | sort; echo
+fi
+
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
-egrep -v 'warning|error' ~/updates.tmp | sort | uniq | if egrep -v 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi
+egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available updates:"; egrep -v 'warning|error' ~/updates.tmp | sort | if egrep -v 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo
+  then echo "raw (all common) available updates:"; egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort; echo
 fi
+
 rm -f ~/updates.tmp
 }
 
@@ -138,21 +150,9 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
   done
 fi
 if echo ${PWD##*/} | grep docroot
-  then :;
-  else while true; do
-    read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) return;;
-        * ) echo "invalid response, try again";;
-    esac
-  done
+  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
 fi
-patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
-#if echo ${PWD##*/} | grep docroot
-#  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-#  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
-#fi
 read -p "Press return to continue, or ctrl-c to stop..."
 
 # find and print out rej/orig files, then exit if any are found
@@ -380,21 +380,9 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
   done
 fi
 if echo ${PWD##*/} | grep docroot
-  then :;
-  else while true; do
-    read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) return;;
-        * ) echo "invalid response, try again";;
-    esac
-  done
+  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
 fi
-patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
-#if echo ${PWD##*/} | grep docroot
-#  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-#  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
-#fi
 read -p "Press return to continue, or ctrl-c to stop..."
 
 # find and print out rej/orig files, then exit if any are found
