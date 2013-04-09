@@ -7,7 +7,7 @@
 #
 # add the two following lines to your .bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
-# source ~/<path-to-repo>/beta_functions
+# source ~/<path-to-repo>/ratools/ra_functions.sh
 #
 # Instructions:
 # 1.  cd to docroot for core updates, or the folder where the module lives for module updates.
