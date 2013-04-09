@@ -150,9 +150,21 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
   done
 fi
 if echo ${PWD##*/} | grep docroot
-  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+  then :;
+  else while true; do
+read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+done
 fi
+patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
+#if echo ${PWD##*/} | grep docroot
+# then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+# else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+#fi
 read -p "Press return to continue, or ctrl-c to stop..."
 
 # find and print out rej/orig files, then exit if any are found
@@ -380,9 +392,21 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
   done
 fi
 if echo ${PWD##*/} | grep docroot
-  then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-  else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+  then :;
+  else while true; do
+read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+done
 fi
+patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
+#if echo ${PWD##*/} | grep docroot
+# then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
+# else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
+#fi
 read -p "Press return to continue, or ctrl-c to stop..."
 
 # find and print out rej/orig files, then exit if any are found
