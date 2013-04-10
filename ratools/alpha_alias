@@ -1,0 +1,471 @@
+# Add these lines to the bottom of .profile or .bash_profile, which conveniently leaves the alias s.a & s.b to re-source this file if needed.
+#
+#alias s.p="source ~/.profile"
+#
+#alias s.b="source ~/.ratools/ra-beta-scripts/beta_functions"
+#s.b
+#
+#alias s.a="source ~/.ratools/ra-beta-scripts/alpha_alias"
+#s.a
+#
+#alias s.t="source ~/.Tim/Acquia-RA-Alias/.tim"     # personal favorite bash functions or alias
+#s.t
+
+
+#
+# Personal Fix these & (hopefully-alpha) we're good to go.
+#
+FIRSTNAME="tim"
+LASTNAME="mcneal"
+RA_INITIALS="TCM"
+SVNPW="codepass11"
+RATOOLSPATH="~/.ratools/ra-beta-scripts/"
+###  END Personal 
+
+#  VERSIONS: Put current versions here
+CURVER6="6.28"
+CURVER7="7.21"
+
+
+
+#
+# General 
+#
+alias ll="ls -la"
+alias llsam="ll sites/all/modules/"
+alias llm="ll modules"
+alias rmds="rm .DS_Store"
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias back='cd $OLDPWD'            # This allows a jump to previous directory
+alias cdb='cd $OLDPWD'             # Same as above
+alias cdt='cd trunk/'
+alias cdsam='cd sites/all/modules/'
+alias cdm='cd modules/'
+alias cdc='cd ~/Sites/clients/$SITENAME/'
+#alias cdcdr='cd ~/Sites/clients/$SITENAME/'  ###############################   diff git/svn
+#
+
+#
+# Other 
+#
+SVNNAME="acquia_ahsupport_$FIRSTNAME$LASTNAME"
+ENV="prod"                                      #  This part needs some TLC
+TCKACQUIA="15066"
+#
+#  Git 
+#  some alias' from the RA VCS page.
+#
+alias gs="git status"
+alias gcom="git checkout master"
+alias gsgr="git status | grep rej"
+alias gsgo="git status | grep orig"
+alias gaa="git add -A"
+alias gb="git branch"
+alias gpa="git pull --all"
+alias gp="git push"
+alias gptom="git push --tags origin master"
+alias glog="git log | less"
+#
+#  Subversion
+#  some alias' from the RA VCS page.
+#
+alias ss="svn status"
+alias ssgr="svn status --no-ignore | grep rej"
+alias ssgo="svn status | grep orig"
+alias sadd="svn status | grep '\?' | awk '{print $2}' | xargs svn add"
+alias srm="svn status | grep \! | awk '{print $2}' | xargs svn rm"
+alias si='svn info'
+alias su='svn up'
+alias sst='svn switch ^/trunk'
+alias slog="svn log -l 10 | less"
+#alias sco='svn checkout --username $SVNNAME --password $SVNPW $VCSPATH'    #######  replaced by function scot
+#
+# Misc Update related
+#
+alias cddr="cd docroot"
+alias cdsc="cd ~/Sites/clients/"
+alias rmvn="~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh"
+alias mcd='mkdir $SITENAME && cd $SITENAME'                                ###################### This seems to work
+alias msulog="less  ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log"
+alias v6="cvt $CURVER6"      # Changes the version number
+alias v7="cvt $CURVER7"      # Changes the version number
+#
+#
+alias sshtest="aht @$SITENAME.test ssh html"
+alias sshprod="aht @$SITENAME.prod ssh html"
+#AH_SITE_NAME=fldmuse AH_SITE_GROUP=fldmuse drush               ###################### This seems to work
+
+
+#
+# ra_functions
+#
+
+# RAA: ra-audit-beta @<docroot>.<environment>     allows cmd line variable for environment
+function raa {
+echo "~ra audit beta @$SITENAME.<ENV>"
+if [ -z "$1" ]
+  then ra-audit-beta @$SITENAME.$ENV
+  else ra-audit-beta @$SITENAME.$1
+fi
+}
+
+
+#
+#  http://stackoverflow.com/questions/10311600/profile-file-linking
+
+
+# == ==  == ==  == ==  == ==  == ==  == ==  == == 
+#
+# Functions
+#
+# == ==  == ==  == ==  == ==  == ==  == ==  == ==
+
+#
+# modversion: display the version number of a module   use:  modver <module name>
+#
+function modver { 
+if [ -z "$1" ]
+  then echo "missing module name" && return
+fi
+  less $1/$1.info | grep version; 
+}
+
+
+
+
+
+
+# sitename: set the sitename const, set up handy aht alias using const & name the tab in iterm2   use:  sn <sitename>
+function sn {
+if [ -z "$1" ]
+  then echo "missing client code, exiting" && return
+fi
+SITENAME="$1"
+export PROMPT_COMMAND='echo -ne "\033]0;$SITENAME\007"'        # sets tab name in iTerm2
+alias ahst="aht @$SITENAME.prod --uri=default drush status"                         
+alias ahsi="aht @$SITENAME.prod sites"                                             
+alias ahsup="aht @$SITENAME.prod --uri=default drush upc --pipe --security-only"    
+alias ahaup="aht @$SITENAME.prod --uri=default drush upc --pipe"                  
+alias ahuli="aht @$SITENAME.prod --uri=default uli"                                
+alias ahrepo="aht @$SITENAME.prod repo" 
+alias ahpmi="aht @$SITENAME.prod drush pmi <module>"      ######################  Need function for this                                   
+}
+
+# tab: name the tab in iterm2    for when you only want to set the tab name
+function tab {
+if [ -z "$1" ]
+  then echo "missing tab name, exiting" && return
+fi
+TABNAME="$1"
+export PROMPT_COMMAND='echo -ne "\033]0;$TABNAME\007"'
+}
+
+# find module: Finds the folders where modules live
+# *#*#*#*#  Notice default raised to 1000(need to if-else this) ####################  In need of some TLC RegEx magic  *#*#*#*# 
+function fmod {
+if [ -z "$1" ]
+  then echo "missing module name, exiting" && return
+fi
+if [ -z "$2" ]
+  then FMODNUM=1000
+  else FMODNUM="$2"
+fi
+find . -type d | grep -i "$1" | head -$FMODNUM  | less
+}
+
+# check pressflow, allows changing env option and uses SITENAME    use cpf <env>
+function cpf { 
+if [ -z "$1" ]
+  then RAENV="prod"
+  else RAENV="$1"
+fi
+  dvcheck @$SITENAME.$RAENV
+#  aht @$SITENAME.$RAENV drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; 
+}
+
+
+
+#aht @fldmuse.test@$SITENAME.$drush pmi <module>
+
+# scot: svn checkout trunk             ######################  Work-in-progress
+function scot {
+echo "scot"
+#echo "s v n copy "$VCSPATH$SOURCEBRANCH $VCSPATH"branches/acqUpd-$TCKNUM$(date +'%Y%m%d') -m '$RA_INITIALS@Acquia, Ticket $TCKACQUIA-$TCKNUM:Branch from master to implement update from Drupal $CVF to $CVT.'"
+#svn copy $VCSPATH$SOURCEBRANCH $VCSPATH"branches/acqUpd-"
+}
+
+# SCPBR: svn copy branch             ######################  Work-in-progress
+function scpbr {
+#set $TARGETBRANCH
+#echo "svn copy $VCSPATH/$SOURCEBRANCH $VCSPATH/branches/acqUpd-$TCKNUM-$(date +'%Y%m%d') -m \"$RA_INITIALS@Acquia, Ticket #$TCKACQUIA-$TCKNUM:Branch from master to implement update from Drupal $CVF to $CVT.\""
+echo "Hello World"
+}
+
+
+#svn copy https://svn-1745.prod.hosting.acquia.com/kyriba/master https://svn-1745.prod.hosting.acquia.com/kyriba/branches/acqUpd-71952-20130404 -m "TCM@Acquia, Ticket 15066-71952:Branch from master to implement update from Drupal 7.20 to 7.21."
+#svn copy https://svn-1745.prod.hosting.acquia.com/kyriba/master https://svn-1745.prod.hosting.acquia.com/kyriba/branches/acqUpd-71952-20130404 -m "TCM@Acquia, Ticket #15066-71952: Branch from master to implement update from Drupal 7.20 to 7.21."
+
+# SSWBR: svn switch to branch             ######################  Work-in-progress
+function sswbr {
+#echo "svn copy $VCSPATH/$SOURCEBRANCH $VCSPATH/branches/acqUpd-$TCKNUM-$(date +'%Y%m%d') -m \"$RA_INITIALS@Acquia, Ticket #$TCKACQUIA-$TCKNUM:Branch from master to implement update from Drupal $CVF to $CVT.\""
+echo " "
+}
+
+
+
+
+################  Git MODULE UPDATES  #############################
+# GMSU: git module security update     use gmsu <module> <source version> <target version>   (copy fro RA Dash)
+#  ***** NOTE  ***** this puts all output into log; check log after each or all module updates or comment out.
+#
+function gmsu {
+if [ -z "$1" ]
+  then echo "Missing module name" && return
+fi
+if [ -z "$2" ]
+  then echo "Missing module from version" && return
+fi
+if [ -z "$3" ]
+  then echo "Missing module to version" && return
+fi
+echo "git-mupdate-sec $1 $2 $3 $TCKACQUIA-$TCKNUM"
+echo "- . - . - . - . - . - . - . - . - .   $1   . - . - . - . - . - . - . - . - . -" >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+git-mupdate-sec $1 $2 $3 $TCKACQUIA-$TCKNUM  >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+echo "==============================================================================" >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+echo " " >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+}
+
+################  SVN MODULE UPDATES  #############################
+# SMSU: svn module security update
+#  ***** NOTE  ***** this puts all output into log; check log after each or all module updates or comment out.
+#
+function smsu {
+if [ -z "$1" ]
+  then echo "Missing module name" && return
+fi
+if [ -z "$2" ]
+  then echo "Missing module from version" && return
+fi
+if [ -z "$3" ]
+  then echo "Missing module to version" && return
+fi
+echo "svn-mupdate-sec $1 $2 $3 $TCKACQUIA-$TCKNUM"
+echo "- . - . - . - . - . - . - . - . - .   $1   . - . - . - . - . - . - . - . - . -" >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+git-mupdate-sec $1 $2 $3 $TCKACQUIA-$TCKNUM  >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+svn-mupdate-sec $1 $2 $3 $TCKACQUIA-$TCKNUM   >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+echo "==============================================================================" >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+echo " " >> ~/Sites/clients/$SITENAME/modUpd$BRANCHDATE.log
+}
+#svn-mupdate-sec rules 7.x-2.2 7.x-2.3 $TCKACQUIA-$TCKNUM  
+
+
+############################   Show & Tell   #########################################
+# vars: print the vars that are needed for smooth ops
+#                                                             #########  needs help option, maybe other options   Work-in-progress
+function vars {
+echo "- ~ - ~    Welcome to RA~World   - ~ - ~"
+echo "Set using  Variable Name  Value"
+echo "---------  ------------   -------------------------------"
+echo "{.profile} RA_INITIALS    "$RA_INITIALS 
+echo "{.profile} FIRSTNAME      "$FIRSTNAME
+echo "{.profile} LASTNAME       "$LASTNAME
+echo "{.profile} SVNNAME        "$SVNNAME
+echo "{.profile} SVNPW          "$SVNPW
+                                
+echo " "                        
+echo "{.profile} TCKACQUIA      "$TCKACQUIA
+echo "tck        TCKNUM         "$TCKNUM
+echo "sn         SITENAME       "$SITENAME 
+echo "env        ENV            "$ENV
+echo " "                        
+echo "gos        GOS            "$GOS
+echo "cvf        CVF            "$CVF
+echo "cvt        CVT            "$CVT
+echo "vcs        VCSPATH        "$VCSPATH
+echo " "                        
+echo "bradte     BRANCHDATE     "$BRANCHDATE
+echo "tagdte     TAGDATE        "$TAGDATE
+echo "srcbra     SOURCEBRANCH   "$SOURCEBRANCH
+echo "tgtbra     TARGETBRANCH   "$TARGETBRANCH
+echo "mrgbra     MERGEBRANCH    "$MERGEBRANCH
+echo "svnrev     SVNREV         "$SVNREV
+echo " "                        
+echo "###  AHT Alias  ###"
+echo "ahst       aht @$SITENAME.prod --uri=default drush status"
+echo "ahsi       aht @$SITENAME.prod sites"
+echo "ahsup      aht @$SITENAME.prod --uri=default drush upc --pipe --security-only"
+echo "ahaup      aht @$SITENAME.prod --uri=default drush upc --pipe"
+echo "ahuli      aht @$SITENAME.prod --uri=default uli"
+echo "ahrepo     aht @$SITENAME.prod repo" 
+#echo "ahupdb     aht @$SITENAME.test drush --uri=default updb"   ####################################   need function with env
+
+#echo "ahpmi      aht @$SITENAME.prod drush pmi <module>"    ##############
+}
+
+alias ahupdb="aht @$SITENAME.test drush --uri=default updb"  ##################################################  Remove this
+
+
+
+
+
+
+###################################   Simple functions to set vars   ################################
+#  Working to find easier way to get this info, but will need these to tweak
+#
+
+# VCS: store the path of the VCS 
+function vcs {
+if [ -z "$1" ]
+  then echo "missing VCS path, exiting" && return
+fi
+VCSPATH="$1"
+echo $VCSPATH
+}
+
+# ENV: store the environment for the workflow & aht commands
+function env {
+if [ -z "$1" ]
+  then echo "missing environment name, i.e prod, stag, dev, qa, etc, exiting" && return
+fi
+ENV="$1"
+echo $ENV
+}
+
+# TCK: store the Ticket number
+function tck {
+if [ -z "$1" ]
+  then echo "missing ticket number, just the last 5-6 digits" && return
+fi
+TCKNUM="$1"
+echo $TCKNUM
+}
+
+# CVF: store the Ticket number
+function cvf {
+if [ -z "$1" ]
+  then echo "missing core version from" && return
+fi
+CVF="$1"
+echo $CVF
+}
+
+# CVT: core version to
+function cvt {
+if [ -z "$1" ]
+  then echo "missing core version to" && return
+fi
+CVT="$1"
+echo $CVT
+}
+
+# GOS: Git or SVN
+function gos {
+if [ -z "$1" ]
+  then echo "Git or SVN missing" && return
+fi
+GOS="$1"
+echo $GOS
+}
+
+# VCSSRC: VCS source
+function vcssrc {
+if [ -z "$1" ]
+  then echo "VCS Source missing" && return
+fi
+VCSSRC="$1"
+echo $VCSSRC
+}
+
+# BRADTE: Branch Date
+function bradte {
+if [ -z "$1" ]
+  then BRANCHDATE=$(date +"%Y-%m-%d")
+  else BRANCHDATE="$1"
+fi
+echo $BRANCHDATE
+}
+
+# TAGDTE: desc
+function tagdte {
+if [ -z "$1" ]
+  then TAGDATE=$(date +"%Y-%m-%d")
+  else TAGDATE="$1"
+fi
+
+echo $TAGDATE
+}
+
+# SVNREV: SVN Revision number
+function svnrev {
+if [ -z "$1" ]
+  then echo "Missing SVN rev" && return
+fi
+SVNREV="$1"
+echo $SVNREV
+}
+
+# MRGBRA: desc
+function mrgbra {
+if [ -z "$1" ]
+  then MERGEBRANCH="master"
+  else MERGEBRANCH="$1"
+fi
+echo $MERGEBRANCH
+}
+
+# SRCBRA: Source branch
+function srcbra {
+if [ -z "$1" ]
+  then SOURCEBRANCH="acqUp-$TCKNUM-$BRANCHDATE"
+  else SOURCEBRANCH="$1"
+fi
+
+echo $SOURCEBRANCH
+}
+
+# TGTBRA: Target Branch
+function tgtbra {
+if [ -z "$1" ]
+  then TARGETBRANCH="acqUpd-"$TCKNUM"-"$(date +"%Y%m%d")
+  else TARGETBRANCH="$1"
+fi
+echo $TARGETBRANCH
+
+}
+
+# VAR: desc
+function var {
+if [ -z "$1" ]
+  then echo "" && return
+fi
+VAR="$1"
+echo $VAR
+}
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
