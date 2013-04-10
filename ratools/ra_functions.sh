@@ -58,12 +58,12 @@ function dvcheck-beta { aht $1 drush php-eval 'echo (function_exists("drupal_pag
 function ra-audit-beta {
 echo -e "\033[1;33;148m[ Distribution/Version/Profile Check ]\033[39m"
 tput sgr0
-aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht $1 drush vget install_profile
+aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+aht $1 drush5 vget install_profile
 echo
 echo -e "\033[1;33;148m[Drush Status ]\033[39m"
 tput sgr0
-aht $1 drush status
+aht $1 drush5 status
 echo
 echo -e "\033[1;33;148m[ Current Code ]\033[39m"
 tput sgr0
@@ -77,7 +77,7 @@ echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"
 tput sgr0
 rm -f ~/updates.tmp
 
-for site in `aht $1 sites`; do echo $site; aht $1 drush upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+for site in `aht $1 sites`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
@@ -152,13 +152,13 @@ fi
 if echo ${PWD##*/} | grep docroot
   then :;
   else while true; do
-read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
-    case $yn in
+    read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
+      case $yn in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
-    esac
-done
+      esac
+    done
 fi
 patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
 #if echo ${PWD##*/} | grep docroot
@@ -394,13 +394,13 @@ fi
 if echo ${PWD##*/} | grep docroot
   then :;
   else while true; do
-read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
-    case $yn in
+    read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
+      case $yn in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
-    esac
-done
+      esac
+    done
 fi
 patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
 #if echo ${PWD##*/} | grep docroot
