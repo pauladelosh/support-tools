@@ -61,13 +61,15 @@ tput sgr0
 aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
 aht $1 drush5 vget install_profile
 echo
-echo -e "\033[1;33;148m[Drush Status ]\033[39m"
+echo -e "\033[1;33;148m[ Drush Status ]\033[39m"
 tput sgr0
 aht $1 drush5 status
 echo
-echo -e "\033[1;33;148m[ Current Code ]\033[39m"
+echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"
 tput sgr0
-aht $1 repo
+echo -n "dev:   "; aht `echo $1 | cut -f1 -d "."`.dev repo
+echo -n "stage:   "; aht `echo $1 | cut -f1 -d "."`.test repo
+echo -n "prod:   "; aht `echo $1 | cut -f1 -d "."`.prod repo
 echo
 echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"
 tput sgr0
@@ -89,10 +91,10 @@ fi
 
 echo -e "\033[1;33;148m[ Other Available Suggested Updates (BETA!) ]\033[39m"
 tput sgr0
-egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | grep -v Installed-version-not-supported | sort | uniq
+egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available suggested updates:"; egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | grep -v Installed-version-not-supported | sort; echo
+  then echo "raw (all common) available suggested updates:"; egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
 fi
 
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
