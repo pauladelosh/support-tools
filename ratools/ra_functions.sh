@@ -29,34 +29,34 @@
 ############################################################################################
 
 # Help
-function ra-help-beta {
+function ra-help {
 echo ""
 echo "Remote Administration Scripts Help:"
 echo ""
 echo "1. cd to docroot for core updates, or the folder where the module lives for module updates:"
 echo "2. pick your function name and enter variables as required:"
 echo "      Check site distribution and version (dvcheck @<docroot>.<environment>)"
-echo "      RA Update Audit (ra-audit-beta @<docroot>.<environment> --raw (optional, shows common output on update checks))"
-echo "      SVN, Core Update (svn-cupdate-beta <distribution> <source version> <target version> <ticket number>)"
-echo "      SVN, Module Security Update (svn-mupdate-sec-beta <module> <source version> <target version> <ticket number>)"
-echo "      SVN, Module Update (svn-mupdate-beta <module> <source version> <target version> <ticket number>)"
-echo "      SVN, Add New Module (svn-mupdate-add-beta <module> <version> <ticket number>)"
-echo "      SVN, Revert Module (svn-mupdate-rev-beta <module> <source version> <target version> <ticket number>)"
-echo "      Git, Core Update (git-cupdate-beta <distribution> <source version> <target version> <ticket number>)"
-echo "      Git, Module Security Update (git-mupdate-sec-beta <module> <source version> <target version> <ticket number>)"
-echo "      Git, Module Update (git-mupdate-beta <module> <source-version> <target version> <ticket number>)"
-echo "      Git, Add New Module (git-mupdate-add-beta <module> <version> <ticket number>)"
-echo "      Git, Revert Module (git-mupdate-rev-beta <module> <source version> <target version> <ticket number>)"
-echo "3. example: cd to docroot/modules/, git-mupdate-sec-beta ctools 7.x-2.1 7.x-2.3 15066-3333"
+echo "      RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))"
+echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
+echo "      SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)"
+echo "      SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)"
+echo "      Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)"
+echo "      Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)"
+echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)"
+echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
+echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
+echo "3. example: cd to docroot/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333"
 echo ""
 }
 
-# Check site distribution and version (dvcheck-beta @<docroot>.<environment>)
-function dvcheck-beta { aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; }
+# Check site distribution and version (dvcheck @<docroot>.<environment>)
+function dvcheck { aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; }
 
-# RA Update Audit (ra-audit-beta @<docroot>.<environment> --raw (optional, shows common output on update checks))
-function ra-audit-beta {
-echo -e "\033[1;33;148m[ Distribution/Version/Profile Check ]\033[39m"
+# RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))
+function ra-audit {
+echo -e "\033[1;33;148m[ Distribution/Version and Profile Check ]\033[39m"
 tput sgr0
 aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
 aht $1 drush5 vget install_profile
@@ -91,10 +91,10 @@ fi
 
 echo -e "\033[1;33;148m[ Other Available Suggested Updates (BETA!) ]\033[39m"
 tput sgr0
-egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep 'acquia_connector|mollom|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available suggested updates:"; egrep 'acquia_connector|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
+  then echo "raw (all common) available suggested updates:"; egrep 'acquia_connector|mollom|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
 fi
 
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
@@ -108,8 +108,8 @@ fi
 rm -f ~/updates.tmp
 }
 
-# SVN, Core Update (svn-cupdate-beta <distribution> <source version> <target version> <ticket number>)
-function svn-cupdate-beta {
+# SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
+function svn-cupdate {
 # check if we have all variables
 echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
 if [ -z "$1" ]
@@ -216,8 +216,8 @@ while true; do
 done
 }
 
-# SVN, Module Security Update (svn-mupdate-sec-beta <module> <source version> <target version> <ticket number>)
-function svn-mupdate-sec-beta {
+# SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
+function svn-mupdate-sec {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
@@ -251,8 +251,8 @@ svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
 }
 
-# SVN, Module Update (svn-mupdate-beta <module> <source version> <target version> <ticket number>)
-function svn-mupdate-beta {
+# SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
+function svn-mupdate {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
@@ -286,8 +286,8 @@ svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
 }
 
-# SVN, Add New Module (svn-mupdate-add-beta <module> <version> <ticket number>)
-function svn-mupdate-add-beta {
+# SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
+function svn-mupdate-add {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
@@ -315,8 +315,8 @@ svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acquia, Ticket #$3: Module Install, adding $1-$2."
 }
 
-# SVN, Revert Module (svn-mupdate-rev-beta <module> <source version> <target version> <ticket number>)
-function svn-mupdate-rev-beta {
+# SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
+function svn-mupdate-rev {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
@@ -350,8 +350,8 @@ svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, reverting to $1-$3 from $2."
 }
 
-# Git, Core Update (git-cupdate-beta <distribution> <source version> <target version> <ticket number>)
-function git-cupdate-beta {
+# Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
+function git-cupdate {
 # check if we have all variables
 echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
 if [ -z "$1" ]
@@ -457,8 +457,8 @@ while true; do
 done
 }
 
-# Git, Module Security Update (git-mupdate-sec-beta <module> <source version> <target version> <ticket number>)
-function git-mupdate-sec-beta {
+# Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)
+function git-mupdate-sec {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
@@ -491,8 +491,8 @@ git add "$1"
 git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
 }
 
-# Git, Module Update (git-mupdate-beta <module> <source version> <target version> <ticket number>)
-function git-mupdate-beta {
+# Git, Module Update (git-mupdate <module> <source version> <target version> <ticket number>)
+function git-mupdate {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
@@ -525,8 +525,8 @@ git add "$1"
 git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
 }
 
-# Git, Add New Module (git-mupdate-add-beta <module> <version> <ticket number>)
-function git-mupdate-add-beta {
+# Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
+function git-mupdate-add {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
@@ -554,8 +554,8 @@ git add "$1"
 git commit -am "$RA_INITIALS@Acquia, Ticket #$3: Module Install, adding $1-$2."
 }
 
-# Git, Revert Module (git-mupdate-rev-beta <module> <source version> <target version> <ticket number>)
-function git-mupdate-rev-beta {
+# Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
+function git-mupdate-rev {
 if [ -z "$1" ]
   then echo "missing module name, exiting" && return
 fi
