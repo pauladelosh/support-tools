@@ -19,7 +19,7 @@ FIRSTNAME="tim"
 LASTNAME="mcneal"
 RA_INITIALS="TCM"
 SVNPW="codepass11"
-RATOOLSPATH="~/.ratools/ra-beta-scripts/"
+#RATOOLSPATH="~/.ratools/ra-beta-scripts/"
 ###  END Personal 
 
 #  VERSIONS: Put current versions here
