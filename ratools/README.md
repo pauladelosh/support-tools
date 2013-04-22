@@ -1,21 +1,15 @@
 RA Tools
 ===================
-
 A collection of Remote Administration tools currently in use.  Generally in flux.  Lots of flux.
 
-Functions in .bash_profile
-===================
-The file 'bash_profile-mupdates' contains functions which allow for the rapid installation/update of modules.  To install:
-# Copy the contents of the file into your .bash_profile.
-# Change the initials "MGM" to your own for accurate commit messages.
+Core/Module Functions
+--------------------
+These are functions which allow for the rapid installation/updating of core and modules. They are located in the ra_functions.sh file. To take advantage of these scripts, add the two following lines to your .bash_profile. Make sure to change "XYZ" to your initials and change the path to your support tools repo:
 
-In order to use the functions, do the following:
+RA_INITIALS="XYZ" <br>
+source ~/{path-to-support-tools}/ratools/ra_functions.sh
 
-# cd to folder where the module lives (sites/all/modules)
-# pick your function name based on VCStype-mupdate-updatetype (message varies a bit for each): [git/svn]-mupdate[-sec/add/rev/blank]
-# Enter variables, in this order: current-version new-version ticket#
-
-Example: git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-333333.  This will update the ctools module to 7.x-2.3, and add a message which includes a security note and the ticket number 15066-333333.
+To see what commands are available, and how to use them, just type "ra-help".
 
 RA Scans
 --------------------
