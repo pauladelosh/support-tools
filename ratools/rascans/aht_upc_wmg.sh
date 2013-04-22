@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function ahtupcwmg {
-foot=`aht --$4 @$1.$2 ssh sudo -u warnermusic drush @$1.$2 upc --pipe 2>/dev/null </dev/null`
+foot=`aht --$4 @$1.$2 ssh sudo -u warnermusic drush5 @$1.$2 upc --pipe 2>/dev/null </dev/null`
 #aht @wmgamnesty.prod ssh sudo -u warnermusic drush @wmgamnesty.prod status --uri=status
   temp=$IFS
   IFS=$'\n';
