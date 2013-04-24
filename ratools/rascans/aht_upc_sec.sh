@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function ahtupcsec {
-foot=`aht --$4 @$1.$2 drush --uri=$3 upc --pipe --security-only 2>/dev/null </dev/null`
+foot=`aht --$4 @$1.$2 drush5 --uri=$3 upc --pipe --security-only 2>/dev/null </dev/null`
 #aht @microtech.prod drush upc --pipe --security-only
   temp=$IFS
   IFS=$'\n';
