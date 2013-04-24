@@ -230,7 +230,7 @@ fi
 if [ -z "$4" ]
   then echo "missing ticket number, exiting" && return
 fi
-if ls | grep $1
+if ls | grep -w $1
 then echo "found $1"
 else echo "$1 not found: exiting" && return
 fi
