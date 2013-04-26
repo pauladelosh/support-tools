@@ -89,12 +89,20 @@ if [ "$2" = "--raw" ]
   then echo "raw (all common) available security updates:"; grep SECURITY-UPDATE-available ~/updates.tmp | sort; echo
 fi
 
-echo -e "\033[1;33;148m[ Other Available Suggested Updates (BETA!) ]\033[39m"
+echo -e "\033[1;33;148m[ Available Mandatory Updates (BETA!) ]\033[39m"
 tput sgr0
-egrep 'acquia_connector|mollom|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep 'acquia_connector|acquia_search|mollom' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available suggested updates:"; egrep 'acquia_connector|mollom|\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
+  then echo "raw (all common) available mandatory updates:"; egrep 'acquia_connector|acquia_search|mollom' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
+fi
+
+echo -e "\033[1;33;148m[ Available Suggested Updates (BETA!) ]\033[39m"
+tput sgr0
+egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+echo
+if [ "$2" = "--raw" ]
+  then echo "raw (all common) available suggested updates:"; egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
 fi
 
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
