@@ -78,8 +78,13 @@ echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"
 tput sgr0
 rm -f ~/updates.tmp
-
 for site in `aht $1 sites`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+
+############################################################################################
+# define mandatory and suggested updates here (seperate with pipes):
+RA_MAND_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity"
+RA_SUGG_UPDATES="\-dev|\-unstable|\-alpha|\-beta|\-rc"
+############################################################################################
 
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
@@ -88,23 +93,20 @@ echo
 if [ "$2" = "--raw" ]
   then echo "raw (all common) available security updates:"; grep SECURITY-UPDATE-available ~/updates.tmp | sort; echo
 fi
-
 echo -e "\033[1;33;148m[ Available Mandatory Updates (BETA!) ]\033[39m"
 tput sgr0
-egrep 'acquia_connector|acquia_search|mollom' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available mandatory updates:"; egrep 'acquia_connector|acquia_search|mollom' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
+  then echo "raw (all common) available mandatory updates:"; egrep $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
 fi
-
 echo -e "\033[1;33;148m[ Available Suggested Updates (BETA!) ]\033[39m"
 tput sgr0
-egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available suggested updates:"; egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
+  then echo "raw (all common) available suggested updates:"; egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort; echo
 fi
-
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
 egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort | uniq
@@ -112,7 +114,6 @@ echo
 if [ "$2" = "--raw" ]
   then echo "raw (all common) available updates:"; egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort; echo
 fi
-
 rm -f ~/updates.tmp
 }
 
