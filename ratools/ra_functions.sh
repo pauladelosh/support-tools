@@ -93,20 +93,23 @@ echo
 if [ "$2" = "--raw" ]
   then echo "raw (all common) available security updates:"; grep SECURITY-UPDATE-available ~/updates.tmp | sort; echo
 fi
+
 echo -e "\033[1;33;148m[ Available Mandatory Updates (BETA!) ]\033[39m"
 tput sgr0
-egrep $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available mandatory updates:"; egrep $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
+  then echo "raw (all common) available mandatory updates:"; egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
 fi
+
 echo -e "\033[1;33;148m[ Available Suggested Updates (BETA!) ]\033[39m"
 tput sgr0
-egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
+egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v -w "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available suggested updates:"; egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort; echo
+  then echo "raw (all common) available suggested updates:"; egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v -w "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort; echo
 fi
+
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
 egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort | uniq
@@ -114,6 +117,7 @@ echo
 if [ "$2" = "--raw" ]
   then echo "raw (all common) available updates:"; egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort; echo
 fi
+
 rm -f ~/updates.tmp
 }
 
