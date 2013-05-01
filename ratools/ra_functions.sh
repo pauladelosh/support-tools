@@ -73,12 +73,12 @@ echo -n "prod:   "; aht `echo $1 | cut -f1 -d "."`.prod repo
 echo
 echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"
 tput sgr0
-aht $1 sites
+aht $1 sites | grep -v \>
 echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"
 tput sgr0
 rm -f ~/updates.tmp
-for site in `aht $1 sites`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 
 ############################################################################################
 # define mandatory and suggested updates here (seperate with pipes):
