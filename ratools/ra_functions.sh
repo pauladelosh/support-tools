@@ -5,13 +5,13 @@
 # modified by MGM for additional variables
 # rewritten, cleaned up and core update scripts added by Matt Lavoie
 #
-# add the two following lines to your .bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
+# add the two following lines to your '~/.bash_profile 'to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
 # source ~/<path-to-repo>/ratools/ra_functions.sh
 #
 # Instructions:
 # 1.  cd to docroot for core updates, or the folder where the module lives for module updates.
-# 2.  pick your function name and enter variables as required:
+# 2.  Pick your function name and enter variables as required:
 #       Check site distribution and version (dvcheck @<docroot>.<environment>)"
 #       RA Audit (ra-audit @<docroot>.<environment>)"
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
@@ -24,7 +24,7 @@
 #       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)
 #       Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
 #       Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
-# 3.  example: cd to docroot/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
+# 3.  Example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
 #
 ############################################################################################
 
@@ -47,7 +47,7 @@ echo "      Git, Module Security Update (git-mupdate-sec <module> <source versio
 echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)"
 echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
 echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
-echo "3. example: cd to docroot/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333"
+echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333"
 echo ""
 }
 
