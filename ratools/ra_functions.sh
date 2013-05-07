@@ -86,7 +86,7 @@ RA_MAND_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_mul
 RA_SUGG_UPDATES="\-dev|\-unstable|\-alpha|\-beta|\-rc"
 ############################################################################################
 
-echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
+echo -e "\033[1;33;148m[ Pending Security Updates ]\033[39m"
 tput sgr0
 grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
 echo
@@ -94,15 +94,15 @@ if [ "$2" = "--raw" ]
   then echo "raw (all common) available security updates:"; grep SECURITY-UPDATE-available ~/updates.tmp | sort; echo
 fi
 
-echo -e "\033[1;33;148m[ Available Mandatory Updates (BETA!) ]\033[39m"
+echo -e "\033[1;33;148m[ Required Acquia-related Updates ]\033[39m"
 tput sgr0
 egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 if [ "$2" = "--raw" ]
-  then echo "raw (all common) available mandatory updates:"; egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
+  then echo "raw (all common) available acquia-related updates:"; egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
 fi
 
-echo -e "\033[1;33;148m[ Available Suggested Updates (BETA!) ]\033[39m"
+echo -e "\033[1;33;148m[ Recommended Updates ]\033[39m"
 tput sgr0
 egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v -w "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
