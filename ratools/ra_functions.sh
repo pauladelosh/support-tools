@@ -47,7 +47,7 @@ echo "      Git, Module Security Update (git-mupdate-sec <module> <source versio
 echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)"
 echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
 echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
-echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333"
+echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-33333"
 echo ""
 }
 
@@ -95,6 +95,7 @@ if [ "$2" = "--raw" ]
 fi
 
 echo -e "\033[1;33;148m[ Required Acquia-related Updates ]\033[39m"
+echo -e "\033[1;32;148mFor specific information check: https://support.acquia.com/doc/index.php/RA_Acquia_Related_Module_Updates ]\033[39m"
 tput sgr0
 egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
