@@ -1,5 +1,13 @@
 #!/usr/bin/php
 <?php
+    /*
+        Install guide:
+            ln -s ~/Support-Tools/ratools/mod_audit ~/bin/mod_audit
+            #If ~/bin isn't in your path, add this line to your .bash_profile/.profile
+            export PATH=$PATH:~/bin
+        Usage guide:
+            mod_audit @<site>.<enviroment> <ticketnumber>
+    */
     if(count($argv) < 3){
         echo "Usage: mod_audit @<site>.<enviroment> <ticketnumber>\n";
         die;
