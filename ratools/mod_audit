@@ -62,9 +62,13 @@
             }
             echo ".";
             if($update[3] == "SECURITY-UPDATE-available"){
-                $path = exec("aht {$argv[1]} drush5 dd {$update[0]} --uri=$site");
+                $module = $update[0];
+                if($module == "acquia_connector"){
+                    $module = "acquia_agent";
+                }
+                $path = exec("aht {$argv[1]} drush5 dd $module --uri=$site");
                 $path = preg_replace("/.*docroot\//","",$path);
-                $path = preg_replace("/{$update[0]}/","",$path);
+                $path = preg_replace("/$module/","",$path);
                 if(strpos($path,"[error]") !== false){
                     $path = "Path not found";
                 }
@@ -72,9 +76,13 @@
                 $all_updates["Security"][] = $update;
             }
             else if(in_array($update[0],$RA_MAND_UPDATES)){
-                $path = exec("aht {$argv[1]} drush5 dd {$update[0]} --uri=$site");
+                $module = $update[0];
+                if($module == "acquia_connector"){
+                    $module = "acquia_agent";
+                }
+                $path = exec("aht {$argv[1]} drush5 dd $module --uri=$site");
                 $path = preg_replace("/.*docroot\//","",$path);
-                $path = preg_replace("/{$update[0]}/","",$path);
+                $path = preg_replace("/$module/","",$path);
                 if(strpos($path,"[error]") !== false){
                     $path = "Path not found";
                 }
