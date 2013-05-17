@@ -94,7 +94,7 @@
         if(count($updates) == 0){
             continue;
         }
-        $updates = array_unique($updates,SORT_STRING);
+        $updates = array_unique($updates,SORT_REGULAR);
         echo "---------------------------------------------------------------------------\n";
         echo "$name Updates:\n";
         foreach($updates as $update){
@@ -106,7 +106,7 @@
     }
     echo "---------------------------------------------------------------------------\n";
     if(count($sugg_updates) !== 0){
-        $sugg_updates = array_unique($sugg_updates,SORT_STRING);
+        $sugg_updates = array_unique($sugg_updates,SORT_REGULAR);
         echo "Suggested Updates:\n";
         foreach($sugg_updates as $update){
             echo implode($update," ")."\n";
@@ -114,7 +114,7 @@
         echo "---------------------------------------------------------------------------\n";
     }
     if(count($other_updates) !== 0){
-        $other_updates = array_unique($other_updates,SORT_STRING);
+        $other_updates = array_unique($other_updates,SORT_REGULAR);
         echo "Other Updates:\n";
         foreach($other_updates as $update){
             echo implode($update," ")."\n";
