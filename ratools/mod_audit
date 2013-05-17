@@ -1,0 +1,116 @@
+#!/usr/bin/php
+<?php
+    if(count($argv) < 3){
+        echo "Usage: mod_audit @<site>.<enviroment> <ticketnumber>\n";
+        die;
+    }
+    function echo_update_commands($updates,$repo_type,$ticket){
+        $paths = array();
+        foreach($updates as $update){
+            $paths[] = $update[4];
+        }
+        array_multisort($paths,SORT_STRING,$updates);
+        $lastdir = "";
+        foreach($updates as $update){
+            if($lastdir !== $update[4]){
+                $lastdir = $update[4];
+                echo "#cd to docroot\n";
+                echo "cd $lastdir\n";
+            }
+            $extra = "";
+            if($update[3] == "SECURITY-UPDATE-available"){
+                $extra = "-sec";
+            }
+            echo "$repo_type-mupdate$extra {$update[0]} {$update[1]} {$update[2]} $ticket\n";
+        }
+    }
+    $repo = exec("aht {$argv[1]} repo");
+    $repo_type = "git";
+    if(strpos($repo,"git") === false){
+        $repo_type = "svn";
+    }
+    $RA_MAND_UPDATES=explode("|","acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity");
+    $RA_SUGG_UPDATES="\-dev|\-unstable|\-alpha|\-beta|\-rc";
+    $sites = array();
+    exec("aht {$argv[1]} sites",$sites);
+    $all_updates = array(
+        "Security"=>array(),
+        "Mandatory"=>array(),
+    );
+    $sugg_updates = array();
+    $other_updates = array();
+    foreach($sites as $site){
+        $updates = array();
+        exec("aht {$argv[1]} drush5 upc --no-core --pipe --uri=$site",$updates);
+        $total = count($updates);
+        echo "Evaluating $total modules on $site site";
+        foreach($updates as $update){
+            if(strpos($update,"[error]") !== false || strpos($update,",") !== false){
+                continue;
+            }
+            $update = explode(" ", $update);
+            if(count($update) !== 4){
+                continue;
+            }
+            echo ".";
+            if($update[3] == "SECURITY-UPDATE-available"){
+                $path = exec("aht {$argv[1]} drush5 dd {$update[0]} --uri=$site");
+                $path = preg_replace("/.*docroot\//","",$path);
+                $path = preg_replace("/{$update[0]}/","",$path);
+                if(strpos($path,"[error]") !== false){
+                    $path = "Path not found";
+                }
+                $update[] = $path;
+                $all_updates["Security"][] = $update;
+            }
+            else if(in_array($update[0],$RA_MAND_UPDATES)){
+                $path = exec("aht {$argv[1]} drush5 dd {$update[0]} --uri=$site");
+                $path = preg_replace("/.*docroot\//","",$path);
+                $path = preg_replace("/{$update[0]}/","",$path);
+                if(strpos($path,"[error]") !== false){
+                    $path = "Path not found";
+                }
+                $update[] = $path;
+                $all_updates["Mandatory"][] = $update;
+            }
+            else if(preg_match("/.*(".$RA_SUGG_UPDATES.").*/",$update[1]) == 1){
+                $sugg_updates[] = $update;
+            }
+            else{
+                $other_updates[] = $update;
+            }
+        }
+        echo "\n";
+    }
+    foreach($all_updates as $name=>$updates){
+        if(count($updates) == 0){
+            continue;
+        }
+        $updates = array_unique($updates,SORT_STRING);
+        echo "---------------------------------------------------------------------------\n";
+        echo "$name Updates:\n";
+        foreach($updates as $update){
+            echo implode($update," ")."\n";
+        }
+        echo "\nRun these commands to perform updates:\n";
+        echo_update_commands($updates,$repo_type,$argv[2]);
+        //perform_update_commands($updates,$repo_type,$argv[2]); //A placeholder for now...
+    }
+    echo "---------------------------------------------------------------------------\n";
+    if(count($sugg_updates) !== 0){
+        $sugg_updates = array_unique($sugg_updates,SORT_STRING);
+        echo "Suggested Updates:\n";
+        foreach($sugg_updates as $update){
+            echo implode($update," ")."\n";
+        }
+        echo "---------------------------------------------------------------------------\n";
+    }
+    if(count($other_updates) !== 0){
+        $other_updates = array_unique($other_updates,SORT_STRING);
+        echo "Other Updates:\n";
+        foreach($other_updates as $update){
+            echo implode($update," ")."\n";
+        }
+        echo "---------------------------------------------------------------------------\n";
+    }
+?>
