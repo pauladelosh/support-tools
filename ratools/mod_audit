@@ -64,6 +64,9 @@
     $sugg_updates = array();
     $other_updates = array();
     foreach($sites as $site){
+        if(strpos($site,"->") !== false){
+            $site = preg_replace("/->\s.*$/","",$site);
+        }
         $updates = array();
         exec("aht {$argv[1]} drush5 upc --no-core --pipe --uri=$site",$updates);
         $total = count($updates);
