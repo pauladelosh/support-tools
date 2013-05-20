@@ -51,13 +51,15 @@
         $updates = array();
         exec("aht {$argv[1]} drush5 upc --no-core --pipe --uri=$site",$updates);
         $total = count($updates);
-        echo "Evaluating $total modules on $site site";
-        foreach($updates as $update){
+        echo "Evaluating $total modules on $site site (0%)";
+        for($i=0;$i<$total;++$i){
+            $progress = floor(($i/$total)*100);
+            echo "\rEvaluating $total modules on $site site ($progress%)";
+            $update = $updates[$i];
             if(!preg_match("/^\S*\s\d\.x\S*\s\d\.x\S*\s\S*$/",$update)){
                 continue;
             }
             $update = explode(" ", $update);
-            echo ".";
             if($update[3] == "SECURITY-UPDATE-available"){
                 $module = $update[0];
                 if($module == "acquia_connector"){
@@ -93,6 +95,7 @@
                 $other_updates[] = $update;
             }
         }
+        echo "\rEvaluating modules on $site site (100%)";
         echo "\n";
     }
     foreach($all_updates as $name=>$updates){
