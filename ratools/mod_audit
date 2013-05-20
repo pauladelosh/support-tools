@@ -53,13 +53,10 @@
         $total = count($updates);
         echo "Evaluating $total modules on $site site";
         foreach($updates as $update){
-            if(strpos($update,"[error]") !== false || strpos($update,",") !== false){
+            if(!preg_match("/^\S*\s\d\.x\S*\s\d\.x\S*\s\S*$/",$update)){
                 continue;
             }
             $update = explode(" ", $update);
-            if(count($update) !== 4){
-                continue;
-            }
             echo ".";
             if($update[3] == "SECURITY-UPDATE-available"){
                 $module = $update[0];
