@@ -11,6 +11,8 @@ Installation
 RA_INITIALS="XYZ" <br>
 source ~/{path-to-support-tools}/ratools/ra_functions.sh
 
+Note that with every update to the ra_functions.sh file, you will need to source .bash_profile in any terminal window currently open.
+
 Core/Module Update Functions
 --------------------
 These are functions which allow for the rapid installation/updating of core and modules. They are located in the ra_functions.sh file.
