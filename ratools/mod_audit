@@ -121,7 +121,7 @@
         $sugg_updates = array_unique($sugg_updates,SORT_REGULAR);
         echo "Suggested Updates:\n";
         foreach($sugg_updates as $update){
-            echo implode($update," ")."\n";
+            echo "$repo_type-mupdate {$update[0]} {$update[1]} {$update[2]} {$argv[2]}\n";
         }
         echo "---------------------------------------------------------------------------\n";
     }
@@ -129,7 +129,7 @@
         $other_updates = array_unique($other_updates,SORT_REGULAR);
         echo "Other Updates:\n";
         foreach($other_updates as $update){
-            echo implode($update," ")."\n";
+            echo "$repo_type-mupdate {$update[0]} {$update[1]} {$update[2]} {$argv[2]}\n";
         }
         echo "---------------------------------------------------------------------------\n";
     }
