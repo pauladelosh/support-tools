@@ -27,8 +27,6 @@
         "Suggested"=>array(),
         "Other"=>array(),
     );
-    $sugg_updates = array();
-    $other_updates = array();
     foreach($sites as $site){
         if(strpos($site,"Warning:") !== false){
             continue;
