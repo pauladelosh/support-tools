@@ -1,9 +1,8 @@
 ############################################################################################
 # remote admin bash functions
 #
-# based on George Cassie's script for updating modules
-# modified by MGM for additional variables
-# rewritten, cleaned up and core update scripts added by Matt Lavoie
+# written by Matt Lavoie
+# based on original scripts by George Cassie and Maria McDowell
 #
 # add the two following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
