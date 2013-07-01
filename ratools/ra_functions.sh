@@ -204,41 +204,6 @@ while true; do
 done
 }
 
-# SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
-function svn-mupdate-sec {
-if [ -z "$1" ]
-  then echo "missing module name, exiting" && return
-fi
-if [ -z "$2" ]
-  then echo "missing source version, exiting" && return
-fi
-if [ -z "$3" ]
-  then echo "missing target version, exiting" && return
-fi
-if [ -z "$4" ]
-  then echo "missing ticket number, exiting" && return
-fi
-if ls | grep -w $1
-then echo "found $1"
-else echo "$1 not found: exiting" && return
-fi
-if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
-  then while true; do
-    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) return;;
-        * ) echo "invalid response, try again";;
-    esac
-  done
-fi
-svn rm "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 module"
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-svn add --force "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
-}
-
 # SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
 function svn-mupdate {
 if [ -z "$1" ]
