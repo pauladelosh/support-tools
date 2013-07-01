@@ -230,18 +230,10 @@ svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 fr
 
 # SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
 function svn-mupdate-add {
-if [ -z "$1" ]
-  then echo "missing module name, exiting" && return
-fi
-if [ -z "$2" ]
-  then echo "missing version, exiting" && return
-fi
-if [ -z "$3" ]
-  then echo "missing ticket number, exiting" && return
-fi
-if ls | grep -w $1
-  then echo "$1 already exists: exiting" && return
-fi
+if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
+if [ -z "$2" ]; then echo "ERROR: missing version; exiting" && return; fi
+if [ -z "$3" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if ls | grep -w $1; then echo "$1 already exists: exiting" && return; fi
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
