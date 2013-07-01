@@ -400,40 +400,6 @@ while true; do
 done
 }
 
-# Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)
-function git-mupdate-sec {
-if [ -z "$1" ]
-  then echo "missing module name, exiting" && return
-fi
-if [ -z "$2" ]
-  then echo "missing source version, exiting" && return
-fi
-if [ -z "$3" ]
-  then echo "missing target version, exiting" && return
-fi
-if [ -z "$4" ]
-  then echo "missing ticket number, exiting" && return
-fi
-if ls | grep -w $1
-then echo "found $1"
-else echo "$1 not found: exiting" && return
-fi
-if git status | grep branch | cut -f4 -d" " | grep -w master
-  then while true; do
-    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) return;;
-        * ) echo "invalid response, try again";;
-    esac
-  done
-fi
-git rm -rf "$1"
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-git add "$1"
-git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
-}
-
 # Git, Module Update (git-mupdate <module> <source version> <target version> <ticket number>)
 function git-mupdate {
 if [ -z "$1" ]
