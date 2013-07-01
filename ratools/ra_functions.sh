@@ -106,6 +106,25 @@ echo
 rm -f ~/updates.tmp
 }
 
+# Module Cache Check (module-cache-check <module> <version>)
+# You can run this by hand if needed
+# At some point, implement $RA_MODULE_CACHE_PATH
+# Need to exclude dev modules. They are not unique versions and thus will never be updated.
+function module-cache-check {
+if [ -d ~/Sites/releases/modules/$1/$2 ]
+  then
+    echo "module $1-$2 found in cache"
+  else
+    echo "module $1-$2 not found in cache; downloading..."
+    mkdir -p ~/Sites/releases/modules/$1/$2
+    curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
+    if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
+      then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
+      else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
+    fi
+fi
+}
+
 # SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 function svn-cupdate {
 # check if we have all variables
