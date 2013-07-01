@@ -81,8 +81,12 @@ rm -f ~/updates.tmp
 for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 ############################################################################################
 # define proactive updates here (seperate with pipes):
-RA_MAND_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity"
+RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity"
 ############################################################################################
+echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
+tput sgr0
+egrep -w drupal ~/updates.tmp
+echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
 grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
@@ -90,11 +94,11 @@ echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 echo -e "\033[1;32;148mFor specific information check: https://support.acquia.com/doc/index.php/RA_Acquia_Related_Module_Updates ]\033[39m"
 tput sgr0
-egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep -w $RA_PROACTIVE_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"
 tput sgr0
-egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v -w "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
+egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
