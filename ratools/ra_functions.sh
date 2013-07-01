@@ -223,6 +223,59 @@ while true; do
 done
 }
 
+# SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> --security (optional, marks as security update))
+function svn-auto-mupdate {
+if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
+if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
+if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
+if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
+  then while true; do
+    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) return;;
+        * ) echo "invalid response, try again";;
+    esac
+  done
+fi
+homepath=`pwd`
+module-cache-check $1 $2
+module-cache-check $1 $3
+for modinfopath in `find . -name $1.info`
+  do modpath=`dirname $(dirname $modinfopath)`
+    if grep "version = \"$2\"" $modinfopath > /dev/null
+      then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
+          case $yn in
+              [Yy]* ) cd $modpath
+                diff $1 ~/Sites/releases/modules/$1/$2/$1
+                if [ $? -ne 1 ]
+                  then
+                    svn rm "$1"
+                    if [ "$5" = "--security" ]
+                      then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 at $modpath."
+                      else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 at $modpath."
+                    fi
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    svn add --force "$1"
+                    if [ "$5" = "--security" ]
+                      then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
+                      else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+                    fi
+                  else echo "WARNING: $1 at $modpath is modified; skipping"
+                fi
+                cd $homepath
+                break;;
+              [Nn]* ) break;;
+              * ) echo "invalid response, try again";;
+            esac
+           done
+      else echo "WARNING: $1 at $modpath is not version $2; skipping"
+    fi
+  done
+}
+
 # SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
 function svn-mupdate {
 if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
