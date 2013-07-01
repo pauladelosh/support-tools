@@ -85,14 +85,13 @@ RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesol
 ############################################################################################
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
 tput sgr0
-egrep -w drupal ~/updates.tmp
+egrep -w drupal ~/updates.tmp | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
 grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
-echo -e "\033[1;32;148mFor specific information check: https://support.acquia.com/doc/index.php/RA_Acquia_Related_Module_Updates ]\033[39m"
 tput sgr0
 egrep -w $RA_PROACTIVE_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
