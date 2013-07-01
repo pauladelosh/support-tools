@@ -3,7 +3,7 @@
 #
 # based on George Cassie's script for updating modules
 # modified by MGM for additional variables
-# rewritten, cleaned up and core/automatic-module update scripts added by Matt Lavoie
+# rewritten from scratch , cleaned up and core/automatic-module update scripts added by Matt Lavoie
 #
 # add the two following lines to your .bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
@@ -88,37 +88,22 @@ echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
 grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
 echo
-if [ "$2" = "--raw" ]
-  then echo "raw (all common) available security updates:"; grep SECURITY-UPDATE-available ~/updates.tmp | sort; echo
-fi
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 tput sgr0
 egrep -w $RA_PROACTIVE_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
-if [ "$2" = "--raw" ]
-  then echo "raw (all common) available mandatory updates:"; egrep -w $RA_PROACTIVE_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
-fi
 echo -e "\033[1;33;148m[ Available Suggested Updates ]\033[39m"
 tput sgr0
 egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
-if [ "$2" = "--raw" ]
-  then echo "raw (all common) available suggested updates:"; egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort; echo
-fi
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
 egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort | uniq
 echo
-if [ "$2" = "--raw" ]
-  then echo "raw (all common) available updates:"; egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort; echo
-fi
 rm -f ~/updates.tmp
 }
 
 # Module Cache Check (module-cache-check <module> <version>)
-# You can run this by hand if needed
-# At some point, implement $RA_MODULE_CACHE_PATH
-# Need to exclude dev modules. They are not unique versions and thus will never be updated.
 function module-cache-check {
 if [ -d ~/Sites/releases/modules/$1/$2 ]
   then
@@ -154,7 +139,6 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-
 # detection code to see if a valid patch exists (also helps sanitize the inputs further)
 if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
   then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
@@ -162,7 +146,6 @@ if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # run the patch, but check if we are in trunk or a docroot first
 echo
 echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"
@@ -189,12 +172,7 @@ if echo ${PWD##*/} | grep docroot
     done
 fi
 patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
-#if echo ${PWD##*/} | grep docroot
-# then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-# else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
-#fi
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # find and print out rej/orig files, then exit if any are found
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
@@ -211,14 +189,12 @@ if svn status --no-ignore | grep -q orig
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # remove version numbers
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
 tput sgr0
 ~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # add changes to svn
 echo
 echo -e "\033[1;33;148m[ adding changes to svn ]\033[39m"
@@ -227,7 +203,6 @@ svn status | grep '\?' | awk '{print $2}' | xargs svn add
 svn status | grep '\!' | awk '{print $2}' | xargs svn rm
 svn status --no-ignore
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # commit
 echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"
@@ -240,30 +215,6 @@ while true; do
         * ) echo "invalid response, try again";;
     esac
 done
-}
-
-# SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
-function svn-mupdate-sec {
-if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
-if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
-if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
-if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
-if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && return; fi
-if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
-  then while true; do
-    read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) return;;
-        * ) echo "invalid response, try again";;
-    esac
-  done
-fi
-svn rm "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 module"
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-svn add --force "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
 }
 
 # SVN, Automatic Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
@@ -413,7 +364,6 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-
 # detection code to see if a valid patch exists (also helps sanitize the inputs further)
 if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
   then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
@@ -421,7 +371,6 @@ if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # run the patch, but check if we are in master or a docroot first
 echo
 echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"
@@ -448,12 +397,7 @@ if echo ${PWD##*/} | grep docroot
     done
 fi
 patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
-#if echo ${PWD##*/} | grep docroot
-# then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-# else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
-#fi
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # find and print out rej/orig files, then exit if any are found
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
@@ -470,14 +414,12 @@ if git status | grep -q orig
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # remove version numbers
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
 tput sgr0
 ~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # add changes to git
 echo
 echo -e "\033[1;33;148m[ adding changes to git ]\033[39m"
@@ -485,7 +427,6 @@ tput sgr0
 git add -A
 git status
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # commit
 echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"
@@ -500,37 +441,13 @@ while true; do
 done
 }
 
-# Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)
-function git-mupdate-sec {
-if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
-if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
-if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
-if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
-if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && return; fi
-if git status | grep branch | cut -f4 -d" " | grep -w master
-  then while true; do
-    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) return;;
-        * ) echo "invalid response, try again";;
-    esac
-  done
-fi
-git rm -rf "$1"
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-#module-cache-check $1 $3
-#cp -R ~/Sites/releases/modules/$1/$3/$1 .
-git add "$1"
-git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
-}
-
 # Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> --security (optional, marks as security update)
 function git-auto-mupdate {
 if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
 if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
 if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if [[ $* =~ " --no-cache" ]] && ! [[ $* =~ " --skip-modified-check" ]]; then echo "ERROR: --no-cache requires --skip-modified-check"; return; fi
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
@@ -542,30 +459,42 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     done
 fi
 homepath=`pwd`
-#if [ -d ~/.ratools_temp ]; then rm -rf ~/.ratools_temp/*; else mkdir ~/.ratools_temp; fi
-#curl --silent "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/.ratools_temp
-module-cache-check $1 $2
-module-cache-check $1 $3
+! [[ $* =~ " --no-cache" ]] && module-cache-check $1 $2
+! [[ $* =~ " --no-cache" ]] && module-cache-check $1 $3
 for modinfopath in `find . -name $1.info`
   do modpath=`dirname $(dirname $modinfopath)`
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                #diff $1 ~/.ratools_temp/$1
-                diff $1 ~/Sites/releases/modules/$1/$2/$1
-                if [ $? -ne 1 ]
+                if [[ $* =~ " --skip-modified-check" ]]
                   then
                     git rm -rf "$1"
-                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    if [[ $* =~ " --no-cache" ]]
+                      then curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                      else cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    fi
                     git add "$1"
-                    #git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
-                    if [ "$5" = "--security" ]
+                    if [[ $* =~ " --security" ]]
                       then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
                       else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
                     fi
-                  else echo "WARNING: $1 at $modpath is modified; skipping"
+                  else
+                    diff $1 ~/Sites/releases/modules/$1/$2/$1
+                    if [ $? -ne 1 ]
+                      then
+                      git rm -rf "$1"
+                      if [[ $* =~ " --no-cache" ]]
+                        then curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                       else cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                      fi
+                      git add "$1"
+                      if [[ $* =~ " --security" ]]
+                        then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
+                        else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+                      fi
+                    else echo "WARNING: $1 at $modpath is modified; skipping"
+                    fi
                 fi
                 cd $homepath
                 break;;
