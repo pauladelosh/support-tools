@@ -519,8 +519,6 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
 fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-#module-cache-check $1 $3
-#cp -R ~/Sites/releases/modules/$1/$3/$1 .
 git add "$1"
 git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 from $2."
 }
@@ -597,8 +595,6 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
 fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-#module-cache-check $1 $3
-#cp -R ~/Sites/releases/modules/$1/$3/$1 .
 git add "$1"
 git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
 }
@@ -620,8 +616,6 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
   done
 fi
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
-#module-cache-check $1 $2
-#cp -R ~/Sites/releases/modules/$1/$2/$1 .
 git add "$1"
 git commit -am "$RA_INITIALS@Acquia, Ticket #$3: Module Install, adding $1-$2."
 }
@@ -645,8 +639,6 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
 fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-#module-cache-check $1 $3
-#cp -R ~/Sites/releases/modules/$1/$3/$1 .
 git add "$1"
 git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, reverting to $1-$3 from $2."
 }
