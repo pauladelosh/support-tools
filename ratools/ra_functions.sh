@@ -5,9 +5,9 @@
 # modified by MGM for additional variables
 # rewritten, cleaned up and core update scripts added by Matt Lavoie
 #
-# add the two following lines to your '~/.bash_profile 'to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
+# add the two following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
-# source ~/<path-to-repo>/ratools/ra_functions.sh
+# source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
 # 1.  cd to docroot for core updates, or the folder where the module lives for module updates.
@@ -86,7 +86,7 @@ RA_MAND_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_mul
 RA_SUGG_UPDATES="\-dev|\-unstable|\-alpha|\-beta|\-rc"
 ############################################################################################
 
-echo -e "\033[1;33;148m[ Pending Security Updates ]\033[39m"
+echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
 grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
 echo
@@ -94,7 +94,7 @@ if [ "$2" = "--raw" ]
   then echo "raw (all common) available security updates:"; grep SECURITY-UPDATE-available ~/updates.tmp | sort; echo
 fi
 
-echo -e "\033[1;33;148m[ Required Acquia-related Updates ]\033[39m"
+echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 echo -e "\033[1;32;148mFor specific information check: https://support.acquia.com/doc/index.php/RA_Acquia_Related_Module_Updates ]\033[39m"
 tput sgr0
 egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
@@ -103,7 +103,7 @@ if [ "$2" = "--raw" ]
   then echo "raw (all common) available acquia-related updates:"; egrep -w $RA_MAND_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort; echo
 fi
 
-echo -e "\033[1;33;148m[ Recommended Updates ]\033[39m"
+echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"
 tput sgr0
 egrep $RA_SUGG_UPDATES ~/updates.tmp | egrep -v -w "'$RA_MAND_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
