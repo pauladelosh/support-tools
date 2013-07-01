@@ -84,11 +84,11 @@ RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesol
 ############################################################################################
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
 tput sgr0
-egrep -w drupal ~/updates.tmp | sort | uniq
+grep -w drupal ~/updates.tmp | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
-grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
+grep SECURITY-UPDATE-available ~/updates.tmp | grep -v -w drupal | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 tput sgr0
