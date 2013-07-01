@@ -126,7 +126,6 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-
 # detection code to see if a valid patch exists (also helps sanitize the inputs further)
 if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
   then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
@@ -134,7 +133,6 @@ if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # run the patch, but check if we are in trunk or a docroot first
 echo
 echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"
@@ -161,12 +159,7 @@ if echo ${PWD##*/} | grep docroot
     done
 fi
 patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
-#if echo ${PWD##*/} | grep docroot
-# then patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch
-# else echo -e "\033[0;31;148mnot in a docroot: exiting\033[39m" && return
-#fi
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # find and print out rej/orig files, then exit if any are found
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
@@ -183,14 +176,12 @@ if svn status --no-ignore | grep -q orig
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # remove version numbers
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
 tput sgr0
 ~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # add changes to svn
 echo
 echo -e "\033[1;33;148m[ adding changes to svn ]\033[39m"
@@ -199,7 +190,6 @@ svn status | grep '\?' | awk '{print $2}' | xargs svn add
 svn status | grep '\!' | awk '{print $2}' | xargs svn rm
 svn status --no-ignore
 read -p "Press return to continue, or ctrl-c to stop..."
-
 # commit
 echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"
