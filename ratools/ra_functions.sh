@@ -15,12 +15,12 @@
 #       RA Audit (ra-audit @<docroot>.<environment>)
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
-#       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
+#       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
 #       SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
 #       Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
 #       Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
-#       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)
+#       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))
 #       Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
 #       Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
 # 3.  Example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
@@ -38,12 +38,12 @@ echo "      Check site distribution and version (dvcheck @<docroot>.<environment
 echo "      RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
-echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)"
 echo "      SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)"
 echo "      Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
-echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)"
+echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
 echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
 echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-33333"
@@ -275,7 +275,7 @@ for modinfopath in `find . -name $1.info`
   done
 }
 
-# SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
+# SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 function svn-mupdate {
 if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
@@ -293,10 +293,18 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 svn rm "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 module."
+#svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 module."
+if [ "$5" = "--security" ]
+  then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 at $modpath."
+  else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 at $modpath."
+fi
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
+#svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
+if [ "$5" = "--security" ]
+  then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
+  else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+fi
 }
 
 # SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
@@ -490,7 +498,7 @@ for modinfopath in `find . -name $1.info`
   done
 }
 
-# Git, Module Update (git-mupdate <module> <source version> <target version> <ticket number>)
+# Git, Module Update (git-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 function git-mupdate {
 if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
@@ -510,7 +518,11 @@ fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
-git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
+#git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
+if [ "$5" = "--security" ]
+  then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
+  else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+fi
 }
 
 # Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
