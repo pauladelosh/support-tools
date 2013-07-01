@@ -109,20 +109,20 @@ rm -f ~/updates.tmp
 # You can run this by hand if needed
 # At some point, implement $RA_MODULE_CACHE_PATH
 # Need to exclude dev modules. They are not unique versions and thus will never be updated.
-function module-cache-check {
-if [ -d ~/Sites/releases/modules/$1/$2 ]
-  then
-    echo "module $1-$2 found in cache"
-  else
-    echo "module $1-$2 not found in cache; downloading..."
-    mkdir -p ~/Sites/releases/modules/$1/$2
-    curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
-    if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
-      then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
-      else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
-    fi
-fi
-}
+#function module-cache-check {
+#if [ -d ~/Sites/releases/modules/$1/$2 ]
+#  then
+#    echo "module $1-$2 found in cache"
+#  else
+#    echo "module $1-$2 not found in cache; downloading..."
+#    mkdir -p ~/Sites/releases/modules/$1/$2
+#    curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
+#    if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
+#      then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
+#      else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
+#    fi
+#fi
+#}
 
 # SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 function svn-cupdate {
@@ -239,31 +239,31 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 homepath=`pwd`
-module-cache-check $1 $2
-module-cache-check $1 $3
+#module-cache-check $1 $2
+#module-cache-check $1 $3
 for modinfopath in `find . -name $1.info`
   do modpath=`dirname $(dirname $modinfopath)`
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                diff $1 ~/Sites/releases/modules/$1/$2/$1
-                if [ $? -ne 1 ]
-                  then
+                #diff $1 ~/Sites/releases/modules/$1/$2/$1
+                #if [ $? -ne 1 ]
+                  #then
                     svn rm "$1"
                     if [ "$5" = "--security" ]
                       then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 at $modpath."
                       else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 at $modpath."
                     fi
-                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    #cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     svn add --force "$1"
                     if [ "$5" = "--security" ]
                       then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
                       else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
                     fi
-                  else echo "WARNING: $1 at $modpath is modified; skipping"
-                fi
+                  #else echo "WARNING: $1 at $modpath is modified; skipping"
+                #fi
                 cd $homepath
                 break;;
               [Nn]* ) break;;
@@ -466,27 +466,27 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     done
 fi
 homepath=`pwd`
-module-cache-check $1 $2
-module-cache-check $1 $3
+#module-cache-check $1 $2
+#module-cache-check $1 $3
 for modinfopath in `find . -name $1.info`
   do modpath=`dirname $(dirname $modinfopath)`
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                diff $1 ~/Sites/releases/modules/$1/$2/$1
-                if [ $? -ne 1 ]
-                  then
+                #diff $1 ~/Sites/releases/modules/$1/$2/$1
+                #if [ $? -ne 1 ]
+                  #then
                     git rm -rf "$1"
-                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    #cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     git add "$1"
                     if [ "$5" = "--security" ]
                       then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
                       else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
                     fi
-                  else echo "WARNING: $1 at $modpath is modified; skipping"
-                fi
+                  #else echo "WARNING: $1 at $modpath is modified; skipping"
+                #fi
                 cd $homepath
                 break;;
               [Nn]* ) break;;
