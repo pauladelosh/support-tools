@@ -442,6 +442,55 @@ while true; do
 done
 }
 
+# Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> --security (optional, marks as security update))
+function git-auto-mupdate {
+if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
+if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
+if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
+if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if git status | grep branch | cut -f4 -d" " | grep -w master
+  then while true; do
+    read -p "WARNING: you are currently in master. Continue? (y/n) " yn
+    case $yn in
+          [Yy]* ) break;;
+          [Nn]* ) return;;
+          * ) echo "invalid response, try again";;
+      esac
+    done
+fi
+homepath=`pwd`
+module-cache-check $1 $2
+module-cache-check $1 $3
+for modinfopath in `find . -name $1.info`
+  do modpath=`dirname $(dirname $modinfopath)`
+    if grep "version = \"$2\"" $modinfopath > /dev/null
+      then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
+          case $yn in
+              [Yy]* ) cd $modpath
+                diff $1 ~/Sites/releases/modules/$1/$2/$1
+                if [ $? -ne 1 ]
+                  then
+                    git rm -rf "$1"
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    git add "$1"
+                    if [ "$5" = "--security" ]
+                      then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
+                      else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+                    fi
+                  else echo "WARNING: $1 at $modpath is modified; skipping"
+                fi
+                cd $homepath
+                break;;
+              [Nn]* ) break;;
+              * ) echo "invalid response, try again";;
+            esac
+           done
+      else echo "WARNING: $1 at $modpath is not version $2; skipping"
+    fi
+  done
+}
+
 # Git, Module Update (git-mupdate <module> <source version> <target version> <ticket number>)
 function git-mupdate {
 if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
