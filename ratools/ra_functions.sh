@@ -10,17 +10,17 @@
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
-# 1.  cd to docroot for core updates, or the folder where the module lives for module updates.
+# 1.  cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates.
 # 2.  Pick your function name and enter variables as required:
-#       Check site distribution and version (dvcheck @<docroot>.<environment>)"
-#       RA Audit (ra-audit @<docroot>.<environment>)"
+#       Check site distribution and version (dvcheck @<docroot>.<environment>)
+#       RA Audit (ra-audit @<docroot>.<environment>)
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
-#       SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
+#       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
 #       SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
 #       SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
 #       Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
-#       Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)
+#       Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)
 #       Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
 #       Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
@@ -33,17 +33,17 @@ function ra-help {
 echo ""
 echo "Remote Administration Scripts Help:"
 echo ""
-echo "1. cd to docroot for core updates, or the folder where the module lives for module updates:"
+echo "1. cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
 echo "2. pick your function name and enter variables as required:"
 echo "      Check site distribution and version (dvcheck @<docroot>.<environment>)"
 echo "      RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
-echo "      SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)"
 echo "      SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)"
 echo "      SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)"
 echo "      Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)"
-echo "      Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)"
+echo "      Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)"
 echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
 echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
@@ -223,7 +223,7 @@ while true; do
 done
 }
 
-# SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> --security (optional, marks as security update))
+# SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 function svn-auto-mupdate {
 if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
@@ -442,7 +442,7 @@ while true; do
 done
 }
 
-# Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> --security (optional, marks as security update))
+# Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 function git-auto-mupdate {
 if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
