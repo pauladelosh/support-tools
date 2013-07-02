@@ -198,7 +198,18 @@ read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
 tput sgr0
-~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+#~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+FILETYPE='*.info'
+ INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
+ files=( $(find $INCLUDEONLY -name "$FILETYPE") )
+for file in "${files[@]}"; do
+  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' $file
+  sed -i '' '/version = "[0-9]*.[0-9]*"/d' $file
+  sed -i '' '/project = "drupal"/d' $file
+  sed -i '' '/datestamp = "[0-9]*"/d' $file
+  echo 'Checking' $file
+done
+echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
 # add changes to svn
 echo
@@ -434,7 +445,18 @@ read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
 tput sgr0
-~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+#~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+FILETYPE='*.info'
+ INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
+ files=( $(find $INCLUDEONLY -name "$FILETYPE") )
+for file in "${files[@]}"; do
+  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' $file
+  sed -i '' '/version = "[0-9]*.[0-9]*"/d' $file
+  sed -i '' '/project = "drupal"/d' $file
+  sed -i '' '/datestamp = "[0-9]*"/d' $file
+  echo 'Checking' $file
+done
+echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
 # add changes to git
 echo
