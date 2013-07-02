@@ -11,7 +11,7 @@
 # Instructions:
 # 1.  cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates.
 # 2.  Pick your function name and enter variables as required:
-#       Check site distribution and version (dvcheck @<docroot>.<environment>)
+#       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 #       RA Audit (ra-audit @<docroot>.<environment>)
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
@@ -34,7 +34,7 @@ echo "Remote Administration Scripts Help:"
 echo ""
 echo "1. cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
 echo "2. pick your function name and enter variables as required:"
-echo "      Check site distribution and version (dvcheck @<docroot>.<environment>)"
+echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
 echo "      RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
@@ -50,8 +50,8 @@ echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2
 echo ""
 }
 
-# Check site distribution and version (dvcheck @<docroot>.<environment>)
-function dvcheck { aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; }
+# Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
+function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush5 vget install_profile; }
 
 # RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))
 function ra-audit {
