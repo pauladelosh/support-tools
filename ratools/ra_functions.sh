@@ -55,12 +55,12 @@ function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_c
 
 # RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))
 function ra-audit {
-echo -e "\033[1;33;148m[ Distribution/Version and Profile Check ]\033[39m"
+echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"
 tput sgr0
 aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
 aht $1 drush5 vget install_profile
 echo
-echo -e "\033[1;33;148m[ Drush Status ]\033[39m"
+echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"
 tput sgr0
 aht $1 drush5 status
 echo
@@ -76,33 +76,33 @@ aht $1 sites | grep -v \>
 echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"
 tput sgr0
-rm -f ~/updates.tmp
-for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+rm -f /tmp/ra-audit-updates.tmp
+for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 ############################################################################################
 # define proactive updates here (seperate with pipes):
 RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity"
 ############################################################################################
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
 tput sgr0
-grep -w drupal ~/updates.tmp | sort | uniq
+grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
-grep SECURITY-UPDATE-available ~/updates.tmp | grep -v -w drupal | sort | uniq
+grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 tput sgr0
-egrep -w $RA_PROACTIVE_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"
 tput sgr0
-egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
+egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
-egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort | uniq
+egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
 echo
-rm -f ~/updates.tmp
+rm -f /tmp/ra-audit-updates.tmp
 }
 
 # Module Cache Check (module-cache-check <module> <version>)
