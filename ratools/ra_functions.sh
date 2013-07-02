@@ -241,8 +241,16 @@ fi
 homepath=`pwd`
 module-cache-check $1 $2
 module-cache-check $1 $3
-for modinfopath in `find . -name $1.info`
-  do modpath=`dirname $(dirname $modinfopath)`
+if [ $1 = "acquia_connector" ]
+  then modname=acquia_agent
+  else modname=$1
+fi
+for modinfopath in `find . -name $modname.info`
+  do
+    if [ $modname = acquia_agent ]
+      then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      else modpath=`dirname $(dirname $modinfopath)`
+    fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
@@ -468,8 +476,16 @@ fi
 homepath=`pwd`
 module-cache-check $1 $2
 module-cache-check $1 $3
-for modinfopath in `find . -name $1.info`
-  do modpath=`dirname $(dirname $modinfopath)`
+if [ $1 = "acquia_connector" ]
+  then modname=acquia_agent
+  else modname=$1
+fi
+for modinfopath in `find . -name $modname.info`
+  do
+    if [ $modname = acquia_agent ]
+      then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      else modpath=`dirname $(dirname $modinfopath)`
+    fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
