@@ -11,7 +11,7 @@
 # Instructions:
 # 1.  cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates.
 # 2.  Pick your function name and enter variables as required:
-#       Check site distribution and version (dvcheck @<docroot>.<environment>)
+#       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 #       RA Audit (ra-audit @<docroot>.<environment>)
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
@@ -34,7 +34,7 @@ echo "Remote Administration Scripts Help:"
 echo ""
 echo "1. cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
 echo "2. pick your function name and enter variables as required:"
-echo "      Check site distribution and version (dvcheck @<docroot>.<environment>)"
+echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
 echo "      RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
@@ -50,17 +50,17 @@ echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2
 echo ""
 }
 
-# Check site distribution and version (dvcheck @<docroot>.<environment>)
-function dvcheck { aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; }
+# Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
+function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush5 vget install_profile; }
 
 # RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))
 function ra-audit {
-echo -e "\033[1;33;148m[ Distribution/Version and Profile Check ]\033[39m"
+echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"
 tput sgr0
 aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
 aht $1 drush5 vget install_profile
 echo
-echo -e "\033[1;33;148m[ Drush Status ]\033[39m"
+echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"
 tput sgr0
 aht $1 drush5 status
 echo
@@ -76,53 +76,53 @@ aht $1 sites | grep -v \>
 echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"
 tput sgr0
-rm -f ~/updates.tmp
-for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a ~/updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+rm -f /tmp/ra-audit-updates.tmp
+for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 ############################################################################################
 # define proactive updates here (seperate with pipes):
 RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity"
 ############################################################################################
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
 tput sgr0
-egrep -w drupal ~/updates.tmp | sort | uniq
+grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
-grep SECURITY-UPDATE-available ~/updates.tmp | sort | uniq
+grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 tput sgr0
-egrep -w $RA_PROACTIVE_UPDATES ~/updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"
 tput sgr0
-egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' ~/updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
+egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
-egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' ~/updates.tmp | sort | uniq
+egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
 echo
-rm -f ~/updates.tmp
+rm -f /tmp/ra-audit-updates.tmp
 }
 
 # Module Cache Check (module-cache-check <module> <version>)
 # You can run this by hand if needed
 # At some point, implement $RA_MODULE_CACHE_PATH
 # Need to exclude dev modules. They are not unique versions and thus will never be updated.
-#function module-cache-check {
-#if [ -d ~/Sites/releases/modules/$1/$2 ]
-#  then
-#    echo "module $1-$2 found in cache"
-#  else
-#    echo "module $1-$2 not found in cache; downloading..."
-#    mkdir -p ~/Sites/releases/modules/$1/$2
-#    curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
-#    if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
-#      then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
-#      else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
-#    fi
-#fi
-#}
+function module-cache-check {
+if [ -d ~/Sites/releases/modules/$1/$2 ]
+  then
+    echo "module $1-$2 found in cache"
+  else
+    echo "module $1-$2 not found in cache; downloading..."
+    mkdir -p ~/Sites/releases/modules/$1/$2
+    curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
+    if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
+      then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
+      else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
+    fi
+fi
+}
 
 # SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 function svn-cupdate {
@@ -198,7 +198,18 @@ read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
 tput sgr0
-~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+#~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+FILETYPE='*.info'
+ INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
+ files=( $(find $INCLUDEONLY -name "$FILETYPE") )
+for file in "${files[@]}"; do
+  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' $file
+  sed -i '' '/version = "[0-9]*.[0-9]*"/d' $file
+  sed -i '' '/project = "drupal"/d' $file
+  sed -i '' '/datestamp = "[0-9]*"/d' $file
+  echo 'Checking' $file
+done
+echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
 # add changes to svn
 echo
@@ -239,31 +250,39 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 homepath=`pwd`
-#module-cache-check $1 $2
-#module-cache-check $1 $3
-for modinfopath in `find . -name $1.info`
-  do modpath=`dirname $(dirname $modinfopath)`
+module-cache-check $1 $2
+module-cache-check $1 $3
+if [ $1 = "acquia_connector" ]
+  then modname=acquia_agent
+  else modname=$1
+fi
+for modinfopath in `find . -name $modname.info`
+  do
+    if [ $modname = acquia_agent ]
+      then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      else modpath=`dirname $(dirname $modinfopath)`
+    fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                #diff $1 ~/Sites/releases/modules/$1/$2/$1
-                #if [ $? -ne 1 ]
-                  #then
+                diff $1 ~/Sites/releases/modules/$1/$2/$1
+                if [ $? -ne 1 ]
+                  then
                     svn rm "$1"
                     if [ "$5" = "--security" ]
                       then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 at $modpath."
                       else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 at $modpath."
                     fi
-                    curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    #cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     svn add --force "$1"
                     if [ "$5" = "--security" ]
                       then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
                       else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
                     fi
-                  #else echo "WARNING: $1 at $modpath is modified; skipping"
-                #fi
+                  else echo "WARNING: $1 at $modpath is modified; skipping"
+                fi
                 cd $homepath
                 break;;
               [Nn]* ) break;;
@@ -426,7 +445,18 @@ read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
 tput sgr0
-~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+#~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+FILETYPE='*.info'
+ INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
+ files=( $(find $INCLUDEONLY -name "$FILETYPE") )
+for file in "${files[@]}"; do
+  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' $file
+  sed -i '' '/version = "[0-9]*.[0-9]*"/d' $file
+  sed -i '' '/project = "drupal"/d' $file
+  sed -i '' '/datestamp = "[0-9]*"/d' $file
+  echo 'Checking' $file
+done
+echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
 # add changes to git
 echo
@@ -466,27 +496,35 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     done
 fi
 homepath=`pwd`
-#module-cache-check $1 $2
-#module-cache-check $1 $3
-for modinfopath in `find . -name $1.info`
-  do modpath=`dirname $(dirname $modinfopath)`
+module-cache-check $1 $2
+module-cache-check $1 $3
+if [ $1 = "acquia_connector" ]
+  then modname=acquia_agent
+  else modname=$1
+fi
+for modinfopath in `find . -name $modname.info`
+  do
+    if [ $modname = acquia_agent ]
+      then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      else modpath=`dirname $(dirname $modinfopath)`
+    fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                #diff $1 ~/Sites/releases/modules/$1/$2/$1
-                #if [ $? -ne 1 ]
-                  #then
+                diff $1 ~/Sites/releases/modules/$1/$2/$1
+                if [ $? -ne 1 ]
+                  then
                     git rm -rf "$1"
-                    curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    #cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     git add "$1"
                     if [ "$5" = "--security" ]
                       then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
                       else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
                     fi
-                  #else echo "WARNING: $1 at $modpath is modified; skipping"
-                #fi
+                  else echo "WARNING: $1 at $modpath is modified; skipping"
+                fi
                 cd $homepath
                 break;;
               [Nn]* ) break;;
