@@ -3,12 +3,14 @@
 // Remove ourselves from arg list
 array_shift($argv);
 
-// Split the arg into docroot and env
 list($docroot, $env) = explode('.', array_shift($argv));
+
+$template_filename = count($argv) ? array_shift($argv) : 'loadTestDashboard.applescript';
 
 $docroot = trim($docroot, '@');
 
 if (empty($docroot)) {
+  echo "Usage: dashboard.php @<docroot>.<env> [--template=<filename>]\n";
   exit(0);
 }
 
@@ -39,7 +41,7 @@ foreach ($response as $myst => $envs) {
   }
 }
 
-$filepath = __DIR__ . '/templates/loadTestDashboard.applescript';
+$filepath = __DIR__ . '/templates/' . $template_filename;
 
 ob_start();
 include($filepath);
