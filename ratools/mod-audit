@@ -8,19 +8,39 @@
         Usage guide:
             mod-audit @<site>.<enviroment> <ticketnumber>
     */
-    if(count($argv) < 3){
-        echo "Usage: mod_audit @<site>.<enviroment> <ticketnumber>\n";
-        die;
+    //Parse options out of argv
+    $options = array();
+    foreach($argv as $i=>$arg){
+        if(substr($arg,0,2) == "--"){
+            $arg = substr($arg,2);
+            $arg = explode("=",$arg);
+            $options[$arg[0]] = $arg[1] ? $arg[1] : "";
+            unset($argv[$i]);
+        }
     }
+    if($argv[1] == "help" || count($argv) < 3){
+        echo "Usage: mod_audit @<site>.<enviroment> <ticketnumber>\n";
+        echo "Extra options: --uri=<multisite> : Specifies a multisite\n";
+        echo "               --paths : Uses 'drush dd' to find paths of all modules (takes awhile to complete)\n";
+        return;
+    }
+    //Get repository type, for generating update commands
     $repo = exec("aht {$argv[1]} repo");
     $repo_type = "git";
     if(strpos($repo,"git") === false){
         $repo_type = "svn";
     }
-    $RA_MAND_UPDATES=explode("|","acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity");
+    //Beyond security, RA also updates Acquia supported modules and suggests pre-release updates
+    $RA_MAND_UPDATES=array("acquia_connector","acquia_search","mollom","apachesolr","apachesolr_multisitesearch","search_api_acquia","search-api","entity");
     $RA_SUGG_UPDATES="\-dev|\-unstable|\-alpha|\-beta|\-rc";
     $sites = array();
-    exec("aht {$argv[1]} sites",$sites);
+    //If uri is specified, you will only be checking one multisite
+    if(isset($options["uri"])){
+        $sites[] = $options["uri"];
+    }
+    else{
+        exec("aht {$argv[1]} sites",$sites);
+    }
     $all_updates = array(
         "Security"=>array(),
         "Mandatory"=>array(),
@@ -28,24 +48,34 @@
         "Other"=>array(),
     );
     foreach($sites as $site){
+        //Covers "site not found" cases
         if(strpos($site,"Warning:") !== false){
             continue;
         }
+        //Handles symlink output
         if(strpos($site,"->") !== false){
             $site = preg_replace("/->\s.*$/","",$site);
         }
         $updates = array();
         exec("aht {$argv[1]} drush5 upc --no-core --pipe --uri=$site",$updates);
         $total = count($updates);
+        //Progress useful when running with --path
         echo "Evaluating $total modules on $site site (0%)";
         for($i=0;$i<$total;++$i){
             $progress = floor(($i/$total)*100);
             echo "\rEvaluating $total modules on $site site ($progress%)";
             $update = $updates[$i];
+            //Regular expression will not work with custom Drupal modules that have strings
+            //  instead of versions numbers, i.e. "DEV6.x-custom". All normal contrib
+            //  modules work fine.
             if(!preg_match("/^\S*\s\d\.x\S*\s\d\.x\S*\s\S*$/",$update)){
                 continue;
             }
             $update = explode(" ", $update);
+            if(isset($options["paths"])){
+                $path = exec("aht {$argv[1]} drush5 dd {$update[0]} --uri=$site");
+                $update[] = str_replace($update[0],"",$path);
+            }
             if($update[3] == "SECURITY-UPDATE-available"){
                 $module = $update[0];
                 $all_updates["Security"][] = $update;
@@ -68,14 +98,39 @@
         if(count($updates) == 0){
             continue;
         }
+        //Remove duplicate module entries. With --path on, all locations of a module will
+        //  be listed, with --path off, there will only be one.
         $updates = array_unique($updates,SORT_REGULAR);
+        if(isset($options["paths"])){
+            $paths = array();
+            foreach($updates as $update){
+                $paths[] = $update[4];
+            }
+            array_multisort($paths,SORT_STRING,$updates);
+        }
         echo "---------------------------------------------------------------------------\n";
         echo "$name Updates:\n";
+        $lastdir = "";
         foreach($updates as $update){
-            echo implode($update," ")."\n";
+            if(isset($options["paths"])){
+                if($lastdir !== $update[4]){
+                    $lastdir = $update[4];
+                    echo "\n$lastdir\n";
+                }
+            }
+            echo "{$update[0]} {$update[1]} {$update[2]} {$update[3]}\n";
         }
         echo "\n";
+        //Outputs the update commands RA uses. This will need to change when Matt updates
+        //  the shell scripts.
+        $lastdir = "";
         foreach($updates as $update){
+            if(isset($options["paths"])){
+                if($lastdir !== $update[4]){
+                    $lastdir = $update[4];
+                    echo "\n$lastdir\n";
+                }
+            }
             if(substr($update[1],4,1) !== substr($update[2],4,1)){
                 echo "Major version, Do not update! ";
             }
