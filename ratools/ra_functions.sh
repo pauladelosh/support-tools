@@ -80,7 +80,7 @@ rm -f /tmp/ra-audit-updates.tmp
 for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 ############################################################################################
 # define proactive updates here (seperate with pipes):
-RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search-api|entity"
+RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity"
 ############################################################################################
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
 tput sgr0
