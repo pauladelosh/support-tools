@@ -134,11 +134,20 @@
             if(substr($update[1],4,1) !== substr($update[2],4,1)){
                 echo "Major version, Do not update! ";
             }
+            $command = "mupdate-auto";
+            if(isset($options["noauto"])){
+                $command = "mupdate";
+            }
             if($update[3] == "SECURITY-UPDATE-available"){
-                echo "$repo_type-mupdate-sec {$update[0]} {$update[1]} {$update[2]} {$argv[2]}";
+                $extra = "--security";
+                if(isset($options["noauto"])){
+                    $extra = "";
+                    $command = "mupdate-sec";
+                }
+                echo "$repo_type-$command {$update[0]} {$update[1]} {$update[2]} {$argv[2]} $extra";
             }
             else{
-                echo "$repo_type-mupdate {$update[0]} {$update[1]} {$update[2]} {$argv[2]}";
+                echo "$repo_type-$command {$update[0]} {$update[1]} {$update[2]} {$argv[2]}";
             }
             echo "\n";
         }
