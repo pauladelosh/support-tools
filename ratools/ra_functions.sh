@@ -182,18 +182,28 @@ read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
 tput sgr0
-svn status --no-ignore | grep rej
-svn status --no-ignore | grep orig
-if svn status --no-ignore | grep -q rej
-  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
-  else echo -e "\033[0;32;148mno reject files found\033[39m"
-fi
-if svn status --no-ignore | grep -q orig
-  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
-  else echo -e "\033[0;32;148mno original files found\033[39m"
-fi
+
+#svn status --no-ignore | grep rej
+#svn status --no-ignore | grep orig
+#if svn status --no-ignore | grep -q rej
+#  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
+#  else echo -e "\033[0;32;148mno reject files found\033[39m"
+#fi
+#if svn status --no-ignore | grep -q orig
+#  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
+#  else echo -e "\033[0;32;148mno original files found\033[39m"
+#fi
+while svn status --no-ignore | egrep -q '.orig|.rej'; do 
+  svn status --no-ignore | egrep '.rej|.orig'
+  echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"
+  tput sgr0
+  read -p "Press return to retry, or ctrl-c to stop...";
+  echo
+done
+echo -e "\033[0;32;148mno original/reject files found!\033[39m"
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
+
 # remove version numbers
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
@@ -429,18 +439,28 @@ read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
 tput sgr0
-git status | grep rej
-git status | grep orig
-if git status | grep -q rej
-  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
-  else echo -e "\033[0;32;148mno reject files found\033[39m"
-fi
-if git status | grep -q orig
-  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
-  else echo -e "\033[0;32;148mno original files found\033[39m"
-fi
+
+#git status | grep rej
+#git status | grep orig
+#if git status | grep -q rej
+#  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
+#  else echo -e "\033[0;32;148mno reject files found\033[39m"
+#fi
+#if git status | grep -q orig
+#  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
+#  else echo -e "\033[0;32;148mno original files found\033[39m"
+#fi
+while git status | egrep -q '.orig|.rej'; do 
+  git status | egrep '.rej|.orig'
+  echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"
+  tput sgr0
+  read -p "Press return to retry, or ctrl-c to stop...";
+  echo
+done
+echo -e "\033[0;32;148mno original/reject files found!\033[39m"
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
+
 # remove version numbers
 echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
