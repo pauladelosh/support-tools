@@ -134,7 +134,7 @@
             if(substr($update[1],4,1) !== substr($update[2],4,1)){
                 echo "Major version, Do not update! ";
             }
-            $command = "mupdate-auto";
+            $command = "auto-mupdate";
             if(isset($options["noauto"])){
                 $command = "mupdate";
             }
