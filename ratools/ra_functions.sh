@@ -28,7 +28,8 @@
 ############################################################################################
 
 # Help
-function ra-help {
+alias ra-help='ratools-help'
+function ratools-help {
 echo ""
 echo "Remote Administration Scripts Help:"
 echo ""
@@ -273,7 +274,7 @@ for modinfopath in `find . -name $modname.info`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
-      then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
+      then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
                 diff $1 ~/Sites/releases/modules/$1/$2/$1
@@ -529,7 +530,7 @@ for modinfopath in `find . -name $modname.info`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
-      then while true; do read -p "Patch $1-$2 at $modpath to $1-$3? (y/n) " yn
+      then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
                 diff $1 ~/Sites/releases/modules/$1/$2/$1
