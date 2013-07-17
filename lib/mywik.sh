@@ -10,12 +10,13 @@
 # Read the wikid token password and pin. This script assumes the SSH key
 # password is the same as the wikid token password.
 stty -echo
-send_user "SSH Password: "
+send_user "This script assumes your Bastion SSH Password and WiKID Password are set the same. If they are not you need to change your .bash_profile/.profile to use mywik2 instead of mywik.\n\n"
+send_user "Bastion SSH Password: "
 set timeout -1
 expect_user -re "(.*)\n"
 send_user "\n"
 set password $expect_out(1,string)
-send_user "Acquia PIN: "
+send_user "WiKID PIN: "
 expect_user -re "(.*)\n"
 send_user "\n"
 set pin $expect_out(1,string)

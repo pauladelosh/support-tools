@@ -10,7 +10,7 @@
 # Read the wikid token password and pin. This script assumes the SSH key
 # password is the same as the wikid token password.
 stty -echo
-send_user "SSH Password: "
+send_user "Bastion SSH Password: "
 set timeout -1
 expect_user -re "(.*)\n"
 send_user "\n"
@@ -19,7 +19,7 @@ send_user "WiKID Password: "
 expect_user -re "(.*)\n"
 send_user "\n"
 set wikid $expect_out(1,string)
-send_user "Acquia PIN: "
+send_user "WiKID PIN: "
 expect_user -re "(.*)\n"
 send_user "\n"
 set pin $expect_out(1,string)
