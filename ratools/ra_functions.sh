@@ -263,8 +263,8 @@ fi
 homepath=`pwd`
 module-cache-check $1 $2
 module-cache-check $1 $3
-if [ $1 = "acquia_connector" ]
-  then modname=acquia_agent
+if [ $1 = "acquia_connector" ]; then modname=acquia_agent
+  elif [ $1 = "google_analytics" ]; then modname=googleanalytics
   else modname=$1
 fi
 for modinfopath in `find . -name $modname.info`
@@ -519,8 +519,8 @@ fi
 homepath=`pwd`
 module-cache-check $1 $2
 module-cache-check $1 $3
-if [ $1 = "acquia_connector" ]
-  then modname=acquia_agent
+if [ $1 = "acquia_connector" ]; then modname=acquia_agent
+  elif [ $1 = "google_analytics" ]; then modname=googleanalytics
   else modname=$1
 fi
 for modinfopath in `find . -name $modname.info`
