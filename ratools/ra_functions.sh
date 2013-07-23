@@ -135,11 +135,16 @@ fi
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
-egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
+egrep 'Update-available|SECURITY-UPDATE-available' /tmp/ra-audit-updates.tmp | sort | uniq
 #if [[ "$2" == --updcmd=* ]]; then
 #echo "=========="
-#egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
+#egrep 'Update-available|SECURITY-UPDATE-available' /tmp/ra-audit-updates.tmp | sort | uniq
 #fi
+
+echo
+echo -e "\033[1;33;148m[ Unsupported/Out-of-Scope Updates (do not perform) ]\033[39m"
+tput sgr0
+grep 'Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
 
 echo
 rm -f /tmp/ra-audit-updates.tmp
