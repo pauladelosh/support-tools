@@ -56,6 +56,20 @@ function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_c
 
 # RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))
 function ra-audit {
+
+if [[ "$2" == --updcmd=* ]]; then
+  RA_AUDIT_VCS=`echo $2 | cut -f2 -d"=" | cut -f1 -d","`
+  RA_AUDIT_TICKNUM=`echo $2 | cut -f2 -d"=" | cut -f2 -d","`
+  if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
+    then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && return
+  fi
+  #echo "outputting update commands for $RA_AUDIT_VCS using ticket number $RA_AUDIT_TICKNUM..."; echo
+  echo -e "\033[1;33;148m[ Update Command Builder Enabled ]\033[39m"; tput sgr0
+  echo "Version Control Type: $RA_AUDIT_VCS"
+  echo "Ticket Number: $RA_AUDIT_TICKNUM"
+  echo
+fi
+
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"
 tput sgr0
 aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
@@ -86,22 +100,47 @@ RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesol
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
 tput sgr0
 grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq
+if [[ "$2" == --updcmd=* ]]; then
+echo "=========="
+grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-cupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+fi
+
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
 grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq
+if [[ "$2" == --updcmd=* ]]; then
+echo "=========="
+grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
+fi
+
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 tput sgr0
 egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+if [[ "$2" == --updcmd=* ]]; then
+echo "=========="
+egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+fi
+
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"
 tput sgr0
 egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
+if [[ "$2" == --updcmd=* ]]; then
+echo "=========="
+egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+fi
+
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
 egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
+#if [[ "$2" == --updcmd=* ]]; then
+#echo "=========="
+#egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
+#fi
+
 echo
 rm -f /tmp/ra-audit-updates.tmp
 }
