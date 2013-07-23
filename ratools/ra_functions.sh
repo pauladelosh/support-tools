@@ -90,22 +90,33 @@ echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
 tput sgr0
 grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq
+if [ -n "$3" ] 
+    then grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$3-auto-mupdate /" -e "s/[^\ ]*$/$2 --security/" 
+fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
 tput sgr0
 egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+if [ -n "$3" ] 
+    then egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$3-auto-mupdate /" -e "s/[^\ ]*$/$2/" 
+fi
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"
 tput sgr0
 egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
+if [ -n "$3" ] 
+    then egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$3-auto-mupdate /" -e "s/[^\ ]*$/$2/" 
+fi
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
 tput sgr0
 egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
+if [ -n "$3" ] 
+    then egrep 'Update-available|SECURITY-UPDATE-available|Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq | sed -e "s/^/$3-auto-mupdate /" -e "s/[^\ ]*$/$2/" 
+fi
 echo
 rm -f /tmp/ra-audit-updates.tmp
 }
-
 # Module Cache Check (module-cache-check <module> <version>)
 # You can run this by hand if needed
 # At some point, implement $RA_MODULE_CACHE_PATH
