@@ -12,7 +12,7 @@
 # 1.  cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates.
 # 2.  Pick your function name and enter variables as required:
 #       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-#       RA Audit (ra-audit @<docroot>.<environment>)
+#       RA Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
@@ -36,7 +36,7 @@ echo ""
 echo "1. cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
 echo "2. pick your function name and enter variables as required:"
 echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
-echo "      RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))"
+echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
