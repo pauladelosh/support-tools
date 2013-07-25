@@ -54,105 +54,80 @@ echo ""
 # Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush5 vget install_profile; }
 
-# RA Update Audit (ra-audit @<docroot>.<environment> --raw (optional, shows common output on update checks))
+# RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
 function ra-audit {
-
+######################################################
+# define proactive updates here (seperate with pipes):
+RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity"
+######################################################
 if [[ "$2" == --updcmd=* ]]; then
   RA_AUDIT_VCS=`echo $2 | cut -f2 -d"=" | cut -f1 -d","`
   RA_AUDIT_TICKNUM=`echo $2 | cut -f2 -d"=" | cut -f2 -d","`
   if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
     then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && return
   fi
-  #echo "outputting update commands for $RA_AUDIT_VCS using ticket number $RA_AUDIT_TICKNUM..."; echo
   echo -e "\033[1;33;148m[ Update Command Builder Enabled ]\033[39m"; tput sgr0
   echo "Version Control Type: $RA_AUDIT_VCS"
   echo "Ticket Number: $RA_AUDIT_TICKNUM"
   echo
 fi
-
-echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
 aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
 aht $1 drush5 vget install_profile
 echo
-echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
 aht $1 drush5 status
 echo
-echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
 echo -n "dev:   "; aht `echo $1 | cut -f1 -d "."`.dev repo
 echo -n "stage:   "; aht `echo $1 | cut -f1 -d "."`.test repo
 echo -n "prod:   "; aht `echo $1 | cut -f1 -d "."`.prod repo
 echo
-echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"; tput sgr0
 aht $1 sites | grep -v \>
 echo
-echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sgr0
 rm -f /tmp/ra-audit-updates.tmp
 for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
-############################################################################################
-# define proactive updates here (seperate with pipes):
-RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity"
-############################################################################################
-echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"; tput sgr0
+# experimental code for outputting none if no updates
+#if grep -q -w drupal /tmp/ra-audit-updates.tmp
+#  then grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq
+#  else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
+#fi
 grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq
-if [[ "$2" == --updcmd=* ]]; then
-echo "=========="
-grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-cupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
-fi
-
 echo
-echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"; tput sgr0
 grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq
 if [[ "$2" == --updcmd=* ]]; then
 echo "=========="
 grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
 fi
-
 echo
-echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
 egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
 if [[ "$2" == --updcmd=* ]]; then
 echo "=========="
 egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
-
 echo
-echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"; tput sgr0
 egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
 if [[ "$2" == --updcmd=* ]]; then
 echo "=========="
 egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
-
 echo
-echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"; tput sgr0
 egrep 'Update-available|SECURITY-UPDATE-available' /tmp/ra-audit-updates.tmp | sort | uniq
-#if [[ "$2" == --updcmd=* ]]; then
-#echo "=========="
-#egrep 'Update-available|SECURITY-UPDATE-available' /tmp/ra-audit-updates.tmp | sort | uniq
-#fi
-
 echo
-echo -e "\033[1;33;148m[ Unsupported/Out-of-Scope Updates (do not perform) ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ Unsupported/Out-of-Scope Updates (do not perform) ]\033[39m"; tput sgr0
 grep 'Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
-
 echo
 rm -f /tmp/ra-audit-updates.tmp
 }
 
 # Module Cache Check (module-cache-check <module> <version>)
-# You can run this by hand if needed
-# At some point, implement $RA_MODULE_CACHE_PATH
 # Need to exclude dev modules. They are not unique versions and thus will never be updated.
 function module-cache-check {
 if [ -d ~/Sites/releases/modules/$1/$2 ]
@@ -171,7 +146,6 @@ fi
 
 # SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 function svn-cupdate {
-# check if we have all variables
 echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
 if [ -z "$1" ]
   then echo -e "\033[0;31;148mmissing distribution: exiting\033[39m" && return
@@ -189,17 +163,14 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-# detection code to see if a valid patch exists (also helps sanitize the inputs further)
 if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
   then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
   else echo -e "\033[0;31;148mno suitable patch found (tried to find ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-# run the patch, but check if we are in trunk or a docroot first
 echo
-echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"; tput sgr0
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
@@ -223,37 +194,18 @@ if echo ${PWD##*/} | grep docroot
 fi
 patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
-# find and print out rej/orig files, then exit if any are found
 echo
-echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
-tput sgr0
-
-#svn status --no-ignore | grep rej
-#svn status --no-ignore | grep orig
-#if svn status --no-ignore | grep -q rej
-#  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
-#  else echo -e "\033[0;32;148mno reject files found\033[39m"
-#fi
-#if svn status --no-ignore | grep -q orig
-#  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
-#  else echo -e "\033[0;32;148mno original files found\033[39m"
-#fi
+echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
 while svn status --no-ignore | egrep -q '.orig|.rej'; do 
   svn status --no-ignore | egrep '.rej|.orig'
-  echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"
-  tput sgr0
+  echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   read -p "Press return to retry, or ctrl-c to stop...";
   echo
 done
-echo -e "\033[0;32;148mno original/reject files found!\033[39m"
-tput sgr0
+echo -e "\033[0;32;148mno original/reject files found!\033[39m"; tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
-# remove version numbers
 echo
-echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
-tput sgr0
-#~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"; tput sgr0
 FILETYPE='*.info'
  INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
  files=( $(find $INCLUDEONLY -name "$FILETYPE") )
@@ -266,18 +218,14 @@ for file in "${files[@]}"; do
 done
 echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
-# add changes to svn
 echo
-echo -e "\033[1;33;148m[ adding changes to svn ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ adding changes to svn ]\033[39m"; tput sgr0
 svn status | grep '\?' | awk '{print $2}' | xargs svn add
 svn status | grep '\!' | awk '{print $2}' | xargs svn rm
 svn status --no-ignore
 read -p "Press return to continue, or ctrl-c to stop..."
-# commit
 echo
-echo -e "\033[1;33;148m[ commiting changes ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
 while true; do
     read -p "commit \"$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3.\" now? (y/n) " yn
     case $yn in
@@ -367,14 +315,12 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 svn rm "$1"
-#svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 module."
 if [ "$5" = "--security" ]
   then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 at $modpath."
   else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 at $modpath."
 fi
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
-#svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
 if [ "$5" = "--security" ]
   then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
   else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
@@ -428,7 +374,6 @@ svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, reverting to $1-$
 
 # Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
 function git-cupdate {
-# check if we have all variables
 echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
 if [ -z "$1" ]
   then echo -e "\033[0;31;148mmissing distribution: exiting\033[39m" && return
@@ -446,17 +391,14 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-# detection code to see if a valid patch exists (also helps sanitize the inputs further)
 if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
   then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
   else echo -e "\033[0;31;148mno suitable patch found (tried to find ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-# run the patch, but check if we are in master or a docroot first
 echo
-echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"; tput sgr0
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
@@ -480,37 +422,18 @@ if echo ${PWD##*/} | grep docroot
 fi
 patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
-# find and print out rej/orig files, then exit if any are found
 echo
-echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"
-tput sgr0
-
-#git status | grep rej
-#git status | grep orig
-#if git status | grep -q rej
-#  then echo -e "\033[0;31;148mreject files found: exiting.\033[39m" && return
-#  else echo -e "\033[0;32;148mno reject files found\033[39m"
-#fi
-#if git status | grep -q orig
-#  then echo -e "\033[0;31;148moriginal files found\033[39m" && return
-#  else echo -e "\033[0;32;148mno original files found\033[39m"
-#fi
+echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
 while git status | egrep -q '.orig|.rej'; do 
   git status | egrep '.rej|.orig'
-  echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"
-  tput sgr0
+  echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   read -p "Press return to retry, or ctrl-c to stop...";
   echo
 done
-echo -e "\033[0;32;148mno original/reject files found!\033[39m"
-tput sgr0
+echo -e "\033[0;32;148mno original/reject files found!\033[39m"; tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
-
-# remove version numbers
 echo
-echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"
-tput sgr0
-#~/Sites/releases/version-patches/scripts/rmv-versionnums-dpl.sh
+echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"; tput sgr0
 FILETYPE='*.info'
  INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
  files=( $(find $INCLUDEONLY -name "$FILETYPE") )
@@ -523,17 +446,13 @@ for file in "${files[@]}"; do
 done
 echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
-# add changes to git
 echo
-echo -e "\033[1;33;148m[ adding changes to git ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ adding changes to git ]\033[39m"; tput sgr0
 git add -A
 git status
 read -p "Press return to continue, or ctrl-c to stop..."
-# commit
 echo
-echo -e "\033[1;33;148m[ commiting changes ]\033[39m"
-tput sgr0
+echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
 while true; do
     read -p "commit \"$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3.\" now? (y/n) " yn
     case $yn in
@@ -621,7 +540,6 @@ fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
-#git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 from $2."
 if [ "$5" = "--security" ]
   then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
   else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
