@@ -244,9 +244,9 @@ echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
 echo "currently on svn branch `svn info | grep URL | cut -f2 -d" " | xargs basename`"
 while true; do
-    read -p "commit \"$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3.\" now? (y/n) " yn
+    read -p "commit \"$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4.\" now? (y/n) " yn
     case $yn in
-        [Yy]* ) svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
+        [Yy]* ) svn commit -m "$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
         [Nn]* ) echo -e "\033[0;31;148mchanges not commited\033[39m"; break;;
         * ) echo "invalid response, try again";;
     esac
@@ -291,15 +291,15 @@ for modinfopath in `find . -name $modname.info`
                   #then
                     svn rm "$1"
                     if [ "$5" = "--security" ]
-                      then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 at $modpath."
-                      else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 at $modpath."
+                      then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
+                      else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
                     fi
                     curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
                     #cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     svn add --force "$1"
                     if [ "$5" = "--security" ]
-                      then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
-                      else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+                      then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                      else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
                   #else echo "WARNING: $1 at $modpath is modified; skipping"
                 #fi
@@ -333,14 +333,14 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
 fi
 svn rm "$1"
 if [ "$5" = "--security" ]
-  then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, cleanup, removing $1-$2 at $modpath."
-  else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, cleanup, removing $1-$2 at $modpath."
+  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
+  else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
 fi
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
 if [ "$5" = "--security" ]
-  then svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
-  else svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+  else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
 fi
 }
 
@@ -362,7 +362,7 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
 fi
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$3: Module Install, adding $1-$2."
+svn commit -m "$RA_INITIALS@Acq: Module Install, adding $1-$2. Ticket #$3."
 }
 
 # SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
@@ -383,10 +383,10 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 svn rm "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, cleanup, removing $1-$2 module."
+svn commit -m "$RA_INITIALS@Acq: Module Revert, cleanup, removing $1-$2 module. Ticket #$4."
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
-svn commit -m "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, reverting to $1-$3 from $2."
+svn commit -m "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
 
 # Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
@@ -475,9 +475,9 @@ echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
 echo "currently on git branch `git status | grep branch | cut -f4 -d" "`"
 while true; do
-    read -p "commit \"$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3.\" now? (y/n) " yn
+    read -p "commit \"$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4.\" now? (y/n) " yn
     case $yn in
-        [Yy]* ) git commit -m "$RA_INITIALS@Acquia, Ticket #$4: Update from $1 $2 to $3."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
+        [Yy]* ) git commit -m "$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
         [Nn]* ) echo -e "\033[0;31;148mchanges not commited\033[39m"; break;;
         * ) echo "invalid response, try again";;
     esac
@@ -525,8 +525,8 @@ for modinfopath in `find . -name $modname.info`
                     #cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     git add "$1"
                     if [ "$5" = "--security" ]
-                      then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
-                      else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+                      then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                      else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
                   #else echo "WARNING: $1 at $modpath is modified; skipping"
                 #fi
@@ -562,8 +562,8 @@ git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 if [ "$5" = "--security" ]
-  then git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Security Update, updating $1-$3 at $modpath from $2."
-  else git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Update, updating $1-$3 at $modpath from $2."
+  then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+  else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
 fi
 }
 
@@ -585,7 +585,7 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
 fi
 curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
-git commit -am "$RA_INITIALS@Acquia, Ticket #$3: Module Install, adding $1-$2."
+git commit -am "$RA_INITIALS@Acq: Module Install, adding $1-$2. Ticket #$3."
 }
 
 # Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
@@ -608,5 +608,5 @@ fi
 git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
-git commit -am "$RA_INITIALS@Acquia, Ticket #$4: Module Revert, reverting to $1-$3 from $2."
+git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
