@@ -1,13 +1,13 @@
 launch "iTerm"
 
-set hostingname to "comcastrsn"
+set hostingname to "golfchannel"
 
 set environment to "prod"
 
-set webs to {"web-2358","web-2359","web-2360","web-2361","web-2862","web-2863","web-2864","web-2865","web-2866","web-3477","web-3478","web-3479","web-3480","web-3481","web-3482","web-3493","web-3494","web-4072","web-4073"}
-set activeBal to "bal-2354"
+set webs to {"web-4655","web-4656","web-4657","web-4658","web-4659","web-4660","web-4661","web-4662"}
+set activeBal to "bal-4667"
 
-set activeDb to "fsdb-2356"
+set activeDb to "fsdb-4653"
 
 
 tell application "iTerm"
