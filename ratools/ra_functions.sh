@@ -274,6 +274,7 @@ homepath=`pwd`
 #module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "google_analytics" ]; then modname=googleanalytics
+  elif [ $1 = "features_extra" ]; then modname=fe_block
   else modname=$1
 fi
 for modinfopath in `find . -name $modname.info`
@@ -505,6 +506,7 @@ homepath=`pwd`
 #module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "google_analytics" ]; then modname=googleanalytics
+  elif [ $1 = "features_extra" ]; then modname=fe_block
   else modname=$1
 fi
 for modinfopath in `find . -name $modname.info`
