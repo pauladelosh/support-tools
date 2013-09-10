@@ -612,3 +612,81 @@ curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
+
+# SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>)
+function svn-init-repo {
+    if [ -z "$1" ]
+      then echo "Missing docroot" && return
+    fi
+    if [ -z "$2" ]
+      then echo "Missing tag name" && return
+    fi
+    if [ -z "$3" ]
+      then echo "Missing branch name" && return
+    fi
+    #split $1 into three distinct variables (@site.env => @site, site, and env)
+    base=${1%.*}
+    docroot=${base#@*}
+    acqenv=${1#*.}
+    if [ -d ./$docroot ]; then
+        echo "Error: Directory $docroot already exists"
+        return
+    fi
+    repo="$(aht $1 repo)"
+    if [[ $repo =~ "live development" ]]; then
+        repo=$(echo "$repo" | grep svn)
+    fi
+    url=${repo% *}
+    baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
+    mkdir $docroot && cd $docroot
+    read -p "SVN Username: " svnuser 
+    stty -echo 
+    read -p "SVN Password: " svnpass
+    stty echo
+    svn checkout --username $svnuser --password $svnpass $baseurl/$2
+    while true; do
+        read -p "OK to create/commit branch $3? (y/n) " yn
+        case $yn in
+            [Yy]* ) break;;
+            [Nn]* ) return;;
+            * ) echo "invalid response, try again";;
+        esac
+    done
+    svn copy $baseurl/$2 $baseurl/branches/$3 -m "$RA_INITIALS@Acquia: Branch from $2 to implement updates."
+    echo "RECORD REVISION NUMBER IN VCS"
+    cd trunk
+    svn switch ^/branches/$3
+}
+
+# GIT, Initialize Repository 
+# Usage: git-init-repo @<docroot>.<environment> <source_tag> <target_branch>
+#        git-init-repo @<docroot>.<environment> <target_branch> 
+function git-init-repo {
+    if [ $# -lt 2 ]
+      then echo "Missing docroot" && return
+    fi
+    #split $1 into three distinct variables (@site.env => @site, site, and env)
+    base=${1%.*}
+    docroot=${base#@*}
+    acqenv=${1#*.}
+    if [ -d ./$docroot ]; then
+        echo "Error: Directory $docroot already exists"
+        return
+    fi
+    repo="$(aht $1 repo)"
+    if [[ $repo =~ "live development" ]]; then
+        repo=$(echo "$repo" | grep svn)
+    fi
+    if [ $# -eq 2 ]; then
+        source_tag=$(echo ${repo#* } | tr -d '\040\011\012\015')
+        target_branch=$2
+    else
+        source_tag=$2
+        target_branch=$3
+    fi
+    git clone ${repo% *}
+    cd $docroot
+    git pull --all
+    git checkout $source_tag
+    git checkout -b $target_branch
+}
