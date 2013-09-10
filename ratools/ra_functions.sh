@@ -613,16 +613,12 @@ git add "$1"
 git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
 
-# SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>)
+# SVN, Initialize Repository
+# Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
+#        svn-init-repo @<docroot>.<environment> <target_branch> 
 function svn-init-repo {
-    if [ -z "$1" ]
+    if [ $# -lt 2 ]
       then echo "Missing docroot" && return
-    fi
-    if [ -z "$2" ]
-      then echo "Missing tag name" && return
-    fi
-    if [ -z "$3" ]
-      then echo "Missing branch name" && return
     fi
     #split $1 into three distinct variables (@site.env => @site, site, and env)
     base=${1%.*}
@@ -632,30 +628,41 @@ function svn-init-repo {
         echo "Error: Directory $docroot already exists"
         return
     fi
+    mkdir $docroot
+    cd $docroot
     repo="$(aht $1 repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
     fi
-    url=${repo% *}
+    url=$(echo $repo | tr -d '\r')
     baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
+    source_tag=$(echo "$url" | sed "s/.*$docroot\///")
+    if [ $# -eq 2 ]; then
+      source_url=$url
+      target_branch=$2
+    else
+      source_url=$baseurl/$2
+      target_branch=$3
+    fi
     mkdir $docroot && cd $docroot
-    read -p "SVN Username: " svnuser 
-    stty -echo 
-    read -p "SVN Password: " svnpass
-    stty echo
-    svn checkout --username $svnuser --password $svnpass $baseurl/$2
+    #read -p "SVN Username: " svnuser 
+    #stty -echo 
+    #read -p "SVN Password: " svnpass
+    #stty echo
+    #svn checkout --username $svnuser --password $svnpass $baseurl/trunk
+    svn checkout $baseurl/trunk
     while true; do
-        read -p "OK to create/commit branch $3? (y/n) " yn
+        read -p "OK to create/commit branch $target_branch? (y/n) " yn
         case $yn in
             [Yy]* ) break;;
             [Nn]* ) return;;
             * ) echo "invalid response, try again";;
         esac
     done
-    svn copy $baseurl/$2 $baseurl/branches/$3 -m "$RA_INITIALS@Acquia: Branch from $2 to implement updates."
+    svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@Acquia: Branch from $source_tag to implement updates."
     echo "RECORD REVISION NUMBER IN VCS"
     cd trunk
-    svn switch ^/branches/$3
+    svn switch ^/branches/$target_branch
 }
 
 # GIT, Initialize Repository 
@@ -673,6 +680,8 @@ function git-init-repo {
         echo "Error: Directory $docroot already exists"
         return
     fi
+    mkdir $docroot
+    cd $docroot
     repo="$(aht $1 repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
