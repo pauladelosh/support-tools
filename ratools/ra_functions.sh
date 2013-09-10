@@ -652,14 +652,15 @@ function svn-init-repo {
     #svn checkout --username $svnuser --password $svnpass $baseurl/trunk
     svn checkout $baseurl/trunk
     while true; do
-        read -p "OK to create/commit branch $target_branch? (y/n) " yn
+        echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
+        read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
         case $yn in
             [Yy]* ) break;;
             [Nn]* ) return;;
             * ) echo "invalid response, try again";;
         esac
     done
-    svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@Acquia: Branch from $source_tag to implement updates."
+    svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
     echo "RECORD REVISION NUMBER IN VCS"
     cd trunk
     svn switch ^/branches/$target_branch
