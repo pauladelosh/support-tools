@@ -633,6 +633,8 @@ function svn-init-repo {
     repo="$(aht $1 repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
+    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+        echo "Could not find sitegroup or environment." && return;
     fi
     url=$(echo $repo | tr -d '\r')
     baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
@@ -645,11 +647,6 @@ function svn-init-repo {
       target_branch=$3
     fi
     mkdir $docroot && cd $docroot
-    #read -p "SVN Username: " svnuser 
-    #stty -echo 
-    #read -p "SVN Password: " svnpass
-    #stty echo
-    #svn checkout --username $svnuser --password $svnpass $baseurl/trunk
     svn checkout $baseurl/trunk
     while true; do
         echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
@@ -686,6 +683,8 @@ function git-init-repo {
     repo="$(aht $1 repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
+    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+        echo "Could not find sitegroup or environment." && return;
     fi
     if [ $# -eq 2 ]; then
         source_tag=$(echo ${repo#* } | tr -d '\040\011\012\015')
