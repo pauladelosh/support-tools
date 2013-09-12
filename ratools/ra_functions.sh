@@ -628,8 +628,6 @@ function svn-init-repo {
         echo "Error: Directory $docroot already exists"
         return
     fi
-    mkdir $docroot
-    cd $docroot
     repo="$(aht $1 repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
@@ -647,7 +645,7 @@ function svn-init-repo {
       target_branch=$3
     fi
     mkdir $docroot && cd $docroot
-    svn checkout $baseurl/trunk
+    svn checkout --username=$SVN_USERNAME $baseurl/trunk
     while true; do
         echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
         read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
@@ -678,8 +676,7 @@ function git-init-repo {
         echo "Error: Directory $docroot already exists"
         return
     fi
-    mkdir $docroot
-    cd $docroot
+    mkdir $docroot && cd $docroot
     repo="$(aht $1 repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
