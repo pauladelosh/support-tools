@@ -645,7 +645,8 @@ function svn-init-repo {
       target_branch=$3
     fi
     mkdir $docroot && cd $docroot
-    svn checkout --username=$SVN_USERNAME $baseurl/trunk
+    read -s -p "Enter SVN Password: " SVN_PASSWORD
+    svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
     while true; do
         echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
         read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
