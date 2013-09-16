@@ -698,3 +698,23 @@ function git-init-repo {
     git checkout $source_tag
     git checkout -b $target_branch
 }
+
+function ra-auto-mupdate {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-auto-mupdate $@; else git-auto-mupdate $@; fi
+}
+
+function ra-mupdate-add {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-add $@; else git-mupdate-add $@; fi
+}
+
+function ra-cupdate {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-cupdate $@; else git-cupdate $@; fi
+}
+
+function ra-mupdate-rev {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-rev $@; else git-mupdate-rev $@; fi
+}
+
+function ra-init-repo {
+  if [[ "$(aht $1 repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
+}
