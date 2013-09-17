@@ -14,16 +14,19 @@
 # 2.  Pick your function name and enter variables as required:
 #       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 #       RA Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
+#       You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
 #       SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
+#       SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <branch_name>)
 #       Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
 #       Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))
 #       Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
 #       Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
+#       Git, Initialize Repository (git-init-repo @<docroot>.<environment> <source_tag> <branch_name>)
 # 3.  Example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
 #
 ############################################################################################
@@ -38,16 +41,19 @@ echo "1. cd to docroot for core/automatic-module updates, or the folder where th
 echo "2. pick your function name and enter variables as required:"
 echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
 echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))"
+echo "      You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)"
 echo "      SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
 echo "      Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
 echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
+echo "      Git, Initialize Repository (git-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
 echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-33333"
 echo ""
 }
