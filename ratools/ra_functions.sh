@@ -705,6 +705,10 @@ function git-init-repo {
     git checkout -b $target_branch
 }
 
+function ra-mupdate {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate $@; else git-mupdate $@; fi
+}
+
 function ra-auto-mupdate {
   if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-auto-mupdate $@; else git-auto-mupdate $@; fi
 }
