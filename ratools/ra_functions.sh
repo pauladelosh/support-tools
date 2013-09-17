@@ -6,6 +6,7 @@
 #
 # add the two following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
+# SVN_USERNAME="acquia_ahsupport_username"
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
@@ -13,16 +14,19 @@
 # 2.  Pick your function name and enter variables as required:
 #       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 #       RA Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
+#       You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
 #       SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
+#       SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <branch_name>)
 #       Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
 #       Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))
 #       Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
 #       Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
+#       Git, Initialize Repository (git-init-repo @<docroot>.<environment> <source_tag> <branch_name>)
 # 3.  Example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
 #
 ############################################################################################
@@ -37,16 +41,19 @@ echo "1. cd to docroot for core/automatic-module updates, or the folder where th
 echo "2. pick your function name and enter variables as required:"
 echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
 echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))"
+echo "      You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)"
 echo "      SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)"
+echo "      SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
 echo "      Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
 echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
+echo "      Git, Initialize Repository (git-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
 echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-33333"
 echo ""
 }
@@ -611,4 +618,109 @@ git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
+}
+
+# SVN, Initialize Repository
+# Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
+#        svn-init-repo @<docroot>.<environment> <target_branch> 
+function svn-init-repo {
+    if [ $# -lt 2 ]
+      then echo "Missing docroot" && return
+    fi
+    #split $1 into three distinct variables (@site.env => @site, site, and env)
+    base=${1%.*}
+    docroot=${base#@*}
+    acqenv=${1#*.}
+    if [ -d ./$docroot ]; then
+        echo "Error: Directory $docroot already exists"
+        return
+    fi
+    repo="$(aht $1 repo)"
+    if [[ $repo =~ "live development" ]]; then
+        repo=$(echo "$repo" | grep svn)
+    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+        echo "Could not find sitegroup or environment." && return;
+    fi
+    url=$(echo $repo | tr -d '\r')
+    baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
+    source_tag=$(echo "$url" | sed "s/.*$docroot\///")
+    if [ $# -eq 2 ]; then
+      source_url=$url
+      target_branch=$2
+    else
+      source_url=$baseurl/$2
+      target_branch=$3
+    fi
+    mkdir $docroot && cd $docroot
+    read -s -p "Enter SVN Password: " SVN_PASSWORD
+    svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
+    while true; do
+        echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
+        read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
+        case $yn in
+            [Yy]* ) break;;
+            [Nn]* ) return;;
+            * ) echo "invalid response, try again";;
+        esac
+    done
+    svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
+    echo "RECORD REVISION NUMBER IN VCS"
+    cd trunk
+    svn switch ^/branches/$target_branch
+}
+
+# GIT, Initialize Repository 
+# Usage: git-init-repo @<docroot>.<environment> <source_tag> <target_branch>
+#        git-init-repo @<docroot>.<environment> <target_branch> 
+function git-init-repo {
+    if [ $# -lt 2 ]
+      then echo "Missing docroot" && return
+    fi
+    #split $1 into three distinct variables (@site.env => @site, site, and env)
+    base=${1%.*}
+    docroot=${base#@*}
+    acqenv=${1#*.}
+    if [ -d ./$docroot ]; then
+        echo "Error: Directory $docroot already exists"
+        return
+    fi
+    mkdir $docroot && cd $docroot
+    repo="$(aht $1 repo)"
+    if [[ $repo =~ "live development" ]]; then
+        repo=$(echo "$repo" | grep svn)
+    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+        echo "Could not find sitegroup or environment." && return;
+    fi
+    if [ $# -eq 2 ]; then
+        source_tag=$(echo ${repo#* } | tr -d '\040\011\012\015')
+        target_branch=$2
+    else
+        source_tag=$2
+        target_branch=$3
+    fi
+    git clone ${repo% *}
+    cd $docroot
+    git pull --all
+    git checkout $source_tag
+    git checkout -b $target_branch
+}
+
+function ra-auto-mupdate {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-auto-mupdate $@; else git-auto-mupdate $@; fi
+}
+
+function ra-mupdate-add {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-add $@; else git-mupdate-add $@; fi
+}
+
+function ra-cupdate {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-cupdate $@; else git-cupdate $@; fi
+}
+
+function ra-mupdate-rev {
+  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-rev $@; else git-mupdate-rev $@; fi
+}
+
+function ra-init-repo {
+  if [[ "$(aht $1 repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
 }
