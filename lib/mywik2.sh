@@ -36,7 +36,7 @@ expect {
 }
 expect {
     "Enter passphrase: " {
-        send_user "Password incorrect.\n"
+        send_user "WiKID Password incorrect.\n"
         stty -echo
         send_user "WiKID Password: "
         set timeout -1
@@ -54,7 +54,7 @@ expect {
     }
     "Passcode: Failed" {
         close
-        send_user "Acquia PIN Incorrect.\n"
+        send_user "WiKID PIN Incorrect.\n"
         exit
     }
     -re "Passcode: (.*)\n" {
