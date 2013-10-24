@@ -643,7 +643,6 @@ function svn-init-repo {
     fi
     url=$(echo $repo | tr -d '\r')
     baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
-    source_tag=$(echo "$url" | sed "s/.*$docroot\///")
     if [ $# -eq 2 ]; then
       source_url=$url
       target_branch=$2
@@ -651,6 +650,7 @@ function svn-init-repo {
       source_url=$baseurl/$2
       target_branch=$3
     fi
+    source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
     mkdir $docroot && cd $docroot
     read -s -p "Enter SVN Password: " SVN_PASSWORD
     svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
