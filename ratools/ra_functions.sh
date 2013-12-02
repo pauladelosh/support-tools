@@ -624,6 +624,12 @@ git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Tic
 # Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
 #        svn-init-repo @<docroot>.<environment> <target_branch> 
 function svn-init-repo {
+    if [ -z "$SVN_USERNAME" ]; then
+      echo "Need to set SVN_USERNAME" && return
+    fi
+    if [ -z "$SVN_PASSWORD" ]; then
+      echo "Need to set SVN_PASSWORD" && return
+    fi
     if [ $# -lt 2 ]
       then echo "Missing docroot" && return
     fi
@@ -652,7 +658,6 @@ function svn-init-repo {
     fi
     source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
     mkdir $docroot && cd $docroot
-    read -s -p "Enter SVN Password: " SVN_PASSWORD
     svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
     while true; do
         echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
