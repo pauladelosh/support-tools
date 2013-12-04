@@ -143,7 +143,7 @@ function test_nagios_info() {
   ahtsep
   
   # Nagios downtime
-  if [ $devcloud -eq 0 -a "${CONFIG_NAGIOS_USERPASS:-x}" != x ]
+  if [ $devcloud -eq 0 ]
   then
     echo "Detected downtime from nagios:"
     nagios_url="https://perf-mon.acquia.com/site_downtime.php?stage=mc&sitename=${site}"
