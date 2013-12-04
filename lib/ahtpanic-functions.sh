@@ -360,7 +360,7 @@ function test_cacheaudit() {
 # Check DB size
 function test_dbsize() {
   echo "Showing largest database tables:"
-  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '| [1-9]\.[0-9][0-9][MG]'
+  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9]\.[0-9][0-9][MG]'
 SELECT CONCAT(table_schema, '.', table_name) as Table_name,
 CONCAT(ROUND(table_rows / 1000000, 2), 'M') rows,
 CONCAT(ROUND(data_length / ( 1024 * 1024 * 1024 ), 2), 'G') DATA,
