@@ -159,7 +159,7 @@ function test_nagios_info() {
           echo "  ... Complete list at: ${nagios_url}"
         fi
       else
-        echo "  ${COLOR_GREEN}OK: No recent downtime found at ${nagios_url}."
+        echo "  ${COLOR_GREEN}OK: No recent downtime found at ${nagios_url}"
       fi
     else
       echo "  ${COLOR_YELLOW}Can't parse Nagios due to IP restriction."
