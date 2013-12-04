@@ -147,16 +147,24 @@ function test_nagios_info() {
   then
     echo "Detected downtime from nagios:"
     nagios_url="https://perf-mon.acquia.com/site_downtime.php?stage=mc&sitename=${site}"
-    curl -s --user ${CONFIG_NAGIOS_USERPASS} "${nagios_url}" |sed -e "s/<br>/\n/g" |sed -e '1,2d' |grep '20.*$' >$tmpout2
-    if [ `grep -c . $tmpout2` -gt 0 ]
+    curl -s "${nagios_url}" >$tmpout
+    if [ `grep -c "401 Authorization Required" $tmpout` -eq 0 ]
     then
-      head -15 $tmpout2 |egrep --color=always "^|"`date +%Y-%m-%d`
-      if [ `grep -c . $tmpout2` -gt 15 ]
+      cat $tmpout |sed -e "s/<br>/\n/g" |sed -e '1,2d' |grep '20.*$' >$tmpout2
+      if [ `grep -c . $tmpout2` -gt 0 ]
       then
-        echo "  ... Complete list at: ${nagios_url}"
+        head -15 $tmpout2 |egrep --color=always "^|"`date +%Y-%m-%d`
+        if [ `grep -c . $tmpout2` -gt 15 ]
+        then
+          echo "  ... Complete list at: ${nagios_url}"
+        fi
+      else
+        echo "  ${COLOR_GREEN}OK: No recent downtime found at ${nagios_url}."
       fi
     else
-      echo "  ${COLOR_GREEN}OK: No recent downtime found at ${nagios_url}."
+      echo "  ${COLOR_YELLOW}Can't parse Nagios due to IP restriction."
+      echo "  Try either using the VPN or viewing on your browser instead:"
+      echo "     ${nagios_url}"
     fi
     echo "${COLOR_NONE}"
     ahtsep
