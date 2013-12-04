@@ -39,21 +39,25 @@ EOF
 ####################################################
 # START
 ####################################################
+
 # Basic checks
-if [ ! -r "$HELPER_SCRIPTS_PATH/ahtpanic.conf" ]
+# Check for aht command
+which aht >/dev/null 2>&1
+if [ $? -gt 0 ]
 then
-  echo "${COLOR_RED}Can't find $HELPER_SCRIPTS_PATH/ahtpanic.conf"
-  echo "Please copy the ahtpanic.conf.default to ahtpanic.conf and edit."
+  echo "${COLOR_RED}aht command not found!"
   ahtsep
   exit
 fi
-. $HELPER_SCRIPTS_PATH/ahtpanic.conf
+#Check the functions exist
 if [ ! -r "$HELPER_SCRIPTS_PATH/lib/ahtpanic-functions.sh" ]
 then
-  echo "${COLOR_YELLOW}WARNING! Could not find bin/aht-log-report.sh at $HELPER_SCRIPTS_PATH"
+  echo "${COLOR_YELLOW}WARNING! Could not find lib/ahtpanic-functions.sh at $HELPER_SCRIPTS_PATH"
   echo "Make sure the HELPER_SCRIPTS_PATH is set correctly."
   ahtsep
 fi
+# Include helper functions
+. $HELPER_SCRIPTS_PATH/lib/ahtpanic-functions.sh
 
 # Show help on empty call.
 if [ "${1:-x}" = x ]
@@ -61,9 +65,6 @@ then
   showhelp
   exit
 fi
-
-# Include helper functions
-. $HELPER_SCRIPTS_PATH/lib/ahtpanic-functions.sh
 
 # Get options 
 # http://stackoverflow.com/questions/402377/using-getopts-in-bash-shell-script-to-get-long-and-short-command-line-options/7680682#7680682
