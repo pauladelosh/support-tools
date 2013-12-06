@@ -6,7 +6,7 @@
 
 # SSHs into an address in a way that won't generate (too many?) strict warnings
 function ahtssh() {
-  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet $@
+  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet $@ |tr -d '\015'
 }
 
 # Create SSL tunnel to DB on local port 33066
@@ -58,24 +58,12 @@ function ahtslowquerydigest() {
 
 # Get the name(s) of the active balancer(s)
 function ahtgetactivebals() {
-  aht $STAGE @$1 --show=bal |grep ' bal-' |tr -d '\015' | awk '$3+0 > 0 { print $1 }'
-}
-
-# Get the names of the web(s)
-function ahtgetwebs() {
-  ahtaht @$1 |tr -d '\015' | egrep "srv-|web-|ded-|staging-" |cut -f2 -d' '
+  ahtaht --show=bal |grep ' bal-' | awk '$3+0 > 0 { print $1 }'
 }
 
 # Returns the name of the first web
 function ahtfirstweb() {
-  #echo ahtfirstweb STAGE:$STAGE site:$1
-  ahtgetwebs $1 |head -1
-}
-
-# Find the number (1-X) of a web (like web-4917)
-# Usage: ahtgetwebnumber sitename.env web-xxxx
-function ahtgetwebnumber() {
-  ahtgetwebs $1 |grep -n $2 |cut -f1 -d':'
+  echo $webs |cut -f1 -d' '
 }
 
 # Just output a nice separator!
@@ -483,23 +471,24 @@ function test_vars() {
   
 # Run ahtaudit script on access.log
 function test_logs() {
-  echo "Looking for and analyzing access.log..."
-  if [ ! -r $HELPER_SCRIPTS_PATH/bin/aht-log-report.sh ]
+  logfilename=access.log
+  echo "Looking for and analyzing $logfilename..."
+  scriptname=$HELPER_SCRIPTS_PATH/bin/aht-log-report.sh
+  if [ ! -r $scriptname ]
   then
-    echo "  ${COLOR_YELLOW}Could not find $HELPER_SCRIPTS_PATH/bin/aht-log-report.sh!"
+    echo "  ${COLOR_YELLOW}Could not find $scriptname!"
     echo "  Check that it exists and try again.${COLOR_NONE}"
     ahtsep
     return
   fi
   tmpscript=/tmp/ahtaudit_script.$$.bash
-  findlog=`ahtfindlog $SITENAME access.log |head -1`
+  findlog=`ahtfindlog $logfilename breakonfirst`
   if [ ${findlog:-x} != x ]
   then
     server=`echo $findlog |cut -f1 -d:`
-    #logfile=`echo $findlog |cut -f2 -d:`
-    echo "  access.log is in $server."
-    #echo $logfile
-    scp -q $HELPER_SCRIPTS_PATH/bin/aht-log-report.sh $server:$tmpscript 2>/dev/null
+    logfile=`echo $findlog |cut -f2 -d:`
+    echo "  $logfile is in $server."
+    scp -q $scriptname $server:$tmpscript 2>/dev/null
     if [ $env != 'prod' ]
     then
       site=$site$env
@@ -507,7 +496,7 @@ function test_logs() {
     ahtsep
     echo "bash $tmpscript $site" | ahtaht ssh logs 
   else
-    echo "  ${COLOR_YELLOW}No access.log found!${COLOR_NONE}"
+    echo "  ${COLOR_YELLOW}No $logfilename found!${COLOR_NONE}"
     echo ""
     ahtsep
   fi
@@ -515,26 +504,28 @@ function test_logs() {
   
 # Run ahtaudit script on drupal-watchdog.log
 function test_drupalwatchdog() {
-  echo "Looking for and analyzing drupal-watchdog.log ..."
-  if [ ! -r $HELPER_SCRIPTS_PATH/bin/aht-drupal-requests-report.sh ]
+  logfilename=drupal-watchdog.log
+  echo "Looking for and analyzing $logfilename..."
+  scriptname=$HELPER_SCRIPTS_PATH/bin/aht-drupal-requests-report.sh
+  if [ ! -r $scriptname ]
   then
-    echo "  ${COLOR_YELLOW}Could not find $HELPER_SCRIPTS_PATH/bin/aht-drupal-requests-report.sh!"
+    echo "  ${COLOR_YELLOW}Could not find $scriptname!"
     echo "  Check that it exists and try again.${COLOR_NONE}"
     ahtsep
     return
   fi
   tmpscript=/tmp/ahtaudit_script.$$.bash
-  findlog=`ahtfindlog $SITENAME drupal-watchdog.log breakonfirst |head -1`
+  findlog=`ahtfindlog $logfilename breakonfirst`
   if [ ${findlog:-x} != x ]
   then
     server=`echo $findlog |cut -f1 -d:`
     logfile=`echo $findlog |cut -f2 -d:`
     echo "  $logfile is in $server."
-    scp -q $HELPER_SCRIPTS_PATH/bin/aht-drupal-requests-report.sh $server:$tmpscript 2>/dev/null
+    scp -q $scriptname $server:$tmpscript 2>/dev/null
     ahtsep
     echo "sudo bash $tmpscript $logfile" | ahtssh $server 
   else
-    echo "  ${COLOR_YELLOW}No drupal-watchdog.log found!${COLOR_NONE}"
+    echo "  ${COLOR_YELLOW}No $logfilename found!${COLOR_NONE}"
     echo ""
   fi
 }

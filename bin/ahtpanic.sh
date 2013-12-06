@@ -154,8 +154,6 @@ ahtsep
 tmpout=/tmp/tmp.$$
 tmpout2=/tmp/tmp.$$.2
   
-# Get firstweb
-web=`ahtfirstweb $SITENAME`
 # devcloud/not devcloud
 devcloud=`echo $web |grep -c srv-`
 # split site/env
@@ -174,6 +172,8 @@ else
 fi
 # Get the webs
 webs=`egrep "srv-|web-|ded-|staging-" $tmpout |cut -f2 -d' '`
+# Get firstweb
+web=`ahtfirstweb $SITENAME`
 # Detect all dedicated balancers
 #dedicated_bals=`cat $tmpout |egrep 'bal-[0-9]+ *dedicated *[1-9]' |awk '{ print $1 }'`
 
@@ -230,5 +230,4 @@ then
 fi
 
 # Finish & cleanup.
-rm $tmpout $tmpout2
-
+rm $tmpout $tmpout2 2>/dev/null
