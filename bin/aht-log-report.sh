@@ -47,10 +47,9 @@ function ahttable() {
   if [ "${1:-x}" != x ]
   then
     printf $1"\n" >$tmpout
-    #sed 's/^\s\+//' >>$tmpout
+    cat >>$tmpout
     column -s$'\t' -t $tmpout
   else
-    #sed 's/^\s\+//' |
     column -s$'\t' -t
   fi
 }
