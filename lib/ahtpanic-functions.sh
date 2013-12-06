@@ -6,7 +6,7 @@
 
 # SSHs into an address in a way that won't generate (too many?) strict warnings
 function ahtssh() {
-  ssh -t -t -o StrictHostKeyChecking=no -o LogLevel=quiet $@
+  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet $@
 }
 
 # Create SSL tunnel to DB on local port 33066
