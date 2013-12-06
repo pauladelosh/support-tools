@@ -63,7 +63,7 @@ function ahtgetactivebals() {
 
 # Get the names of the web(s)
 function ahtgetwebs() {
-  aht $STAGE @$1 |tr -d '\015' | egrep "srv-|web-|ded-|staging-" |cut -f2 -d' '
+  ahtaht @$1 |tr -d '\015' | egrep "srv-|web-|ded-|staging-" |cut -f2 -d' '
 }
 
 # Returns the name of the first web
@@ -205,9 +205,9 @@ function test_varnish_stats() {
   ahtsep
 }
   
-#PHP-CGI Check process limit settings, number of skip spawns
+#PHP-CGI Check process limit settings
 function test_phpcgi_procs() {
-  echo "Checking PHP proc limits/status:"
+  echo "Checking PHP-CGI proc limits/status:"
   ahtaht php-cgi --conf |grep -v defunct |awk '
     function alert(value, flag) {
       #return (flag ? "'$COLOR_RED'" : "") value "'$COLOR_NONE'";
@@ -240,18 +240,46 @@ function test_phpcgi_procs() {
   ahtsep
 }
 
-# PHP-CGI
+#PHP-FPM Check process limit settings
+function test_phpfpm_procs() {
+  echo "Checking PHP-FPM proc limits/status:"
+  echo $webs |tr ' ' '\n' |awk '
+    function alert(value, flag) {
+      #return (flag ? "'$COLOR_RED'" : "") value "'$COLOR_NONE'";
+      return value (flag ? "⚠warn!" : "");
+    }
+    BEGIN { 
+      user="'${site}'";
+      dotless_sitename="'${site}'" ("'$env'" != "prod" ? "'$env'" : "")
+      # Header 
+      print "Server MaxProcs-'$site$env' Active-'$site$env' FreeMem TotalMem"
+    }
+    # For each server
+    {
+      server=$0
+      # Get max fpm processes config
+      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " grep pm.max_children /var/www/site-fpm/'$SITENAME'/pool.d/*conf |cut -f2 -d'='" |getline max_docroot
+      # Get number of processes running per docroot
+      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " ps -ef |grep -c \"[0-9] php-fpm: pool " dotless_sitename "\"" |getline docroot_running;
+      # Get memory info from server.
+      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " free -m |grep Mem" |getline;
+      total_mem=$2; 
+      free_mem=$3;
+      # Print the line
+      print server " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "kB " total_mem "kB";
+    }' |column -t
+}
+
+# PHP-CGI number of skip spawns
 function test_phpcgi_skips() {
-  #ahtssh $web "sudo grep \"skip the spawn request\" /var/log/apache2/error.log |awk -F: '{ print \$1 \":\" substr(\$2,1,1) \"X:XX\" }' |sort |uniq -c" >$tmpout
   ahtssh $web "sudo grep \"skip the spawn request\" /var/log/apache2/error.log |awk -F: '{ print substr(\$1,2) \":XX\" }' |sort |uniq -c" >$tmpout
   echo "Skip-spawns for today:"
   ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No skip spawns found.${COLOR_NONE}" "${COLOR_RED}"
   ahtsep
 }
 
-#FPM
+#FPM number of skip spawns
 function test_phpfpm_skips() {
-  #echo 'tail -5000 fpm-error.log | grep "you may need to increase pm.start_servers"' |ahtaht ssh logs |awk -F: '{ print $1 ":" substr($2,1,1) "X:XX" }' |sort |uniq -c  >$tmpout
   echo 'tail -5000 fpm-error.log | grep "you may need to increase pm.start_servers"' |ahtaht ssh logs |awk -F: '{ print $1 ":XX:XX" }' |sort |uniq -c  >$tmpout
   echo "Skip-spawns for today:"
   ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No skip spawns found.${COLOR_NONE}" "${COLOR_RED}"

@@ -8,10 +8,9 @@
 # TODOS:
 # * Check that settings.php use $_ENV instead of $_SERVER for AH_ variables
 #   (so that they work with drush too)
-# * Get fpm settings.
 
 # Constants
-# Folder where this script is installed
+# Folder where this and other supporting scripts are installed
 HELPER_SCRIPTS_PATH="."
 # See http://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
 COLOR_RED=$(tput setaf 1) #"\[\033[0;31m\]"
@@ -19,11 +18,14 @@ COLOR_YELLOW=$(tput setaf 5) #"\[\033[0;33m\]"
 COLOR_GREEN=$(tput setaf 2) #"\[\033[0;32m\]"
 COLOR_GRAY=$(tput setaf 7) #"\[\033[2;37m\]"
 COLOR_NONE=$(tput sgr0) #"\[\033[0m\]"
+# Environment for aht runs
 STAGE=''
 SITENAME=''
 URI=''
+# Flags for what test sets should be run
 BASICCHECK_FLAG=1
 DRUSH_FLAG=1
+LOGS_FLAG=1
 
 function showhelp() {
   cat <<EOF
@@ -108,6 +110,12 @@ do
     --skipdrush)
       DRUSH_FLAG=0
       ;;
+    --skip-logs)
+      LOGS_FLAG=0
+      ;;
+    --skiplogs)
+      LOGS_FLAG=0
+      ;;
     --*)
       # error unknown (long) option $1
       echo "Unknown option $1"
@@ -164,9 +172,12 @@ then
 else
   FPM_FLAG=0
 fi
+# Get the webs
+webs=`egrep "srv-|web-|ded-|staging-" $tmpout |cut -f2 -d' '`
 # Detect all dedicated balancers
 #dedicated_bals=`cat $tmpout |egrep 'bal-[0-9]+ *dedicated *[1-9]' |awk '{ print $1 }'`
-  
+
+# Run basic checks
 if [ $BASICCHECK_FLAG = 1 ]
 then
   test_nagios_info
@@ -186,6 +197,7 @@ then
     test_phpcgi_procs
     test_phpcgi_skips
   else
+    test_phpfpm_procs
     test_phpfpm_skips
   fi
   test_dns
@@ -193,6 +205,7 @@ then
   test_tasks
 fi
 
+# Run Drush-based checks
 if [ $DRUSH_FLAG -eq 1 ]
 then
   test_ahtaudit
@@ -203,14 +216,18 @@ then
     test_pressflow
     test_modules
     test_cacheaudit
+    test_duplicatemodules
+    test_vars
     test_dbsize
   fi
 fi
 
-test_duplicatemodules
-test_vars
-test_logs
-test_drupalwatchdog
+# Run Drush-based checks
+if [ $LOGS_FLAG -eq 1 ]
+then
+  test_logs
+  test_drupalwatchdog
+fi
 
 # Finish & cleanup.
 rm $tmpout $tmpout2

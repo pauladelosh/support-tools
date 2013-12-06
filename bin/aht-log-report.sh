@@ -20,7 +20,7 @@ hostname=`hostname -s`
 # See http://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
 TERM=xterm-color
 COLOR_RED=$(tput setaf 1) #"\[\033[0;31m\]"
-COLOR_YELLOW=$(tput setaf 5) #"\[\033[0;33m\]"
+COLOR_YELLOW=$(tput setaf 3) #"\[\033[0;33m\]"
 COLOR_GREEN=$(tput setaf 2) #"\[\033[0;32m\]"
 COLOR_GRAY=$(tput setaf 7) #"\[\033[2;37m\]"
 COLOR_NONE=$(tput sgr0) #"\[\033[0m\]"
@@ -46,11 +46,12 @@ function ahtcounttop() {
 function ahttable() {
   if [ "${1:-x}" != x ]
   then
-    echo $1 >$tmpout
-    sed 's/^\s\+//' >>$tmpout
-    column -t -s $'\t ' $tmpout
+    printf $1"\n" >$tmpout
+    #sed 's/^\s\+//' >>$tmpout
+    column -s$'\t' -t $tmpout
   else
-    sed 's/^\s\+//' |column -t -s $'\t '
+    #sed 's/^\s\+//' |
+    column -s$'\t' -t
   fi
 }
 
@@ -109,7 +110,7 @@ END {
 ahtsep
 
 echo "Total byte sizes for logs on $hostname:"
-stat *.log --format="%s %n" | sort -nr |awk '{ printf("%.1fM %s\n",$1/1024/1024, $2 ($1+0 > 10000000 ? " '$COLOR_YELLOW'**WARNING**'$COLOR_NONE'" : "")) }' |ahttable "Size Filename"
+stat *.log --format="%s %n" | sort -nr |awk '{ printf("%.1fM\t%s\n",$1/1024/1024, $2 ($1+0 > 10000000 ? " '$COLOR_YELLOW'**WARNING**'$COLOR_NONE'" : "")) }' |ahttable "Size\tFilename"
 ahtsep
 
 sitename=$1
@@ -137,18 +138,21 @@ NR==1 {
   } 
 } 
 END { 
-  print "Date/Time #Reqs Avg(s) Max(s) #>" slowtime "s HTTP:2XX 3XX 4XX 5XX";
-  for (t in times) { 
-    printf ("%s %6d %3.2f %3.2f %5d", t, numtot[t], durtot[t]/numtot[t], max[t], 
+  print "Date/Time\t#Reqs\tAvg(s)\tMax(s)\t#>" slowtime "s\tHTTP:2XX\t3XX\t4XX\t5XX";
+  for (t in times) {
+    printf ("%s\t%d\t%.2f\t%.2f\t%d", t, numtot[t], durtot[t]/numtot[t], max[t],
       (slow[t]/numtot[t] > 0.05 ? "'${COLOR_RED}'" : "") slow[t] "'${COLOR_NONE}'");
     # Print count per status
-    printf (" %5d %5d %5d %5d\n",
+    printf ("\t%d\t%d\t%s%d'"${COLOR_NONE}"'\t%s%d'"${COLOR_NONE}"'\n",
       stats[t "2XX"],
       stats[t "3XX"],
-      (stats[t "4XX"]/numtot[t] > 0.05 ? "'${COLOR_RED}'" : "") stats[t "4XX"] "'${COLOR_NONE}'",
-      "'${COLOR_RED}'" stats[t "5XX"] "'${COLOR_NONE}'")
+      # Determine color
+      (stats[t "4XX"]/numtot[t]) > 0.05 ? "'${COLOR_RED}'" : "",
+      stats[t "4XX"],
+      (stats[t "5XX"]) > 0 ? "'${COLOR_RED}'" : "", 
+      stats[t "5XX"])
   }
-}' |sort -n |ahttable
+}' |ahttable
 ahtsep
 
 if [ -r $slowout ]
@@ -156,7 +160,7 @@ then
   echo "Count of top slow HTTP requests on $hostname:"
   cat $slowout |awk -F' ' '
   {
-    req=substr($6,2) " " $7 #" " $9
+    req=substr($6,2) "\t" $7
     dur=substr($0, index($0, "request_time=") + 13)/1000000;
     if (dur>max[req]) { max[req] = dur }
     cnt[req]++
@@ -165,10 +169,10 @@ then
   END {
     for (r in reqs) {
       if (cnt[r] > 0) {
-        printf("%6d %3.2f %s\n", cnt[r], max[r], r);
+        printf("%d\t%.2f\t%s\n", cnt[r], max[r], r);
       }
     }
-  }' | sort -nr |head -$topcount | ahttable "Count Max(s) Method URL"
+  }' | sort -nr |head -$topcount | ahttable "Count\tMax(s)\tMethod\tURL"
   ahtsep
   rm $slowout
 fi
@@ -195,7 +199,7 @@ ahtcatnonempty $tmpout2 "${COLOR_GREEN}No calls to cron.php via HTTP request fou
 ahtsep
 
 echo "Count of top error messages in php-errors.log on $hostname:"
-cut -f2- -d']' php-errors.log |ahtcounttop
+cut -f2- -d']' php-errors.log |ahtcounttop |egrep --color=always "^|PHP Fatal error"
 #ahtcatnonempty $tmpout "${COLOR_GREEN}No errors found." "${COLOR_RED}"
 ahtsep
 
