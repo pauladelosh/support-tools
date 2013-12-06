@@ -87,13 +87,13 @@ function ahtsep() {
 # Finds which server a logfile lives at.
 # Usage: ahtfindlog sitename.env xyz.log [breakonfirst]
 function ahtfindlog() {
-  for nom in `ahtgetwebs $1`
+  for nom in $webs
   do
-    here=`ahtssh $nom 'sudo find /var/log/sites/'"$1"'/logs/'"$nom/$2"' -size +1k 2>/dev/null'`
+    here=`ahtssh $nom 'sudo find /var/log/sites/'$SITENAME'/logs/'"$nom/$1"' -size +1k 2>/dev/null'`
     if [ "${here:-x}" != x ]
     then
       echo $nom:$here
-      if [ "${3:-x}" = "breakonfirst" ]
+      if [ "${2:-x}" = "breakonfirst" ]
       then
         break
       fi
