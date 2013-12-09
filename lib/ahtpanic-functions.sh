@@ -326,7 +326,7 @@ function test_modules() {
   
   # Check for offending modules
   # TODO: Separate criticals from warnings
-  egrep  "^(dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api)$" $tmpout >$tmpout2 2>/dev/null
+  egrep  "^(robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api)$" $tmpout >$tmpout2 2>/dev/null
   if [ `grep -c . $tmpout2` -gt 0 ]
   then
     echo $COLOR_RED
@@ -489,12 +489,13 @@ function test_logs() {
     logfile=`echo $findlog |cut -f2 -d:`
     echo "  $logfile is in $server."
     scp -q $scriptname $server:$tmpscript 2>/dev/null
+    site_argument=$site
     if [ $env != 'prod' ]
     then
-      site=$site$env
+      site_argument=$site$env
     fi
     ahtsep
-    echo "bash $tmpscript $site" | ahtaht ssh logs 
+    echo "bash $tmpscript $site_argument" | ahtaht ssh logs 
   else
     echo "  ${COLOR_YELLOW}No $logfilename found!${COLOR_NONE}"
     echo ""
