@@ -114,15 +114,16 @@ ahtsep
 
 sitename=$1
 slowout=/tmp/slow.$$.txt
+cat /dev/null >$slowout
 echo "Per-hour requests and slow requests for $sitename on $hostname: (Note: Times are GMT+0)"
 ahtcat access.log |awk -F ' ' '
 NR==1 { 
   slowtime='$slowtime';
 }
 /hosting_site='$sitename' / { 
-  pos=index($0, "request_time="); 
-  dur=substr($0, pos + 13)/1000000; 
-  if (dur>0) { 
+  pos=index($0, "request_time=");
+  if (pos>0) { 
+    dur=substr($0, pos + 13)/1000000; 
     time=substr($4, 2, 14)":XX";
     times[time]=time; 
     numtot[time]++; 
@@ -134,9 +135,9 @@ NR==1 {
     max[time] = (max[time] < dur) ? dur : max[time];
     stat=substr($9,1,1) "XX"
     stats[time stat]++
-  } 
+  }
 } 
-END { 
+END {
   print "Date/Time\t#Reqs\tAvg(s)\tMax(s)\t#>" slowtime "s\tHTTP:2XX\t3XX\t4XX\t5XX";
   for (t in times) {
     printf ("%s\t%d\t%.2f\t%.2f\t%d", t, numtot[t], durtot[t]/numtot[t], max[t],
@@ -151,7 +152,7 @@ END {
       (stats[t "5XX"]) > 0 ? "'${COLOR_RED}'" : "", 
       stats[t "5XX"])
   }
-}' |ahttable
+}' |sort -n |ahttable
 ahtsep
 
 if [ -r $slowout ]
@@ -164,16 +165,16 @@ then
     if (dur>max[req]) { max[req] = dur }
     cnt[req]++
     reqs[req]=req
+    tot[req]+=dur
   }
   END {
     for (r in reqs) {
       if (cnt[r] > 0) {
-        printf("%d\t%.2f\t%s\n", cnt[r], max[r], r);
+        printf("%d\t%.2f\t%.2f\t%s\n", cnt[r], max[r], tot[r]/cnt[r], r);
       }
     }
-  }' | sort -nr |head -$topcount | ahttable "Count\tMax(s)\tMethod\tURL"
+  }' | sort -nr |head -10 #| ahttable "Count\tMax(s)\tAvg(s)\tMethod\tURL"
   ahtsep
-  rm $slowout
 fi
 
 echo "Count of top paths that caused a 5XX error on $hostname:"
