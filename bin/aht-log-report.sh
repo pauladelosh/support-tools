@@ -173,7 +173,7 @@ then
         printf("%d\t%.2f\t%.2f\t%s\n", cnt[r], max[r], tot[r]/cnt[r], r);
       }
     }
-  }' | sort -nr |head -10 #| ahttable "Count\tMax(s)\tAvg(s)\tMethod\tURL"
+  }' | sort -nr |head -10 | ahttable "Count\tMax(s)\tAvg(s)\tMethod\tURL"
   ahtsep
 fi
 
