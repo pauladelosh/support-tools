@@ -48,12 +48,14 @@ echo "      SVN, Module Update (svn-mupdate <module> <source version> <target ve
 echo "      SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)"
 echo "      SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)"
 echo "      SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
+echo "                                 (svn-init-repo @<docroot>.<environment> <branch_name> (This will pull the source_tag from the environment))"
 echo "      Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
 echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
 echo "      Git, Initialize Repository (git-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
+echo "                                 (git-init-repo @<docroot>.<environment> <branch_name> (This will pull the source_tag from the environment))"
 echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-33333"
 echo ""
 }
@@ -624,6 +626,12 @@ git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Tic
 # Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
 #        svn-init-repo @<docroot>.<environment> <target_branch> 
 function svn-init-repo {
+    if [ -z "$SVN_USERNAME" ]; then
+      echo "Need to set SVN_USERNAME" && return
+    fi
+    if [ -z "$SVN_PASSWORD" ]; then
+      echo "Need to set SVN_PASSWORD" && return
+    fi
     if [ $# -lt 2 ]
       then echo "Missing docroot" && return
     fi
@@ -652,7 +660,6 @@ function svn-init-repo {
     fi
     source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
     mkdir $docroot && cd $docroot
-    read -s -p "Enter SVN Password: " SVN_PASSWORD
     svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
     while true; do
         echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
