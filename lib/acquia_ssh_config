@@ -3,14 +3,14 @@
 # Using this file:
 #
 # Edit --USERNAME-- and replace with your bastion user name
-# EDIT --KEYNAME-- and replace with the name of your key file (verify that the path is correct)
-# Place this file in ~/.ssh/config
+# Edit --KEYNAME-- and replace with the name of your key file (verify that the path is correct)
+# Edit --BASTION-- and replace with your bastion server name (e.g. bastion)
+# Place this file in ~/.ssh/ah_config
 #
 #########################################################
 
-
 Host bastion
-  HostName bastion-21.network.hosting.acquia.com
+  HostName --BASTION--.network.hosting.acquia.com
   User --USERNAME--
   Port 40506
   ServerAliveInterval 60
@@ -62,7 +62,7 @@ Host svn-*.hosting.acquia.com
   IdentityFile --KEYNAME--
 
 Host *.castle
-  ProxyCommand ssh bastion-3 nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion-3 nc %h %p
   HostName %h.hosting.acquia.com
   User --USERNAME--
   Port 40506
@@ -72,7 +72,7 @@ Host *.castle
   IdentityFile --KEYNAME--
 
 Host *.castle.hosting.acquia.com
-  ProxyCommand ssh bastion-3 nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion-3 nc %h %p
   HostName %h
   User --USERNAME--
   Port 40506
@@ -82,7 +82,7 @@ Host *.castle.hosting.acquia.com
   IdentityFile --KEYNAME--
 
 Host *.hosting.acquia.com
-  ProxyCommand ssh bastion nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h
   User --USERNAME--
   Port 40506
@@ -92,7 +92,7 @@ Host *.hosting.acquia.com
   IdentityFile --KEYNAME--
 
 Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
-  ProxyCommand ssh bastion nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.hosting.acquia.com
   User --USERNAME--
   Port 40506
@@ -102,7 +102,7 @@ Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.net
   IdentityFile --KEYNAME--
 
 Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-* bal-*
-  ProxyCommand ssh bastion nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.prod.hosting.acquia.com
   User --USERNAME--
   Port 40506
@@ -112,7 +112,7 @@ Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-* bal-*
   IdentityFile --KEYNAME--
 
 Host srv-* free-*
-  ProxyCommand ssh bastion nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.devcloud.hosting.acquia.com
   User --USERNAME--
   Port 40506
@@ -122,7 +122,7 @@ Host srv-* free-*
   IdentityFile --KEYNAME--
 
 Host managed-*
-  ProxyCommand ssh bastion nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.gardens.hosting.acquia.com
   User --USERNAME--
   Port 40506
@@ -132,7 +132,7 @@ Host managed-*
   IdentityFile --KEYNAME--
 
 Host *.e2a.us
-  ProxyCommand ssh bastion nc %h %p
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h
   User --USERNAME--
   Port 40506

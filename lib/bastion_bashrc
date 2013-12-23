@@ -36,27 +36,10 @@
 #    bald   bal-NNN.devcloud.hosting.acquia.com
 #
 #####################################################################
-#
-#  Configuration
-#
-#####################################################################
-#
-#  Minimally you will need to change the following:
-#
-#  1. Change AH_BASTION to the bastion host you connect to
-#
-#  2. Change AH_SSH_USER to your bastion username
-#
-#####################################################################
 
 export AH_SSH=/usr/bin/ssh
 export AH_SCP=/usr/bin/scp
-export AH_SSH_USER=bastion_username
-export AH_SSH_CONFIG=/Users/local_username/.ssh/ah_config
-export AH_RSA_KEY=/Users/local_username/.ssh/bastion_username_rsa
-export AH_BASTION=bastion-21
-export AH_PROXY_COMMAND="ssh $AH_BASTION nc %h %p"
-export AH_DEST_PORT=40506
+export AH_SSH_CONFIG=/Users/--LOCAL_USERNAME--/.ssh/ah_config
 
 #
 # SSH via bastion conenction
