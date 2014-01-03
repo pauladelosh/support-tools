@@ -31,10 +31,13 @@ function showhelp() {
   cat <<EOF
 This is a sniff-out-everything script that uncovers a lot of potential problems.
 Note: you should give it a --uri argument if auditing a multisite install.
-Usage: $0 sitename.env
-      $0 --skipbasic eluniverso.prod  # Skips some basic checks and goes directly to the good stuff.
-      $0 --uri=www.eluniverso.com eluniverso.prod  # Give it a URI for drush
-      $0 --mc eluniverso.prod  # Forces managed cloud, use --dc for devcloud
+Usage: 
+  $0 sitename.env [--uri=URI] [--mc|--dc] [--skip-(basic|drush|logs)]
+  
+Examples:
+  $0 --skip-basic eluniverso.prod  # Skips some basic checks
+  $0 --uri=www.eluniverso.com eluniverso.prod  # Give it a URI for drush
+  $0 --mc eluniverso.prod  # Forces managed cloud, use --dc for devcloud
 EOF
 }
 
@@ -214,6 +217,7 @@ then
   if [ $drushworks_flag -eq 1 ]
   then
     test_pressflow
+    test_anonsession
     test_modules
     test_cacheaudit
     test_duplicatemodules

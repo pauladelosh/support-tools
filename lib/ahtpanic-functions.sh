@@ -314,7 +314,50 @@ EOF
   else
     echo "  ${COLOR_GREEN}Drupal version OK:"
   fi
-  cat $tmpout2
+  cat $tmpout2 |awk '{ print "  " $0 }'
+  ahtsep
+}
+
+# Check to see if there's a session cookie being set for anon users
+function test_anonsession() {
+  echo "Checking for anonymous user sessions:"
+  problem=0
+  # Get valid domains (only those marked "OK" by aht domain-check)
+  ahtaht dc |grep "ok" |awk '{ print $1 }' >$tmpout
+  # Cycle thru domains and check for session cookies.
+  for domain in `cat $tmpout`
+  do
+    domain="http://${domain}/"
+    #Get headers
+    curl -vv -o /dev/null $domain 2>&1 |grep -e "^[<>]" >$tmpout2
+    # Check if there's a Set-Cookie: ... SESS  somewhere
+    if [ `grep -c "< Set-Cookie: .*SESS" $tmpout2` -gt 0 ]
+    then
+      echo "  ${COLOR_RED}$domain: Anonymous SESS cookie found!!${COLOR_NONE}"
+      problem=1
+      # Try to get anon. sessions from the DB table
+      echo "    * ${COLOR_RED}10 most recent sessions set in {sessions} table:"
+      echo "SELECT uid,hostname,timestamp,FROM_UNIXTIME(timestamp),LEFT(session,80) FROM sessions WHERE uid = 0 ORDER BY timestamp DESC LIMIT 0,10;" |ahtaht --uri=$domain drush sql-cli |awk '{ print "      " $0 }'
+      echo "${COLOR_NONE}"
+    else
+      # Check for redirection
+      grep ". Location:" $tmpout2 > $tmpout
+      if [ `grep -c . $tmpout` -eq 1 ]
+      then
+        # Show redirect header
+        echo "  ${COLOR_YELLOW}$domain ==> Redirect: "`cat $tmpout`
+      else
+        # No redirect nor SESS cookie, say things are OK.
+        echo "  ${COLOR_GREEN}$domain: OK, no SESS cookie${COLOR_NONE}"
+      fi
+    fi
+  done
+  if [ $problem -eq 1 ]
+  then
+    echo "$COLOR_RED"
+    ahtfiglet "Anonymous sessions found"
+    echo "$COLOR_NONE"
+  fi
   ahtsep
 }
 
