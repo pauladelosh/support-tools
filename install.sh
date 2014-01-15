@@ -126,7 +126,7 @@ if [ "$install_ssh" == "yes" ]
       then
         existing_user=`grep -A 10 'Host bastion' ${ssh_config_file} | grep -m 1 User | grep -o '[a-zA-Z0-9]\+$'`
     fi
-    echo -n "What is your acquia hosting username? [$existing_user]: "
+    echo -n "What is your bastion username? [$existing_user]: "
     read acquia_username
     if [ "$acquia_username" == "" ]
       then
