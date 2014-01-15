@@ -62,7 +62,7 @@ close
 wait
 
 # SSH and login to the bastion server.
-spawn -noecho ssh bastion
+spawn -noecho ssh -F "$env(HOME)/.ssh/ah_config" bastion
 expect {
     "Password:" {
         send "$passcode\n"
