@@ -20,7 +20,7 @@ Host bastion
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
 
-Host bastion-21 bastion-22
+Host bastion-21 bastion-22 bastion-133
   HostName %h.network.hosting.acquia.com
   User --USERNAME--
   Port 40506
