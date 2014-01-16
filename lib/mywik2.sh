@@ -65,7 +65,12 @@ close
 wait
 
 # SSH and login to the bastion server.
-spawn -noecho ssh bastion
+# Check for AH_SSH_CONFIG
+if {[info exists env(AH_SSH_CONFIG)]} {
+    spawn -noecho ssh -F $env(AH_SSH_CONFIG) bastion
+} else {
+    spawn -noecho ssh bastion
+}
 expect {
     "Password:" {
         send "$passcode\n"
