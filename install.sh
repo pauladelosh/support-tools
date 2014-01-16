@@ -49,7 +49,9 @@ if [ "$install_bash" == "yes" ]
       then
         echo "
 # include AH profile
-. ~/.ah_profile
+if [ -f ~/.ah_profile ]; then
+  . ~/.ah_profile
+fi
 " >> $profile_file
     fi
 
