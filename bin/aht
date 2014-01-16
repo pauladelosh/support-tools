@@ -47,6 +47,6 @@ if (empty($ahtools_path)) {
 elseif (strtolower($ahtools_path) == 'test') {
   $ahtools_path = 'support_bin_test';
 }
-$command = "ssh -tq bastion /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$stages} " . implode(' ', $argv);
+$command = "ssh -tq -F ~/.ssh/ah_config bastion /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$stages} " . implode(' ', $argv);
 passthru($command, $return_code);
 exit($return_code);
