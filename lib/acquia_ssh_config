@@ -101,7 +101,7 @@ Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.net
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
 
-Host dbmaster-* ded-* web-* staging-* fsdb-* custom-* managed-* bal-*
+Host dbmaster-* ded-* web-* staging-* fsdb-* fsdbmesh-* custom-* managed-* bal-*
   ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.prod.hosting.acquia.com
   User --USERNAME--
