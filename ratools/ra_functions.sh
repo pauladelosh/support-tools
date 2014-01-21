@@ -756,6 +756,5 @@ function ra-init-repo {
     echo "Example: ra-init-repo --mc $site source_tag target_branch"
     return
   fi
-  return
   if [[ "$(aht $site repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
 }
