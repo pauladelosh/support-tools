@@ -118,6 +118,52 @@ function ahtcatnonempty() {
   fi
 }
 
+# Check that all webs have the same code deployed
+function test_code_deploy() {
+  site_argument=$site
+  if [ $env != 'prod' ]
+  then
+    if [ $env == 'test' ]
+    then
+      site_argument=${site}stg
+    else
+      site_argument=$site$env
+    fi
+  fi
+  folder="/var/www/html/$site_argument"
+  echo "Checking deployed code across all webs in $folder"
+  cat /dev/null >$tmpout
+  for web in $webs
+  do
+    echo "$web: " `ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet $web "find $folder -maxdepth 3 -type d |wc -l"` >>$tmpout
+  done
+  awk -F: '
+    NR==1 {
+      max=$2; err=0;
+    }
+    NR > 1 {
+      if ($2!=max) { err=1; }
+      if ($2 > max) { max = $2; }
+      data[$1]=$2;
+    }
+    END {
+      if (err) {
+        print "\n'$COLOR_RED'PROBLEM FOUND! There should be " max " folders.'$COLOR_NONE'";
+        for (web in data) {
+          n=data[web]+0;
+          if (n<max) { printf "'$COLOR_RED'"; }
+          printf web ": " n " folders";
+          if (n<max) { printf " ***"; }
+          printf "'$COLOR_NONE'\n";
+        }
+      }
+      else {
+        print "OK. " max " folders found in deployed code."
+      }
+    }' $tmpout
+  ahtsep
+}
+
 # 
 function test_nagios_info() {
   # Nagios urls
@@ -418,6 +464,24 @@ function test_cacheaudit() {
 
 # Check DB size
 function test_dbsize() {
+  echo "Showing DB data use:"
+  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }'
+SELECT IFNULL(B.engine,'Total') "Storage Engine",
+CONCAT(LPAD(REPLACE(FORMAT(B.DSize/POWER(1024,pw),3),',',''),17,' '),' ',
+SUBSTR(' KMGTP',pw+1,1),'B') "Data Size", CONCAT(LPAD(REPLACE(
+FORMAT(B.ISize/POWER(1024,pw),3),',',''),17,' '),' ',
+SUBSTR(' KMGTP',pw+1,1),'B') "Index Size", CONCAT(LPAD(REPLACE(
+FORMAT(B.TSize/POWER(1024,pw),3),',',''),17,' '),' ',
+SUBSTR(' KMGTP',pw+1,1),'B') "Table Size" FROM
+(SELECT engine,SUM(data_length) DSize,SUM(index_length) ISize,
+SUM(data_length+index_length) TSize FROM
+information_schema.tables WHERE table_schema NOT IN
+('mysql','information_schema','performance_schema') AND
+engine IS NOT NULL GROUP BY engine WITH ROLLUP) B,
+(SELECT 3 pw) A ORDER BY TSize;
+EOF
+  ahtsep
+
   echo "Showing largest database tables:"
   cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9]\.[0-9][0-9][MG]'
 SELECT CONCAT(table_schema, '.', table_name) as Table_name,
@@ -535,7 +599,12 @@ function test_logs() {
     site_argument=$site
     if [ $env != 'prod' ]
     then
-      site_argument=$site$env
+      if [ $env == 'test' ]
+      then
+        site_argument=${site}stg
+      else
+        site_argument=$site$env
+      fi
     fi
     ahtsep
     echo "bash $tmpscript $site_argument" | ahtaht ssh logs 

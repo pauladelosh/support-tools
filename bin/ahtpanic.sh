@@ -183,6 +183,10 @@ web=`ahtfirstweb $SITENAME`
 # Run basic checks
 if [ $BASICCHECK_FLAG = 1 ]
 then
+  if [ $devcloud -eq 0 ]
+  then
+    test_code_deploy
+  fi
   test_nagios_info
   
   # Add graphs to balancers if dedicated
