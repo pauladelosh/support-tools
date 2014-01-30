@@ -221,8 +221,8 @@ echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr
 while svn status --no-ignore | egrep -q '.orig|.rej'; do 
   svn status --no-ignore | egrep '.rej|.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
-  echo "to change into repository: cd `pwd`"
-  echo "to locate all reject/original files: svn status --no-ignore | egrep '.orig|.rej'"
+  echo "to change into repository and find all reject/original files: cd `pwd` && svn status --no-ignore | egrep '.orig|.rej'"
+  echo "to remove all reject/original files: svn status --no-ignore | egrep '.orig|.rej' | awk '{print \$2}' | xargs rm"
   echo
   read -p "Press return to retry, or ctrl-c to stop...";
   echo
@@ -454,8 +454,8 @@ echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr
 while git status | egrep -q '.orig|.rej'; do 
   git status | egrep '.rej|.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
-  echo "to change into repository: cd `pwd`"
-  echo "to locate all reject/original files: git status| egrep '.orig|.rej'"
+  echo "to change into repository and locate all reject/original files: cd `pwd` && git status | egrep '.orig|.rej'"
+  echo "to remove all reject/original files: git status | egrep '.orig|.rej' | awk '{print \$2}' | xargs rm"
   echo
   read -p "Press return to retry, or ctrl-c to stop...";
   echo
