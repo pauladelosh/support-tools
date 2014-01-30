@@ -4,7 +4,7 @@
 # written by Matt Lavoie
 # based on original scripts by George Cassie and Maria McDowell
 #
-# add the two following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
+# add the following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
 # SVN_USERNAME="acquia_ahsupport_username"
 # SVN_PASSWORD="verysecureopspassword123"

@@ -8,8 +8,12 @@ Installation
 2.  Change "XYZ" to your initials
 3.  Change the path to your local checkout of this repository
 
-RA_INITIALS="XYZ" <br>
+RA_INITIALS="XYZ"
+SVN_USERNAME="acquia_ahsupport_username"
+SVN_PASSWORD="verysecureopspassword123"
 source ~/{path-to-support-tools}/ratools/ra_functions.sh
+
+4. For the patch files to work, the Drupal Git Patches repository must be stored at: "~/Sites/releases/version-patches".  You may checkout the repo here: https://github.com/acquiacat/Drupal-Core-Git-Patches.
 
 Note that with every update to the ra_functions.sh file, you will need to source .bash_profile in any terminal window currently open.
 
