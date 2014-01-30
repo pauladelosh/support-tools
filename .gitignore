@@ -1,3 +1,4 @@
 ratools/rascans/csv/*.csv
 ratools/rascans/csv/aht_results_upc_sec.csv
 ratools/rascans/csv/*
+.DS_Store

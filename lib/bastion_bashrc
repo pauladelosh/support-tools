@@ -36,48 +36,30 @@
 #    bald   bal-NNN.devcloud.hosting.acquia.com
 #
 #####################################################################
-#
-#  Configuration
-#
-#####################################################################
-#
-#  Minimally you will need to change the following:
-#
-#  1. Change AH_BASTION to the bastion host you connect to
-#
-#  2. Change AH_SSH_USER to your bastion username
-#
-#####################################################################
 
 export AH_SSH=/usr/bin/ssh
 export AH_SCP=/usr/bin/scp
-export AH_SSH_USER=bastion_username
-export AH_RSA_KEY=/Users/local_username/.ssh/bastion_username_rsa
-export AH_BASTION=bastion-21
-export AH_PROXY_COMMAND="ssh $AH_BASTION nc %h %p"
-export AH_DEST_PORT=40506
+export AH_SSH_CONFIG=/Users/--LOCAL_USERNAME--/.ssh/ah_config
 
 #
 # SSH via bastion conenction
 #
 function _ah_ssh_to() {
-  $AH_SSH -A -o StrictHostKeyChecking=no -o ProxyCommand="$AH_PROXY_COMMAND" -i $AH_RSA_KEY -p $AH_DEST_PORT $AH_SSH_USER@$1.hosting.acquia.com ;
+  $AH_SSH -F $AH_SSH_CONFIG $1.hosting.acquia.com ;
 }
 
 #
 # SCP upload via bastion
 #
 function _ah_scp_ul {
-  $AH_SCP -o StrictHostKeyChecking=no -o ProxyCommand="$AH_PROXY_COMMAND" -i $AH_RSA_KEY -P $AH_DEST_PORT $2 $AH_SSH_USER@$1.hosting.acquia.com:$3
-#  $AH_SCP $2 $AH_SSH_USER@$1.hosting.acquia.com:$3 ;
+  $AH_SCP -F $AH_SSH_CONFIG $$2 $AH_SSH_USER@$1.hosting.acquia.com:$3 ;
 }
 
 #
 # SCP download via bastion
 #
 function _ah_scp_dl {
-  $AH_SCP -o StrictHostKeyChecking=no -o ProxyCommand="$AH_PROXY_COMMAND" -i $AH_RSA_KEY -P $AH_DEST_PORT $AH_SSH_USER@$1.hosting.acquia.com:$2 $3
-#  $AH_SCP $AH_SSH_USER@$1.hosting.acquia.com:$2 $3 ;
+  $AH_SCP -F $AH_SSH_CONFIG $AH_SSH_USER@$1.hosting.acquia.com:$2 $3 ;
 }
 
 #
