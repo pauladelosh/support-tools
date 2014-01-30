@@ -7,6 +7,7 @@
 # add the two following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
 # RA_INITIALS="XYZ"
 # SVN_USERNAME="acquia_ahsupport_username"
+# SVN_PASSWORD="verysecureopspassword123"
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
