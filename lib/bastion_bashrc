@@ -39,7 +39,7 @@
 
 export AH_SSH=/usr/bin/ssh
 export AH_SCP=/usr/bin/scp
-export AH_SSH_CONFIG="/Users/${USER}/.ssh/ah_config"
+export AH_SSH_CONFIG="${HOME}/.ssh/ah_config"
 
 #
 # SSH via bastion conenction
