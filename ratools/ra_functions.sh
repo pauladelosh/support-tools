@@ -1,21 +1,22 @@
+## CURRENT REPO CODE
+
 ############################################################################################
 # remote admin bash functions
 #
 # written by Matt Lavoie
 # based on original scripts by George Cassie and Maria McDowell
 #
-# add the following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
+# add the following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE THE VARIABLES TO YOUR INFORMATION!!!
 # RA_INITIALS="XYZ"
-# SVN_USERNAME="acquia_ahsupport_username"
-# SVN_PASSWORD="verysecureopspassword123"
+# SVN_USERNAME="XYZ"
+# SVN_PASSWORD="XYZ"
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
-# 1.  cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates.
+# 1.  cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module commands.
 # 2.  Pick your function name and enter variables as required:
 #       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 #       RA Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
-#       You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
@@ -38,7 +39,7 @@ function ratools-help {
 echo ""
 echo "Remote Administration Scripts Help:"
 echo ""
-echo "1. cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
+echo "1. cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
 echo "2. pick your function name and enter variables as required:"
 echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
 echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))"
