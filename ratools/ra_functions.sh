@@ -437,7 +437,7 @@ if [ -z "$2" ]
 fi
 if [ -z "$3" ]
   then echo -e "\033[0;31;148mmissing target version: exiting\033[39m" && return
-  else echo -e "\033[0;32;148msource version:  $3\033[39m"
+  else echo -e "\033[0;32;148mtarget version:  $3\033[39m"
 fi
 if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
@@ -476,11 +476,12 @@ patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
-while git status | egrep -q '.orig|.rej'; do 
-  git status | egrep '.rej|.orig'
+while git status | egrep -q '\.orig|\.rej'; do 
+  git status | egrep '\.rej|\.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   echo "to change into repository and locate all reject/original files: cd `pwd` && git status | egrep '.orig|.rej'"
   echo "to remove all reject/original files: git status | egrep '.orig|.rej' | awk '{print \$2}' | xargs rm"
+  echo "cd `pwd`; git status | egrep '\.orig|\.rej'" | pbcopy
   echo
   read -p "Press return to retry, or ctrl-c to stop...";
   echo
