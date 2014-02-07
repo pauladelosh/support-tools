@@ -537,8 +537,8 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     done
 fi
 homepath=`pwd`
-#module-cache-check $1 $2
-#module-cache-check $1 $3
+module-cache-check $1 $2
+module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "google_analytics" ]; then modname=googleanalytics
   elif [ $1 = "features_extra" ]; then modname=fe_block
@@ -546,34 +546,51 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
 fi
 for modinfopath in `find . -name $modname.info`
   do
-    if [ $modname = acquia_agent ]
-      then modpath=`dirname $(dirname $(dirname $modinfopath))`
+    if [ $modname = acquia_agent ];then modpath=`dirname $(dirname $(dirname $modinfopath))`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                #diff $1 ~/Sites/releases/modules/$1/$2/$1
-                #if [ $? -ne 1 ]
-                  #then
+                echo -e "\033[1;33;148m"checking to see if $1 at $modpath is modified..."\033[39m"; tput sgr0
+                diff -rq $1 ~/Sites/releases/modules/$1/$2/$1
+                if [ $? -ne 1 ]
+                  then
+                    echo -e "\033[0;32;148m"module does not appear to be modified"\033[39m"; tput sgr0
                     git rm -rf "$1"
-                    curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    #cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    #keep below line for legacy purposes
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     git add "$1"
                     if [ "$5" = "--security" ]
                       then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                       else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
-                  #else echo "WARNING: $1 at $modpath is modified; skipping"
-                #fi
+                else 
+                  echo -e "\033[0;31;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
+                  while true; do read -p "update potentially modified module anyways? (y/n) " yn
+                    case $yn in
+                    [Yy]* ) git rm -rf "$1"
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    git add "$1"
+                    if [ "$5" = "--security" ]
+                      then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                      else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                    fi
+                    break;;
+                    [Nn]* ) echo "skipping $1 at $modpath"; break;;
+                    * ) echo "invalid response, try again";;
+                    esac
+                  done
+                fi
                 cd $homepath
                 break;;
               [Nn]* ) break;;
               * ) echo "invalid response, try again";;
             esac
            done
-      else echo "WARNING: $1 at $modpath is not version $2; skipping"
+      else echo -e "\033[0;31;148m"WARNING: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
     fi
   done
 }
