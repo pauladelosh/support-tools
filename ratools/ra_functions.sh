@@ -6,10 +6,13 @@
 # written by Matt Lavoie
 # based on original scripts by George Cassie and Maria McDowell
 #
-# add the following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE THE VARIABLES TO YOUR INFORMATION!!!
-# RA_INITIALS="XYZ"
-# SVN_USERNAME="XYZ"
-# SVN_PASSWORD="XYZ"
+# add the following block to ~/.bash_profile to use the ratools scripts. 
+# make sure to uncomment the variable lines and set them to your information. 
+#
+# set ratools variables and include the script
+# RA_INITIALS=""
+# SVN_USERNAME=""
+# SVN_PASSWORD=""
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
@@ -152,19 +155,20 @@ rm -f /tmp/ra-audit-updates.tmp
 }
 
 # Module Cache Check (module-cache-check <module> <version>)
-# Need to exclude dev modules. They are not unique versions and thus will never be updated.
+# Excludes dev modules as they will always be wrong and fail for diff checking
 function module-cache-check {
 if [ -d ~/Sites/releases/modules/$1/$2 ]
-  then
-    echo "module $1-$2 found in cache"
-  else
-    echo "module $1-$2 not found in cache; downloading..."
-    mkdir -p ~/Sites/releases/modules/$1/$2
-    curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
-    if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
-      then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
-      else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
-    fi
+  then echo "module $1-$2 found in cache"
+elif echo $2 | grep -q "\-dev"
+  then echo "module $1-$2 is dev, not downloading"
+else
+  echo "module $1-$2 not found in cache; downloading..."
+  mkdir -p ~/Sites/releases/modules/$1/$2
+  curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
+  if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
+    then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
+    else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
+  fi
 fi
 }
 
@@ -270,7 +274,7 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
     esac
   done
 fi
-if echo ${PWD##*/} | grep docroot
+if echo ${PWD##*/} | grep -q docroot
   then :;
   else while true; do
     read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
@@ -565,7 +569,7 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     esac
   done
 fi
-if echo ${PWD##*/} | grep docroot
+if echo ${PWD##*/} | grep -q docroot
   then :;
   else while true; do
     read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
