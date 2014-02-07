@@ -368,14 +368,14 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
 fi
 svn rm "$1"
 if [ "$5" = "--security" ]
-  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
-  else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
+  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2. Ticket #$4."
+  else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2. Ticket #$4."
 fi
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
 if [ "$5" = "--security" ]
-  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
-  else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 from $2. Ticket #$4."
+  else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 from $2. Ticket #$4."
 fi
 }
 
