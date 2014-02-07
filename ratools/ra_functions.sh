@@ -72,35 +72,49 @@ function ra-audit {
 # define proactive updates here (seperate with pipes):
 RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity"
 ######################################################
-if [[ "$2" == --updcmd=* ]]; then
-  RA_AUDIT_VCS=`echo $2 | cut -f2 -d"=" | cut -f1 -d","`
-  RA_AUDIT_TICKNUM=`echo $2 | cut -f2 -d"=" | cut -f2 -d","`
-  if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
-    then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && return
-  fi
-  echo -e "\033[1;33;148m[ Update Command Builder Enabled ]\033[39m"; tput sgr0
-  echo "Version Control Type: $RA_AUDIT_VCS"
-  echo "Ticket Number: $RA_AUDIT_TICKNUM"
-  echo
-fi
+local OPTIND
+DOCROOT=$1
+shift
+while getopts ":p:c:" opt; do
+  case $opt in
+    p)
+      DOCROOT="'--$OPTARG $DOCROOT'"
+      echo -e "\033[1;33;148m[ Hosting Platform Specified ]\033[39m"; tput sgr0
+    echo "Using platform option \"--$OPTARG\""
+    echo
+      ;;
+    c)
+      local RA_AUDIT_UPDCMD="true"
+      RA_AUDIT_VCS=`echo $OPTARG | cut -f2 -d"=" | cut -f1 -d","`
+      RA_AUDIT_TICKNUM=`echo $OPTARG | cut -f2 -d"=" | cut -f2 -d","`
+      if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
+        then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && exit
+    fi
+      echo -e "\033[1;33;148m[ Update Command Builder Enabled ]\033[39m"; tput sgr0
+    echo "Version Control Type: $RA_AUDIT_VCS"
+    echo "Ticket Number: $RA_AUDIT_TICKNUM"
+    echo
+      ;;
+  esac
+done
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
-aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht $1 drush5 vget install_profile
+aht $DOCROOT drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+aht $DOCROOT drush5 vget install_profile
 echo
 echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
-aht $1 drush5 status
+aht $DOCROOT drush5 status
 echo
 echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
-echo -n "dev:   "; aht `echo $1 | cut -f1 -d "."`.dev repo
-echo -n "stage:   "; aht `echo $1 | cut -f1 -d "."`.test repo
-echo -n "prod:   "; aht `echo $1 | cut -f1 -d "."`.prod repo
+echo -n "dev:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
+echo -n "stage:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.test repo
+echo -n "prod:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.prod repo
 echo
 echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"; tput sgr0
-aht $1 sites | grep -v \>
+aht $DOCROOT sites | grep -v \>
 echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sgr0
 rm -f /tmp/ra-audit-updates.tmp
-for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+for site in `aht $DOCROOT sites | grep -v \>`; do echo $site; aht $DOCROOT drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"; tput sgr0
 if grep -q -w drupal /tmp/ra-audit-updates.tmp
   then grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq
@@ -112,7 +126,7 @@ if grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w -q drup
   then grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ "$2" == --updcmd=* ]]; then
+if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
 grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
 fi
@@ -122,7 +136,7 @@ if egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -q -v 'Insta
   then egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ "$2" == --updcmd=* ]]; then
+if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
 egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
@@ -132,7 +146,7 @@ if egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egre
   then egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ "$2" == --updcmd=* ]]; then
+if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
 egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
