@@ -616,8 +616,8 @@ git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 if [ "$5" = "--security" ]
-  then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
-  else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+  then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 from $2. Ticket #$4."
+  else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 from $2. Ticket #$4."
 fi
 }
 
