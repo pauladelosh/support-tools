@@ -168,6 +168,9 @@ if [ -d ~/Sites/releases/modules/$1/$2 ]
 fi
 }
 
+# SVN, Get Repository (get-repo-svn <docroot-name> <repository-url)
+function get-repo-svn { cd ~/Sites/clients; mkdir $1; cd $1; svn checkout --username $SVN_USERNAME --password $SVN_PASSWORD $2; }
+
 # SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 function svn-cupdate {
 echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
@@ -423,6 +426,9 @@ curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
+
+# Git, Get Repository (get-repo-git <docroot-name> <repository-url)
+function get-repo-git { cd ~/Sites/clients; mkdir $1; cd $1; git clone $2; }
 
 # Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
 function git-cupdate {
