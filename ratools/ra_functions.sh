@@ -351,6 +351,9 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 homepath=`pwd`
+if echo $2 | grep -q "\-dev"
+  then echo -e "\033[0;31;148m"ERROR: source version $2 is a dev version. use svn-mupdate to perform this update manually."\033[39m"; tput sgr0 && return
+fi
 module-cache-check $1 $2
 module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
@@ -386,7 +389,7 @@ for modinfopath in `find . -name $modname.info`
                       else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
                 else 
-                  echo -e "\033[0;31;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
+                  echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
                   while true; do read -p "update potentially modified module anyways? (y/n) " yn
                     case $yn in
                     [Yy]* ) svn rm "$1"
@@ -413,7 +416,7 @@ for modinfopath in `find . -name $modname.info`
               * ) echo "invalid response, try again";;
             esac
            done
-      else echo "WARNING: $1 at $modpath is not version $2; skipping"
+      else echo -e "\033[1;33;148m"NOTICE: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
     fi
   done
 }
@@ -645,6 +648,9 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     done
 fi
 homepath=`pwd`
+if echo $2 | grep -q "\-dev"
+  then echo -e "\033[0;31;148m"ERROR: source version $2 is a dev version. use git-mupdate to perform this update manually."\033[39m"; tput sgr0 && return
+fi
 module-cache-check $1 $2
 module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
@@ -676,7 +682,7 @@ for modinfopath in `find . -name $modname.info`
                       else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
                 else 
-                  echo -e "\033[0;31;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
+                  echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
                   while true; do read -p "update potentially modified module anyways? (y/n) " yn
                     case $yn in
                     [Yy]* ) git rm -rf "$1"
@@ -698,7 +704,7 @@ for modinfopath in `find . -name $modname.info`
               * ) echo "invalid response, try again";;
             esac
            done
-      else echo -e "\033[0;31;148m"WARNING: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
+      else echo -e "\033[1;33;148m"NOTICE: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
     fi
   done
 }
