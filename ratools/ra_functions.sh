@@ -16,8 +16,9 @@
 # Instructions:
 # 1.  cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module commands.
 # 2.  Pick your function name and enter variables as required:
-#       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-#       RA Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
+#       Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
+#       RA Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))
+#     You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
@@ -42,9 +43,9 @@ echo "Remote Administration Scripts Help:"
 echo ""
 echo "1. cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
 echo "2. pick your function name and enter variables as required:"
-echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
-echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))"
-echo "      You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
+echo "      Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
+echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))"
+echo "   You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
@@ -63,10 +64,10 @@ echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2
 echo ""
 }
 
-# Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
+# Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush5 vget install_profile; }
 
-# RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
+# RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))
 function ra-audit {
 ######################################################
 # define proactive updates here (seperate with pipes):
@@ -85,13 +86,14 @@ while getopts ":p:c:" opt; do
       ;;
     c)
       local RA_AUDIT_UPDCMD="true"
-      RA_AUDIT_VCS=`echo $OPTARG | cut -f2 -d"=" | cut -f1 -d","`
-      RA_AUDIT_TICKNUM=`echo $OPTARG | cut -f2 -d"=" | cut -f2 -d","`
-      if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
-        then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && exit
-    fi
+      #RA_AUDIT_VCS=`echo $OPTARG | cut -f2 -d"=" | cut -f1 -d","`
+      #RA_AUDIT_TICKNUM=`echo $OPTARG | cut -f2 -d"=" | cut -f2 -d","`
+      RA_AUDIT_TICKNUM=$OPTARG
+      #if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
+      #  then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && exit
+      #fi
       echo -e "\033[1;33;148m[ Update Command Builder Enabled ]\033[39m"; tput sgr0
-    echo "Version Control Type: $RA_AUDIT_VCS"
+    #echo "Version Control Type: $RA_AUDIT_VCS"
     echo "Ticket Number: $RA_AUDIT_TICKNUM"
     echo
       ;;
@@ -128,7 +130,8 @@ if grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w -q drup
 fi
 if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
-grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
+#grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
+grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
@@ -138,7 +141,8 @@ if egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -q -v 'Insta
 fi
 if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
-egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+#egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"; tput sgr0
@@ -148,7 +152,8 @@ if egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egre
 fi
 if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
-egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+#egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"; tput sgr0
