@@ -1,0 +1,8 @@
+2-10-2014: MATT LAVOIE
+==========
+* lots of minor tweaks and bugfixes
+* ra-audit now uses VCS agnostic commands (ra-* instead of git-* or svn-*)
+* changed the ra-audit command builder flag. now use the "-c" flag, followed by the ticket number. example: "ra-audit @test.prod -c 15066-12345"
+* added hosting platform support to ra-audit. nse "-p" flag, followed by the aht hosting platform (dc/mc/ac/ace). example: "ra-audit @test.prod -p ac"
+* added ra environment to the currently deployed code" section of ra-audit
+* *-cupdate commands now copy the "cd ..., find rej/orig" command to your clipboard when rej/orig files are found
