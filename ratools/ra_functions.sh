@@ -109,6 +109,7 @@ echo
 echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
 echo -n "dev:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
 echo -n "stage:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.test repo
+echo -n "ra:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.ra repo
 echo -n "prod:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.prod repo
 echo
 echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"; tput sgr0
