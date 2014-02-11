@@ -636,6 +636,13 @@ function svn-init-repo {
     if [ $# -lt 2 ]
       then echo "Missing docroot" && return
     fi
+    #support for the --mc and --dc type flags in aht
+    if [[ $1 == --* ]]; then
+      site="$1 $2"
+      shift
+    else
+      site=$1
+    fi
     #split $1 into three distinct variables (@site.env => @site, site, and env)
     base=${1%.*}
     docroot=${base#@*}
@@ -644,7 +651,7 @@ function svn-init-repo {
         echo "Error: Directory $docroot already exists"
         return
     fi
-    repo="$(aht $1 repo)"
+    repo="$(aht $site repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
     elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
@@ -684,16 +691,22 @@ function git-init-repo {
     if [ $# -lt 2 ]
       then echo "Missing docroot" && return
     fi
+    #support for the --mc and --dc type flags in aht
+    if [[ $1 == --* ]]; then
+      site="$1 $2"
+      shift
+    else
+      site=$1
+    fi
     #split $1 into three distinct variables (@site.env => @site, site, and env)
     base=${1%.*}
     docroot=${base#@*}
     acqenv=${1#*.}
     if [ -d ./$docroot ]; then
-        echo "Error: Directory $docroot already exists"
-        return
+        echo "Error: Directory $docroot already exists" && return;
     fi
     mkdir $docroot && cd $docroot
-    repo="$(aht $1 repo)"
+    repo="$(aht $site repo)"
     if [[ $repo =~ "live development" ]]; then
         repo=$(echo "$repo" | grep svn)
     elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
@@ -712,7 +725,6 @@ function git-init-repo {
     git checkout $source_tag
     git checkout -b $target_branch
 }
-
 function ra-mupdate {
   if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate $@; else git-mupdate $@; fi
 }
@@ -734,5 +746,15 @@ function ra-mupdate-rev {
 }
 
 function ra-init-repo {
-  if [[ "$(aht $1 repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
+  if [[ $1 == --* ]]; then
+    site="$1 $2"
+  else
+    site=$1
+  fi
+  if (yes 1 | aht $site | grep -q Please); then
+    echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
+    echo "Example: ra-init-repo --mc $site source_tag target_branch"
+    return
+  fi
+  if [[ "$(aht $site repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
 }
