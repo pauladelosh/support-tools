@@ -191,65 +191,84 @@ fi
 }
 
 # Git/SVN agnostic function shortcuts
-function ra-init-repo { if [[ "$(aht $1 repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi }
 function ra-cupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-cupdate $@; else git-cupdate $@; fi }
 function ra-auto-mupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-auto-mupdate $@; else git-auto-mupdate $@; fi }
 function ra-mupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate $@; else git-mupdate $@; fi }
 function ra-mupdate-add { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-add $@; else git-mupdate-add $@; fi }
 function ra-mupdate-rev { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-rev $@; else git-mupdate-rev $@; fi }
+function ra-init-repo {
+  if [[ $1 == --* ]]; then
+    site="$1 $2"
+  else
+  site=$1
+  fi
+  if (yes 1 | aht $site | grep -q Please); then
+  echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
+    echo "Example: ra-init-repo --mc $site source_tag target_branch"
+    return
+  fi
+  if [[ "$(aht $site repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
+}
 
 # SVN, Get Repository (get-repo-svn <docroot-name> <repository-url)
 function get-repo-svn { cd ~/Sites/clients; mkdir $1; cd $1; svn checkout --username $SVN_USERNAME --password $SVN_PASSWORD $2; }
 
 # SVN, Initialize Repository
 # Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
-#        svn-init-repo @<docroot>.<environment> <target_branch> 
+# svn-init-repo @<docroot>.<environment> <target_branch>
 function svn-init-repo {
     if [ -z "$SVN_USERNAME" ]; then
-      echo "Need to set SVN_USERNAME" && return
-    fi
-    if [ -z "$SVN_PASSWORD" ]; then
-      echo "Need to set SVN_PASSWORD" && return
-    fi
-    if [ $# -lt 2 ]
+echo "Need to set SVN_USERNAME" && return
+fi
+if [ -z "$SVN_PASSWORD" ]; then
+echo "Need to set SVN_PASSWORD" && return
+fi
+if [ $# -lt 2 ]
       then echo "Missing docroot" && return
+fi
+    #support for the --mc and --dc type flags in aht
+    if [[ $1 == --* ]]; then
+site="$1 $2"
+      shift
+else
+site=$1
     fi
     #split $1 into three distinct variables (@site.env => @site, site, and env)
     base=${1%.*}
     docroot=${base#@*}
     acqenv=${1#*.}
     if [ -d ./$docroot ]; then
-        echo "Error: Directory $docroot already exists"
+echo "Error: Directory $docroot already exists"
         return
-    fi
-    repo="$(aht $1 repo)"
+fi
+repo="$(aht $site repo)"
     if [[ $repo =~ "live development" ]]; then
-        repo=$(echo "$repo" | grep svn)
+repo=$(echo "$repo" | grep svn)
     elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
-        echo "Could not find sitegroup or environment." && return;
+echo "Could not find sitegroup or environment." && return;
     fi
-    url=$(echo $repo | tr -d '\r')
+url=$(echo $repo | tr -d '\r')
     baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
     if [ $# -eq 2 ]; then
-      source_url=$url
+source_url=$url
       target_branch=$2
     else
-      source_url=$baseurl/$2
+source_url=$baseurl/$2
       target_branch=$3
     fi
-    source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
+source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
     mkdir $docroot && cd $docroot
     svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
     while true; do
-        echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
+echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
         read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
         case $yn in
             [Yy]* ) break;;
             [Nn]* ) return;;
             * ) echo "invalid response, try again";;
         esac
-    done
-    svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
+done
+svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
     echo "RECORD REVISION NUMBER IN VCS"
     cd trunk
     svn switch ^/branches/$target_branch
@@ -519,34 +538,40 @@ function get-repo-git { cd ~/Sites/clients; mkdir $1; cd $1; git clone $2; }
 
 # Git, Initialize Repository 
 # Usage: git-init-repo @<docroot>.<environment> <source_tag> <target_branch>
-#        git-init-repo @<docroot>.<environment> <target_branch> 
+# git-init-repo @<docroot>.<environment> <target_branch>
 function git-init-repo {
     if [ $# -lt 2 ]
       then echo "Missing docroot" && return
+fi
+    #support for the --mc and --dc type flags in aht
+    if [[ $1 == --* ]]; then
+site="$1 $2"
+      shift
+else
+site=$1
     fi
     #split $1 into three distinct variables (@site.env => @site, site, and env)
     base=${1%.*}
     docroot=${base#@*}
     acqenv=${1#*.}
     if [ -d ./$docroot ]; then
-        echo "Error: Directory $docroot already exists"
-        return
+echo "Error: Directory $docroot already exists" && return;
     fi
-    mkdir $docroot && cd $docroot
-    repo="$(aht $1 repo)"
+mkdir $docroot && cd $docroot
+    repo="$(aht $site repo)"
     if [[ $repo =~ "live development" ]]; then
-        repo=$(echo "$repo" | grep svn)
+repo=$(echo "$repo" | grep svn)
     elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
-        echo "Could not find sitegroup or environment." && return;
+echo "Could not find sitegroup or environment." && return;
     fi
-    if [ $# -eq 2 ]; then
-        source_tag=$(echo ${repo#* } | tr -d '\040\011\012\015')
+if [ $# -eq 2 ]; then
+source_tag=$(echo ${repo#* } | tr -d '\040\011\012\015')
         target_branch=$2
     else
-        source_tag=$2
+source_tag=$2
         target_branch=$3
     fi
-    git clone ${repo% *}
+git clone ${repo% *}
     cd $docroot
     git pull --all
     git checkout $source_tag
