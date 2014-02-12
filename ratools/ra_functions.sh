@@ -4,18 +4,21 @@
 # written by Matt Lavoie
 # based on original scripts by George Cassie and Maria McDowell
 #
-# add the following lines to ~/.bash_profile to include the scripts. MAKE SURE TO CHANGE "XYZ" TO YOUR INITIALS!!!
-# RA_INITIALS="XYZ"
-# SVN_USERNAME="acquia_ahsupport_username"
-# SVN_PASSWORD="verysecureopspassword123"
+# add the following block to ~/.bash_profile to use the ratools scripts. 
+# make sure to uncomment the variable lines and set them to your information. 
+#
+# set ratools variables and include the script
+# RA_INITIALS=""
+# SVN_USERNAME=""
+# SVN_PASSWORD=""
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
-# 1.  cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates.
+# 1.  cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module commands.
 # 2.  Pick your function name and enter variables as required:
-#       Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-#       RA Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
-#       You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS
+#       Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
+#       RA Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))
+#     You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
 #       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
 #       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
 #       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
@@ -38,11 +41,11 @@ function ratools-help {
 echo ""
 echo "Remote Administration Scripts Help:"
 echo ""
-echo "1. cd to docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
+echo "1. cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
 echo "2. pick your function name and enter variables as required:"
-echo "      Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
-echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))"
-echo "      You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
+echo "      Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
+echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))"
+echo "   You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
 echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
 echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
 echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
@@ -61,44 +64,60 @@ echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2
 echo ""
 }
 
-# Check site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
+# Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush5 vget install_profile; }
 
-# RA Update Audit (ra-audit @<docroot>.<environment> (add --updcmd=<git|svn>,<ticket number> to generate update commands))
+# RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))
 function ra-audit {
 ######################################################
 # define proactive updates here (seperate with pipes):
 RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity"
 ######################################################
-if [[ "$2" == --updcmd=* ]]; then
-  RA_AUDIT_VCS=`echo $2 | cut -f2 -d"=" | cut -f1 -d","`
-  RA_AUDIT_TICKNUM=`echo $2 | cut -f2 -d"=" | cut -f2 -d","`
-  if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
-    then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && return
-  fi
-  echo -e "\033[1;33;148m[ Update Command Builder Enabled ]\033[39m"; tput sgr0
-  echo "Version Control Type: $RA_AUDIT_VCS"
-  echo "Ticket Number: $RA_AUDIT_TICKNUM"
-  echo
-fi
+local OPTIND
+DOCROOT=$1
+shift
+while getopts ":p:c:" opt; do
+  case $opt in
+    p)
+      DOCROOT="'--$OPTARG $DOCROOT'"
+      echo -e "\033[1;33;148m[ Hosting Platform Specified ]\033[39m"; tput sgr0
+    echo "Using platform option \"--$OPTARG\""
+    echo
+      ;;
+    c)
+      local RA_AUDIT_UPDCMD="true"
+      #RA_AUDIT_VCS=`echo $OPTARG | cut -f2 -d"=" | cut -f1 -d","`
+      #RA_AUDIT_TICKNUM=`echo $OPTARG | cut -f2 -d"=" | cut -f2 -d","`
+      RA_AUDIT_TICKNUM=$OPTARG
+      #if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
+      #  then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && exit
+      #fi
+      echo -e "\033[1;33;148m[ Update Command Builder Enabled ]\033[39m"; tput sgr0
+    #echo "Version Control Type: $RA_AUDIT_VCS"
+    echo "Ticket Number: $RA_AUDIT_TICKNUM"
+    echo
+      ;;
+  esac
+done
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
-aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht $1 drush5 vget install_profile
+aht $DOCROOT drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+aht $DOCROOT drush5 vget install_profile
 echo
 echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
-aht $1 drush5 status
+aht $DOCROOT drush5 status
 echo
 echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
-echo -n "dev:   "; aht `echo $1 | cut -f1 -d "."`.dev repo
-echo -n "stage:   "; aht `echo $1 | cut -f1 -d "."`.test repo
-echo -n "prod:   "; aht `echo $1 | cut -f1 -d "."`.prod repo
+echo -n "dev:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
+echo -n "stage:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.test repo
+echo -n "ra:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.ra repo
+echo -n "prod:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.prod repo
 echo
 echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"; tput sgr0
-aht $1 sites | grep -v \>
+aht $DOCROOT sites | grep -v \>
 echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sgr0
 rm -f /tmp/ra-audit-updates.tmp
-for site in `aht $1 sites | grep -v \>`; do echo $site; aht $1 drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
+for site in `aht $DOCROOT sites | grep -v \>`; do echo $site; aht $DOCROOT drush5 upc --pipe --uri=$site | tee -a /tmp/ra-audit-updates.tmp | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo; done
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"; tput sgr0
 if grep -q -w drupal /tmp/ra-audit-updates.tmp
   then grep -w drupal /tmp/ra-audit-updates.tmp | sort | uniq
@@ -110,9 +129,10 @@ if grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w -q drup
   then grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ "$2" == --updcmd=* ]]; then
+if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
-grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
+#grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
+grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
@@ -120,9 +140,10 @@ if egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -q -v 'Insta
   then egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ "$2" == --updcmd=* ]]; then
+if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
-egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+#egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"; tput sgr0
@@ -130,9 +151,10 @@ if egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egre
   then egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ "$2" == --updcmd=* ]]; then
+if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
-egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+#egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"; tput sgr0
@@ -151,20 +173,105 @@ rm -f /tmp/ra-audit-updates.tmp
 }
 
 # Module Cache Check (module-cache-check <module> <version>)
-# Need to exclude dev modules. They are not unique versions and thus will never be updated.
+# Excludes dev modules as they will always be wrong and fail for diff checking
 function module-cache-check {
 if [ -d ~/Sites/releases/modules/$1/$2 ]
-  then
-    echo "module $1-$2 found in cache"
-  else
-    echo "module $1-$2 not found in cache; downloading..."
-    mkdir -p ~/Sites/releases/modules/$1/$2
-    curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
-    if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
-      then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
-      else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
-    fi
+  then echo "module $1-$2 found in cache"
+elif echo $2 | grep -q "\-dev"
+  then echo "module $1-$2 is dev, not downloading"
+else
+  echo "module $1-$2 not found in cache; downloading..."
+  mkdir -p ~/Sites/releases/modules/$1/$2
+  curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
+  if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
+    then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
+    else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
+  fi
 fi
+}
+
+# Git/SVN agnostic function shortcuts
+function ra-cupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-cupdate $@; else git-cupdate $@; fi }
+function ra-auto-mupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-auto-mupdate $@; else git-auto-mupdate $@; fi }
+function ra-mupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate $@; else git-mupdate $@; fi }
+function ra-mupdate-add { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-add $@; else git-mupdate-add $@; fi }
+function ra-mupdate-rev { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-rev $@; else git-mupdate-rev $@; fi }
+function ra-init-repo {
+  if [[ $1 == --* ]]; then
+    site="$1 $2"
+  else
+  site=$1
+  fi
+  if (yes 1 | aht $site | grep -q Please); then
+  echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
+    echo "Example: ra-init-repo --mc $site source_tag target_branch"
+    return
+  fi
+  if [[ "$(aht $site repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
+}
+
+# SVN, Get Repository (get-repo-svn <docroot-name> <repository-url)
+function get-repo-svn { cd ~/Sites/clients; mkdir $1; cd $1; svn checkout --username $SVN_USERNAME --password $SVN_PASSWORD $2; }
+
+# SVN, Initialize Repository
+# Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
+# svn-init-repo @<docroot>.<environment> <target_branch>
+function svn-init-repo {
+    if [ -z "$SVN_USERNAME" ]; then
+echo "Need to set SVN_USERNAME" && return
+fi
+if [ -z "$SVN_PASSWORD" ]; then
+echo "Need to set SVN_PASSWORD" && return
+fi
+if [ $# -lt 2 ]
+      then echo "Missing docroot" && return
+fi
+    #support for the --mc and --dc type flags in aht
+    if [[ $1 == --* ]]; then
+site="$1 $2"
+      shift
+else
+site=$1
+    fi
+    #split $1 into three distinct variables (@site.env => @site, site, and env)
+    base=${1%.*}
+    docroot=${base#@*}
+    acqenv=${1#*.}
+    if [ -d ./$docroot ]; then
+echo "Error: Directory $docroot already exists"
+        return
+fi
+repo="$(aht $site repo)"
+    if [[ $repo =~ "live development" ]]; then
+repo=$(echo "$repo" | grep svn)
+    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+echo "Could not find sitegroup or environment." && return;
+    fi
+url=$(echo $repo | tr -d '\r')
+    baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
+    if [ $# -eq 2 ]; then
+source_url=$url
+      target_branch=$2
+    else
+source_url=$baseurl/$2
+      target_branch=$3
+    fi
+source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
+    mkdir $docroot && cd $docroot
+    svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
+    while true; do
+echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
+        read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
+        case $yn in
+            [Yy]* ) break;;
+            [Nn]* ) return;;
+            * ) echo "invalid response, try again";;
+        esac
+done
+svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
+    echo "RECORD REVISION NUMBER IN VCS"
+    cd trunk
+    svn switch ^/branches/$target_branch
 }
 
 # SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
@@ -180,7 +287,7 @@ if [ -z "$2" ]
 fi
 if [ -z "$3" ]
   then echo -e "\033[0;31;148mmissing target version: exiting\033[39m" && return
-  else echo -e "\033[0;32;148msource version:  $3\033[39m"
+  else echo -e "\033[0;32;148mtarget version:  $3\033[39m"
 fi
 if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
@@ -204,7 +311,7 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
     esac
   done
 fi
-if echo ${PWD##*/} | grep docroot
+if echo ${PWD##*/} | grep -q docroot
   then :;
   else while true; do
     read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
@@ -219,11 +326,12 @@ patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
-while svn status --no-ignore | egrep -q '.orig|.rej'; do 
-  svn status --no-ignore | egrep '.rej|.orig'
+while svn status --no-ignore | egrep -q '\.orig|\.rej'; do 
+  svn status --no-ignore | egrep '\.rej|\.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   echo "to change into repository and find all reject/original files: cd `pwd` && svn status --no-ignore | egrep '.orig|.rej'"
   echo "to remove all reject/original files: svn status --no-ignore | egrep '.orig|.rej' | awk '{print \$2}' | xargs rm"
+  echo "cd `pwd`; svn status --no-ignore | egrep '\.orig|\.rej'" | pbcopy
   echo
   read -p "Press return to retry, or ctrl-c to stop...";
   echo
@@ -252,7 +360,7 @@ svn status --no-ignore
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
-echo "currently on svn branch `svn info | grep URL | cut -f2 -d" " | xargs basename`"
+echo "currently on svn branch `svn info | grep URL | cut -f2 -d" "`"
 while true; do
     read -p "commit \"$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4.\" now? (y/n) " yn
     case $yn in
@@ -280,8 +388,11 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 homepath=`pwd`
-#module-cache-check $1 $2
-#module-cache-check $1 $3
+if echo $2 | grep -q "\-dev"
+  then echo -e "\033[0;31;148m"ERROR: source version $2 is a dev version. use svn-mupdate to perform this update manually."\033[39m"; tput sgr0 && return
+fi
+module-cache-check $1 $2
+module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "google_analytics" ]; then modname=googleanalytics
   elif [ $1 = "features_extra" ]; then modname=fe_block
@@ -297,30 +408,52 @@ for modinfopath in `find . -name $modname.info`
       then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                #diff $1 ~/Sites/releases/modules/$1/$2/$1
-                #if [ $? -ne 1 ]
-                  #then
+                echo -e "\033[1;33;148m"checking to see if $1 at $modpath is modified..."\033[39m"; tput sgr0
+                diff -rq $1 ~/Sites/releases/modules/$1/$2/$1
+                if [ $? -ne 1 ]
+                  then
+                    echo -e "\033[0;32;148m"module does not appear to be modified"\033[39m"; tput sgr0
                     svn rm "$1"
                     if [ "$5" = "--security" ]
                       then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
                       else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
                     fi
-                    curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    #cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     svn add --force "$1"
                     if [ "$5" = "--security" ]
                       then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                       else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
-                  #else echo "WARNING: $1 at $modpath is modified; skipping"
-                #fi
+                else 
+                  echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
+                  while true; do read -p "update potentially modified module anyways? (y/n) " yn
+                    case $yn in
+                    [Yy]* ) svn rm "$1"
+                    if [ "$5" = "--security" ]
+                      then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
+                      else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
+                    fi
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    svn add --force "$1"
+                    if [ "$5" = "--security" ]
+                      then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                      else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                    fi
+                    break;;
+                    [Nn]* ) echo "skipping $1 at $modpath"; break;;
+                    * ) echo "invalid response, try again";;
+                    esac
+                  done
+                fi
                 cd $homepath
-                break;;
+                break;; 
               [Nn]* ) break;;
               * ) echo "invalid response, try again";;
             esac
            done
-      else echo "WARNING: $1 at $modpath is not version $2; skipping"
+      else echo -e "\033[1;33;148m"NOTICE: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
     fi
   done
 }
@@ -344,14 +477,14 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
 fi
 svn rm "$1"
 if [ "$5" = "--security" ]
-  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
-  else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
+  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2. Ticket #$4."
+  else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2. Ticket #$4."
 fi
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
 if [ "$5" = "--security" ]
-  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
-  else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+  then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 from $2. Ticket #$4."
+  else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 from $2. Ticket #$4."
 fi
 }
 
@@ -400,6 +533,51 @@ svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
 
+# Git, Get Repository (get-repo-git <docroot-name> <repository-url)
+function get-repo-git { cd ~/Sites/clients; mkdir $1; cd $1; git clone $2; }
+
+# Git, Initialize Repository 
+# Usage: git-init-repo @<docroot>.<environment> <source_tag> <target_branch>
+# git-init-repo @<docroot>.<environment> <target_branch>
+function git-init-repo {
+    if [ $# -lt 2 ]
+      then echo "Missing docroot" && return
+fi
+    #support for the --mc and --dc type flags in aht
+    if [[ $1 == --* ]]; then
+site="$1 $2"
+      shift
+else
+site=$1
+    fi
+    #split $1 into three distinct variables (@site.env => @site, site, and env)
+    base=${1%.*}
+    docroot=${base#@*}
+    acqenv=${1#*.}
+    if [ -d ./$docroot ]; then
+echo "Error: Directory $docroot already exists" && return;
+    fi
+mkdir $docroot && cd $docroot
+    repo="$(aht $site repo)"
+    if [[ $repo =~ "live development" ]]; then
+repo=$(echo "$repo" | grep svn)
+    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+echo "Could not find sitegroup or environment." && return;
+    fi
+if [ $# -eq 2 ]; then
+source_tag=$(echo ${repo#* } | tr -d '\040\011\012\015')
+        target_branch=$2
+    else
+source_tag=$2
+        target_branch=$3
+    fi
+git clone ${repo% *}
+    cd $docroot
+    git pull --all
+    git checkout $source_tag
+    git checkout -b $target_branch
+}
+
 # Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
 function git-cupdate {
 echo -e "\033[1;33;148m[ checking input and patchfile ]\033[39m"
@@ -413,7 +591,7 @@ if [ -z "$2" ]
 fi
 if [ -z "$3" ]
   then echo -e "\033[0;31;148mmissing target version: exiting\033[39m" && return
-  else echo -e "\033[0;32;148msource version:  $3\033[39m"
+  else echo -e "\033[0;32;148mtarget version:  $3\033[39m"
 fi
 if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
@@ -437,7 +615,7 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     esac
   done
 fi
-if echo ${PWD##*/} | grep docroot
+if echo ${PWD##*/} | grep -q docroot
   then :;
   else while true; do
     read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
@@ -452,11 +630,12 @@ patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
-while git status | egrep -q '.orig|.rej'; do 
-  git status | egrep '.rej|.orig'
+while git status | egrep -q '\.orig|\.rej'; do 
+  git status | egrep '\.rej|\.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   echo "to change into repository and locate all reject/original files: cd `pwd` && git status | egrep '.orig|.rej'"
   echo "to remove all reject/original files: git status | egrep '.orig|.rej' | awk '{print \$2}' | xargs rm"
+  echo "cd `pwd`; git status | egrep '\.orig|\.rej'" | pbcopy
   echo
   read -p "Press return to retry, or ctrl-c to stop...";
   echo
@@ -512,8 +691,11 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     done
 fi
 homepath=`pwd`
-#module-cache-check $1 $2
-#module-cache-check $1 $3
+if echo $2 | grep -q "\-dev"
+  then echo -e "\033[0;31;148m"ERROR: source version $2 is a dev version. use git-mupdate to perform this update manually."\033[39m"; tput sgr0 && return
+fi
+module-cache-check $1 $2
+module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "google_analytics" ]; then modname=googleanalytics
   elif [ $1 = "features_extra" ]; then modname=fe_block
@@ -521,34 +703,51 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
 fi
 for modinfopath in `find . -name $modname.info`
   do
-    if [ $modname = acquia_agent ]
-      then modpath=`dirname $(dirname $(dirname $modinfopath))`
+    if [ $modname = acquia_agent ];then modpath=`dirname $(dirname $(dirname $modinfopath))`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
       then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
           case $yn in
               [Yy]* ) cd $modpath
-                #diff $1 ~/Sites/releases/modules/$1/$2/$1
-                #if [ $? -ne 1 ]
-                  #then
+                echo -e "\033[1;33;148m"checking to see if $1 at $modpath is modified..."\033[39m"; tput sgr0
+                diff -rq $1 ~/Sites/releases/modules/$1/$2/$1
+                if [ $? -ne 1 ]
+                  then
+                    echo -e "\033[0;32;148m"module does not appear to be modified"\033[39m"; tput sgr0
                     git rm -rf "$1"
-                    curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
-                    #cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    #keep below line for legacy purposes
+                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     git add "$1"
                     if [ "$5" = "--security" ]
                       then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                       else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
-                  #else echo "WARNING: $1 at $modpath is modified; skipping"
-                #fi
+                else 
+                  echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
+                  while true; do read -p "update potentially modified module anyways? (y/n) " yn
+                    case $yn in
+                    [Yy]* ) git rm -rf "$1"
+                    cp -R ~/Sites/releases/modules/$1/$3/$1 .
+                    git add "$1"
+                    if [ "$5" = "--security" ]
+                      then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                      else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+                    fi
+                    break;;
+                    [Nn]* ) echo "skipping $1 at $modpath"; break;;
+                    * ) echo "invalid response, try again";;
+                    esac
+                  done
+                fi
                 cd $homepath
                 break;;
               [Nn]* ) break;;
               * ) echo "invalid response, try again";;
             esac
            done
-      else echo "WARNING: $1 at $modpath is not version $2; skipping"
+      else echo -e "\033[1;33;148m"NOTICE: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
     fi
   done
 }
@@ -574,8 +773,8 @@ git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 if [ "$5" = "--security" ]
-  then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
-  else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
+  then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 from $2. Ticket #$4."
+  else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 from $2. Ticket #$4."
 fi
 }
 
@@ -621,140 +820,4 @@ git rm -rf "$1"
 curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
-}
-
-# SVN, Initialize Repository
-# Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
-#        svn-init-repo @<docroot>.<environment> <target_branch> 
-function svn-init-repo {
-    if [ -z "$SVN_USERNAME" ]; then
-      echo "Need to set SVN_USERNAME" && return
-    fi
-    if [ -z "$SVN_PASSWORD" ]; then
-      echo "Need to set SVN_PASSWORD" && return
-    fi
-    if [ $# -lt 2 ]
-      then echo "Missing docroot" && return
-    fi
-    #support for the --mc and --dc type flags in aht
-    if [[ $1 == --* ]]; then
-      site="$1 $2"
-      shift
-    else
-      site=$1
-    fi
-    #split $1 into three distinct variables (@site.env => @site, site, and env)
-    base=${1%.*}
-    docroot=${base#@*}
-    acqenv=${1#*.}
-    if [ -d ./$docroot ]; then
-        echo "Error: Directory $docroot already exists"
-        return
-    fi
-    repo="$(aht $site repo)"
-    if [[ $repo =~ "live development" ]]; then
-        repo=$(echo "$repo" | grep svn)
-    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
-        echo "Could not find sitegroup or environment." && return;
-    fi
-    url=$(echo $repo | tr -d '\r')
-    baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
-    if [ $# -eq 2 ]; then
-      source_url=$url
-      target_branch=$2
-    else
-      source_url=$baseurl/$2
-      target_branch=$3
-    fi
-    source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
-    mkdir $docroot && cd $docroot
-    svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
-    while true; do
-        echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
-        read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
-        case $yn in
-            [Yy]* ) break;;
-            [Nn]* ) return;;
-            * ) echo "invalid response, try again";;
-        esac
-    done
-    svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
-    echo "RECORD REVISION NUMBER IN VCS"
-    cd trunk
-    svn switch ^/branches/$target_branch
-}
-
-# GIT, Initialize Repository 
-# Usage: git-init-repo @<docroot>.<environment> <source_tag> <target_branch>
-#        git-init-repo @<docroot>.<environment> <target_branch> 
-function git-init-repo {
-    if [ $# -lt 2 ]
-      then echo "Missing docroot" && return
-    fi
-    #support for the --mc and --dc type flags in aht
-    if [[ $1 == --* ]]; then
-      site="$1 $2"
-      shift
-    else
-      site=$1
-    fi
-    #split $1 into three distinct variables (@site.env => @site, site, and env)
-    base=${1%.*}
-    docroot=${base#@*}
-    acqenv=${1#*.}
-    if [ -d ./$docroot ]; then
-        echo "Error: Directory $docroot already exists" && return;
-    fi
-    mkdir $docroot && cd $docroot
-    repo="$(aht $site repo)"
-    if [[ $repo =~ "live development" ]]; then
-        repo=$(echo "$repo" | grep svn)
-    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
-        echo "Could not find sitegroup or environment." && return;
-    fi
-    if [ $# -eq 2 ]; then
-        source_tag=$(echo ${repo#* } | tr -d '\040\011\012\015')
-        target_branch=$2
-    else
-        source_tag=$2
-        target_branch=$3
-    fi
-    git clone ${repo% *}
-    cd $docroot
-    git pull --all
-    git checkout $source_tag
-    git checkout -b $target_branch
-}
-function ra-mupdate {
-  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate $@; else git-mupdate $@; fi
-}
-
-function ra-auto-mupdate {
-  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-auto-mupdate $@; else git-auto-mupdate $@; fi
-}
-
-function ra-mupdate-add {
-  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-add $@; else git-mupdate-add $@; fi
-}
-
-function ra-cupdate {
-  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-cupdate $@; else git-cupdate $@; fi
-}
-
-function ra-mupdate-rev {
-  if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate-rev $@; else git-mupdate-rev $@; fi
-}
-
-function ra-init-repo {
-  if [[ $1 == --* ]]; then
-    site="$1 $2"
-  else
-    site=$1
-  fi
-  if (yes 1 | aht $site | grep -q Please); then
-    echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
-    echo "Example: ra-init-repo --mc $site source_tag target_branch"
-    return
-  fi
-  if [[ "$(aht $site repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
 }
