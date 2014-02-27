@@ -52,14 +52,14 @@ function _ah_ssh_to() {
 # SCP upload via bastion
 #
 function _ah_scp_ul {
-  $AH_SCP -F $AH_SSH_CONFIG $$2 $AH_SSH_USER@$1.hosting.acquia.com:$3 ;
+  $AH_SCP -F $AH_SSH_CONFIG $$2 $1.hosting.acquia.com:$3 ;
 }
 
 #
 # SCP download via bastion
 #
 function _ah_scp_dl {
-  $AH_SCP -F $AH_SSH_CONFIG $AH_SSH_USER@$1.hosting.acquia.com:$2 $3 ;
+  $AH_SCP -F $AH_SSH_CONFIG $1.hosting.acquia.com:$2 $3 ;
 }
 
 #
