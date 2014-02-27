@@ -2,8 +2,12 @@
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && cd ../lib && pwd )"
 cd ~
-if [ ! -d ".WiKID" ]; then
-  mkdir .WiKID
+if [ "$( which java )" ]; then
+  if [ ! -d ".WiKID" ]; then
+    mkdir .WiKID
+  fi
+  cd .WiKID
+  java -cp $DIR/wikidtoken-3.1.25.jar com.wikidsystems.jw.JWcl 050019123119
+else
+  echo "Java JRE NOT INSTALLED. Please install and re-run wikid"
 fi
-cd .WiKID
-java -cp $DIR/wikidtoken-3.1.25.jar com.wikidsystems.jw.JWcl 050019123119
