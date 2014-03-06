@@ -1,5 +1,39 @@
 #!/bin/bash
 
-DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && cd ../lib && pwd )"
-cd ~/.WiKID
-$DIR/$( basename "${BASH_SOURCE[0]}" ).sh
+#
+#  Determine if the Bastion ControlMaster is already connected
+#
+#  @return true if the ControlMaster is connected
+#
+function isControlMasterActive
+{
+    pgrep -f "ssh.*bastion" > /dev/null 2>&1
+    echo $?
+}
+
+#
+#  Connect to the expect script of choice
+#
+function connectBastion
+{
+    DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && cd ../lib && pwd )"
+    cd ~/.WiKID
+    $DIR/$( basename "${BASH_SOURCE[0]}" ).sh
+}
+
+#
+#  Check if the bastion is connected, connect if it is not  
+#
+function mywik_main
+{
+    if [[ $(isControlMasterActive) -eq 0 ]]; then
+        echo The bastion connection is already active.
+    else
+        connectBastion
+        if [[ $(isControlMasterActive) -eq 0 ]]; then
+            echo The bastion connection is active.
+        fi
+    fi
+}
+
+mywik_main
