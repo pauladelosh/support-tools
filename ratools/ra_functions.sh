@@ -14,24 +14,37 @@
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
-# 1.  cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module commands.
-# 2.  Pick your function name and enter variables as required:
-#       Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-#       RA Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))
-#     You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
-#       SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
-#       SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
-#       SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
-#       SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
-#       SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
-#       SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <branch_name>)
-#       Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
-#       Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))
-#       Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))
-#       Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
-#       Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
-#       Git, Initialize Repository (git-init-repo @<docroot>.<environment> <source_tag> <branch_name>)
-# 3.  Example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
+# 1.  RA Audit: ra-audit @<docroot>.<environment>
+# -c <ticket number> to generate update commands
+# -p <dc/mc/ac/ace> to specify hosting platform
+# 2.  Unless otherwise specified, commands can be run from docroot level of repo.
+# 3.  Initialize Repo and Branch:
+# ra-init-repo @<docroot>.<environment> <source_tag> <branch_name>
+# ra-init-repo @<docroot>.<environment> <branch_name> (This will pull the source_tag from the environment)
+# example: ra-init-repo @radash.prod master acqUpd-20140307-23456
+# 4.  Update functions:
+# Quick check of site distribution, version and install profile: dvpcheck @<docroot>.<environment>
+# Core Update:
+#   ra-cupdate <distribution> <source version> <target version> <ticket number>
+#   Requires installation of patches (see: https://github.com/acquiacat/Drupal-Core-Git-Patches)
+#   example: ra-cupdate drupal 7.24 7.26 23456
+# Automatic Module Update:
+#   ra-auto-mupdate <module> <source version> <target version> <ticket number>
+#   add --security to mark as a security update
+#   Diff will be run against source_version with option to stop update
+#   example: ra-auto-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security
+# Module Update:
+#   ra-mupdate <module> <source version> <target version> <ticket number>
+#   Must be run from within containing module folder
+#   add --security to mark as a security update
+#   example: ra-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security
+# Add New Module:
+#   ra-mupdate-add <module> <version> <ticket number>
+#   example: ra-mupdate0add ctools 7.x-1.4 23456
+# Revert Module:
+#   ra-mupdate-rev <module> <source version> <target version> <ticket number>
+#   Must be run from within containing module folder
+#   example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456
 #
 ############################################################################################
 
@@ -41,26 +54,37 @@ function ratools-help {
 echo ""
 echo "Remote Administration Scripts Help:"
 echo ""
-echo "1. cd to code docroot for core/automatic-module updates, or the folder where the module lives for other module updates."
-echo "2. pick your function name and enter variables as required:"
-echo "      Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)"
-echo "      RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))"
-echo "   You can replace git/svn with 'ra' for any of the below commands, and it will automatically detect the current VCS"
-echo "      SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)"
-echo "      SVN, Automatic Module Update (svn-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
-echo "      SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
-echo "      SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)"
-echo "      SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)"
-echo "      SVN, Initialize Repository (svn-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
-echo "                                 (svn-init-repo @<docroot>.<environment> <branch_name> (This will pull the source_tag from the environment))"
-echo "      Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)"
-echo "      Git, Automatic Module Update (git-auto-mupdate <module> <source version> <target version> <ticket number> (add --security to mark as a security update))"
-echo "      Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number> (add --security to mark as a security update))"
-echo "      Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)"
-echo "      Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)"
-echo "      Git, Initialize Repository (git-init-repo @<docroot>.<environment> <source_tag> <branch_name>)"
-echo "                                 (git-init-repo @<docroot>.<environment> <branch_name> (This will pull the source_tag from the environment))"
-echo "3. example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-33333"
+echo "1.  RA Audit: ra-audit @<docroot>.<environment>"
+echo "  -c <ticket number> to generate update commands"
+echo "  -p <dc/mc/ac/ace> to specify hosting platform"
+echo "2.  Unless otherwise specified, commands can be run from docroot level of repo."
+echo "3.  Initialize Repo and Branch:"
+echo "  ra-init-repo @<docroot>.<environment> <source_tag> <branch_name>"
+echo "  ra-init-repo @<docroot>.<environment> <branch_name> (This will pull the source_tag from the environment)"
+echo "  example: ra-init-repo @radash.prod master acqUpd-20140307-23456"
+echo "4.  Update functions:"
+echo "  Quick check of site distribution, version and install profile: dvpcheck @<docroot>.<environment>"
+echo "  Core Update:"
+echo "    ra-cupdate <distribution> <source version> <target version> <ticket number>"
+echo "    Requires installation of patches (see: https://github.com/acquiacat/Drupal-Core-Git-Patches)"
+echo "    example: ra-cupdate drupal 7.24 7.26 23456"
+echo "  Automatic Module Update:"
+echo "    ra-auto-mupdate <module> <source version> <target version> <ticket number>"
+echo "    add --security to mark as a security update"
+echo "    Diff will be run against source_version with option to stop update"
+echo "    example: ra-auto-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security"
+echo "  Module Update:"
+echo "    ra-mupdate <module> <source version> <target version> <ticket number>"
+echo "    Must be run from within containing module folder"
+echo "    add --security to mark as a security update"
+echo "    example: ra-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security"
+echo "  Add New Module:"
+echo "    ra-mupdate-add <module> <version> <ticket number>"
+echo "    example: ra-mupdate0add ctools 7.x-1.4 23456"
+echo "  Revert Module:"
+echo "    ra-mupdate-rev <module> <source version> <target version> <ticket number>"
+echo "    Must be run from within containing module folder"
+echo "    example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456"
 echo ""
 }
 
