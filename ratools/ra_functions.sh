@@ -420,12 +420,16 @@ module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "google_analytics" ]; then modname=googleanalytics
   elif [ $1 = "features_extra" ]; then modname=fe_block
+  elif [ $1 = "vote_up_down" ]; then modname=vud
+  elif [ $1 = "user_relationships" ]; then modname=user_relationship_blocks
+  elif [ $1 = "ubercart" ]; then modname=uc_cart
   else modname=$1
 fi
 for modinfopath in `find . -name $modname.info`
   do
-    if [ $modname = acquia_agent ]
-      then modpath=`dirname $(dirname $(dirname $modinfopath))`
+    if [ $modname = acquia_agent ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      elif [ $modname = user_relationship ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      elif [ $modname = ubercart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
@@ -723,11 +727,16 @@ module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "google_analytics" ]; then modname=googleanalytics
   elif [ $1 = "features_extra" ]; then modname=fe_block
+  elif [ $1 = "vote_up_down" ]; then modname=vud
+  elif [ $1 = "user_relationships" ]; then modname=user_relationship_blocks
+  elif [ $1 = "ubercart" ]; then modname=uc_cart
   else modname=$1
 fi
 for modinfopath in `find . -name $modname.info`
   do
-    if [ $modname = acquia_agent ];then modpath=`dirname $(dirname $(dirname $modinfopath))`
+    if [ $modname = acquia_agent ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      elif [ $modname = user_relationship ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      elif [ $modname = ubercart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
