@@ -28,10 +28,10 @@ function mywik_main
 {
     if [ "$1" == "kill" ]; then
 	kill $(pgrep -f "ssh.*bastion") > /dev/null 2>&1
-        echo The bastion connection has been killed.
+	echo The bastion connection has been killed.
     else
         if [[ $(isControlMasterActive) -eq 0 ]]; then
-            echo The bastion connection is already active.
+	    echo The bastion connection is already active.
     	else
             connectBastion
             if [[ $(isControlMasterActive) -eq 0 ]]; then
