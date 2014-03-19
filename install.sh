@@ -84,11 +84,11 @@ fi" >> $ah_profile_file
         then
           echo "
 # set bastion function to use
-function bastion { mywik ; }" >> $ah_profile_file
+function bastion { mywik "$@" ; }" >> $ah_profile_file
       else
           echo "
 # set bastion function to use
-function bastion { mywik2 ; }" >> $ah_profile_file
+function bastion { mywik2 "$@" ; }" >> $ah_profile_file
       fi
     fi
 
