@@ -82,13 +82,13 @@ fi" >> $ah_profile_file
 
       if [ "$same" == "yes" ]
         then
-          echo "
+          echo '
 # set bastion function to use
-function bastion { mywik "$@" ; }" >> $ah_profile_file
+function bastion { mywik "$@" ; }' >> $ah_profile_file
       else
-          echo "
+          echo '
 # set bastion function to use
-function bastion { mywik2 "$@" ; }" >> $ah_profile_file
+function bastion { mywik2 "$@" ; }' >> $ah_profile_file
       fi
     fi
 
