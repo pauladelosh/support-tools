@@ -148,19 +148,18 @@ function test_code_deploy() {
     }
     END {
       if (err) {
-        print "\n'$COLOR_RED'PROBLEM FOUND! There should be " max " folders.'$COLOR_NONE'";
+        print "\nPROBLEM FOUND! There should be " max " folders.";
         for (web in data) {
           n=data[web]+0;
-          if (n<max) { printf "'$COLOR_RED'"; }
           printf web ": " n " folders";
-          if (n<max) { printf " ***"; }
-          printf "'$COLOR_NONE'\n";
+          if (n<max) { printf " ***PROBLEM***"; }
+          printf "\n";
         }
       }
       else {
-        print "OK. " max " folders found in deployed code."
+        print "\nOK. " max " folders found in deployed code."
       }
-    }' $tmpout
+    }' $tmpout |egrep --color=always "^|PROBLEM"
   ahtsep
 }
 
@@ -302,6 +301,7 @@ function test_phpfpm_procs() {
       # Print the line
       print server " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "kB " total_mem "kB";
     }' |column -t
+  ahtsep
 }
 
 # PHP-CGI number of skip spawns
@@ -370,12 +370,17 @@ function test_anonsession() {
   problem=0
   # Get valid domains (only those marked "OK" by aht domain-check)
   ahtaht dc |grep "ok" |awk '{ print $1 }' >$tmpout
+  count=`grep -c . $tmpout`
+  if [ $count -gt 15 ]
+  then
+    echo "${COLOR_YELLOW}  ** More than 15 domains found ($count); checking only first 15 **${COLOR_NONE}";
+  fi
   # Cycle thru domains and check for session cookies.
-  for domain in `cat $tmpout`
+  for domain in `head -15 $tmpout`
   do
     domain="http://${domain}/"
     #Get headers
-    curl -vv -o /dev/null $domain 2>&1 |grep -e "^[<>]" >$tmpout2
+    curl $BASIC_AUTH_USERPASS -vv -o /dev/null $domain 2>&1 |grep -e "^[<>]" >$tmpout2
     # Check if there's a Set-Cookie: ... SESS  somewhere
     if [ `grep -c "< Set-Cookie: .*SESS" $tmpout2` -gt 0 ]
     then
@@ -573,6 +578,15 @@ function test_vars() {
   echo "Checking size (in bytes) and quantity of Drupal variables:"
   echo "SELECT count(1) as Num_of_Variables, max(length(value)) as Maximum_variable_size, sum(length(value)) as Combined_variables_size FROM variable\\G" |ahtaht drush sql-cli | sed -n '2,$p' >$tmpout
   egrep --color=always "^|Num_of_Variables: [0-9][0-9][0-9][0-9][0-9]*|Maximum_variable_size: [0-9][0-9][0-9][0-9][0-9][0-9]*|Combined_variables_size: [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]*" $tmpout
+  ahtsep
+}
+
+# Get last times for cache flushes
+function test_cacheflushes() {
+  echo "Getting times of latest cache flushes in Drupal:"
+  ahtaht drush vget cache_flush | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout
+  today=`date +'%h %_d'`
+  egrep --color=always "^|${today}" $tmpout
   ahtsep
 }
   

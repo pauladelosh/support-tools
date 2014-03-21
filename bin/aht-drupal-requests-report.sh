@@ -93,7 +93,7 @@ else
   do
     msg=`echo $msg |tr '*' ' '`
     echo "Count of top '$msg' messages on $logfilename:"
-    ahtcat $logfilename |awk -F '|' '$3=="'"$msg"'" { print $9 }' |ahtcounttop |egrep --color=always "|^  *[1-9][0-9][0-9][0-9][0-9][0-9]* .*"
+    ahtcat $logfilename |awk -F '|' '$3=="'"$msg"'" { print $9 }' |ahtcounttop |egrep --color=always "^|^  *[1-9][0-9][0-9][0-9][0-9]*" |egrep --color=always -i "^|exception|error"
     ahtsep
   done
 
@@ -108,10 +108,11 @@ else
   
   echo "Modules enabled/disabled from last ${days} days on $logfilename:"
   logfiles=`ls -tr $logfilename*.gz $logfilename 2>/dev/null|tail -${days}`
+  today_date=`date +'%h %d '`
   cat /dev/null >$tmpout
   for file in $logfiles
   do 
-    zgrep -e 'module .*abled' $file| cut -f1,9 -d'|' >>$tmpout    
+    zgrep -e 'module .*abled' $file| cut -f1,9 -d'|' |egrep -i --color=always "^|${today_date}" >>$tmpout
   done
   ahtcatnonempty $tmpout "${COLOR_GREEN}No modules enabled/disabled in last 5 days.${COLOR_NONE}"
   ahtsep

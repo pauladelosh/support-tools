@@ -14,8 +14,8 @@
 HELPER_SCRIPTS_PATH="."
 # See http://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
 COLOR_RED=$(tput setaf 1) #"\[\033[0;31m\]"
-COLOR_YELLOW=$(tput setaf 5) #"\[\033[0;33m\]"
-COLOR_GREEN=$(tput setaf 2) #"\[\033[0;32m\]"
+COLOR_YELLOW=$(tput setaf 3) #"\[\033[0;33m\]"
+COLOR_GREEN=$(tput setaf 8) #"\[\033[0;32m\]"
 COLOR_GRAY=$(tput setaf 7) #"\[\033[2;37m\]"
 COLOR_NONE=$(tput sgr0) #"\[\033[0m\]"
 # Environment for aht runs
@@ -32,7 +32,9 @@ function showhelp() {
 This is a sniff-out-everything script that uncovers a lot of potential problems.
 Note: you should give it a --uri argument if auditing a multisite install.
 Usage: 
-  $0 sitename.env [--uri=URI] [--mc|--dc] [--skip-(basic|drush|logs)]
+  $0 [--uri=URI] [--mc|--dc] [--skip-(basic|drush|logs)] 
+     [--user=BASICAUTHUSER:BASICAUTHPASSWORD]
+     sitename.env
   
 Examples:
   $0 --skip-basic eluniverso.prod  # Skips some basic checks
@@ -91,6 +93,9 @@ do
   # Special cases
     --)
       break
+      ;;
+    --user=*)
+      BASIC_AUTH_USERPASS=$1
       ;;
     --uri=*)
       URI=$1
@@ -167,7 +172,7 @@ env=`echo $SITENAME |cut -f2 -d'.'`
 ahtaht --load |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)' | tee $tmpout
 ahtsep
 # Detect FPM from the aht output.
-if [ `grep -c -- "-fpm" $tmpout` -eq 1 ]
+if [ `grep -c -- "-fpm" $tmpout` -gt 0 ]
 then
   FPM_FLAG=1
 else
@@ -226,6 +231,7 @@ then
     test_cacheaudit
     test_duplicatemodules
     test_vars
+    test_cacheflushes
     test_dbsize
   fi
 fi
