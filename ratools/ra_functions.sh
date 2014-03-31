@@ -429,7 +429,7 @@ for modinfopath in `find . -name $modname.info`
   do
     if [ $modname = acquia_agent ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
       elif [ $modname = user_relationship ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      elif [ $modname = ubercart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      elif [ $modname = uc_cart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
@@ -736,7 +736,7 @@ for modinfopath in `find . -name $modname.info`
   do
     if [ $modname = acquia_agent ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
       elif [ $modname = user_relationship ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      elif [ $modname = ubercart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
+      elif [ $modname = uc_cart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
       else modpath=`dirname $(dirname $modinfopath)`
     fi
     if grep "version = \"$2\"" $modinfopath > /dev/null
