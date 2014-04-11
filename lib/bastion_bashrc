@@ -11,10 +11,15 @@
 #  Where "PREFIX" is a server prefix: ded, web, fsdb, srv, or bal
 #  And "NUMBER" is the server number, e.g. "srv 6"
 #
-#  You can also provide CMD arguments "up" or "dl" to scp files.
+#  You can also provide CMD arguments:
+#    - "ssh" to run remote commands.
+#    - "up" or "dl" to scp files.
 #
 #  For example to log into srv-6.devcloud.hosting.acquia.com
 #    $ srv 6
+#
+#  To run a comamnd on srv-6
+#    $ srv 6 ssh <command>
 #
 #  To download a file from srv-6
 #    $ srv 6 dl /path/to/remote/file /path/to/local/file
@@ -49,7 +54,11 @@ export AH_SSH_CONFIG="${HOME}/.ssh/ah_config"
 # SSH via bastion conenction
 #
 function _ah_ssh_to() {
-  $AH_SSH -F $AH_SSH_CONFIG $1.hosting.acquia.com ;
+  if [ $# -eq 1 ]; then
+    $AH_SSH -F $AH_SSH_CONFIG $1.hosting.acquia.com ;
+  else
+    $AH_SSH -F $AH_SSH_CONFIG $1.hosting.acquia.com ${*:2} ;
+  fi
 }
 
 #
@@ -90,6 +99,8 @@ function _ah_cmd_router {
     _ah_scp_dl $AH_HOST $AH_CMD_OP1 $AH_CMD_OP2
   elif [ $AH_CMD_OP0 = "sftp" ]; then
     _ah_scp_sftp $AH_HOST $AH_CMD_OP1 $AH_CMD_OP2
+  elif [ $AH_CMD_OP0 = "ssh" ]; then
+    _ah_ssh_to $AH_HOST ${*:3}
   else
     echo no command could be routed for: $AH_HOST $AH_CMD_OP0 $AH_CMD_OP1 $AH_CMD_OP2
   fi
