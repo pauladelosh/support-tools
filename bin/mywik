@@ -40,7 +40,6 @@ function addBastionKeyToAgent
     else
         ssh-add "$BASTION_KEY"
     fi
-    echo
 }
 
 #
@@ -71,7 +70,6 @@ function disconnectBastion
 	echo The bastion connection has been killed.
 }
 
-
 #
 #  Check if the bastion is connected, connect if it is not  
 #
@@ -90,6 +88,7 @@ function mywik_main
             else
                 echo "Public key was found in ssh-agent"
             fi
+            echo
             connectBastion
             if [[ $(isControlMasterActive) -eq 0 ]]; then
                 echo The bastion connection is active.
