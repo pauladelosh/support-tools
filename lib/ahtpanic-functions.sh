@@ -138,26 +138,27 @@ function test_code_deploy() {
     echo "$web: " `ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet $web "find $folder -maxdepth 3 -type d |wc -l"` >>$tmpout
   done
   awk -F: '
+    { n=$2+0; }
     NR==1 {
-      max=$2; err=0;
+      max=n; err=0;
     }
     NR > 1 {
-      if ($2!=max) { err=1; }
-      if ($2 > max) { max = $2; }
-      data[$1]=$2;
+      if (n!=max) { err=1; }
+      if (n > max) { max = n; }
+      data[$1]=n;
     }
     END {
       if (err) {
-        print "\nPROBLEM FOUND! There should be " max " folders.";
+        print ""; print "PROBLEM FOUND! There should be " max " folders.";
         for (web in data) {
           n=data[web]+0;
           printf web ": " n " folders";
           if (n<max) { printf " ***PROBLEM***"; }
-          printf "\n";
+          print "";
         }
       }
       else {
-        print "\nOK. " max " folders found in deployed code."
+        print ""; print "OK. " max " folders found in deployed code."
       }
     }' $tmpout |egrep --color=always "^|PROBLEM"
   ahtsep
