@@ -343,6 +343,8 @@ function test_pressflow() {
   # Copy script to web
 cat <<EOF >$tmpout
 <?php
+ini_set('display_errors', 0);
+error_reporting(0);
 list(\$v, ) = explode(".", VERSION);
 if (\$v == 6) { 
 echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n"; 
@@ -351,8 +353,9 @@ else {
 echo "Drupal " . VERSION . "\n";
 }
 EOF
-  scp -q $tmpout $web:/tmp/tmpscript.php 2>/dev/null
-  ahtaht drush scr /tmp/tmpscript.php >$tmpout2 2>/dev/null
+  dest="/tmp/testpressflow_$$.php"
+  scp -q $tmpout $web:$dest 2>/dev/null
+  ahtaht drush scr $dest >$tmpout2 2>/dev/null
   if [ `grep -c "Drupal 6" $tmpout2` -gt 0 ]
   then
     echo "  ${COLOR_RED}: WARNING: D6 installed; No Pressflow:"
@@ -420,7 +423,7 @@ function test_modules() {
   
   # Check for offending modules
   # TODO: Separate criticals from warnings
-  egrep  "^(robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api)$" $tmpout >$tmpout2 2>/dev/null
+  egrep  "^(robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity)$" $tmpout >$tmpout2 2>/dev/null
   if [ `grep -c . $tmpout2` -gt 0 ]
   then
     echo $COLOR_RED
@@ -488,7 +491,7 @@ EOF
   ahtsep
 
   echo "Showing largest database tables:"
-  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9]\.[0-9][0-9][MG]'
+  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9][0-9]*\.[0-9][0-9][MG]'
 SELECT CONCAT(table_schema, '.', table_name) as Table_name,
 CONCAT(ROUND(table_rows / 1000000, 2), 'M') rows,
 CONCAT(ROUND(data_length / ( 1024 * 1024 * 1024 ), 2), 'G') DATA,

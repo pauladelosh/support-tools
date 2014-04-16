@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # ahtpanic.sh
 #
@@ -143,7 +142,7 @@ do
   #    ;;
 
   # Done with options, the sitename comes last.
-    *)
+    @*)
       SITENAME=$1
       break
       ;;
@@ -161,6 +160,9 @@ ahtsep
 # Set some vars
 tmpout=/tmp/tmp.$$
 tmpout2=/tmp/tmp.$$.2
+
+# Trim @ from sitename
+SITENAME=`echo $SITENAME |cut -c2-`
   
 # devcloud/not devcloud
 devcloud=`echo $web |grep -c srv-`
@@ -179,7 +181,7 @@ else
   FPM_FLAG=0
 fi
 # Get the webs
-webs=`egrep "srv-|web-|ded-|staging-" $tmpout |cut -f2 -d' '`
+webs=`egrep "srv-|web-|ded-|staging-" $tmpout |grep -v ' \*' |cut -f2 -d' '`
 # Get firstweb
 web=`ahtfirstweb $SITENAME`
 # Detect all dedicated balancers
