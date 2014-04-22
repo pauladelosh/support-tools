@@ -45,6 +45,9 @@
 #   ra-mupdate-rev <module> <source version> <target version> <ticket number>
 #   Must be run from within containing module folder
 #   example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456
+# Fix settings.php files for the Search Apocalypse:
+#   ra-searchpocolypse <ticket number>
+#   example: ra-searchpocolypse 12345
 #
 ############################################################################################
 
@@ -85,6 +88,9 @@ echo "  Revert Module:"
 echo "    ra-mupdate-rev <module> <source version> <target version> <ticket number>"
 echo "    Must be run from within containing module folder"
 echo "    example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456"
+echo "  Fix settings.php files for the Search Apocalypse: "
+echo "    ra-searchpocolypse <ticket number>"
+echo "    example: ra-searchpocolypse 12345"
 echo ""
 }
 
@@ -215,6 +221,7 @@ fi
 }
 
 # Git/SVN agnostic function shortcuts
+function ra-searchpocolypse { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-searchpocolypse $@; else git-searchpocolypse $@; fi }
 function ra-cupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-cupdate $@; else git-cupdate $@; fi }
 function ra-auto-mupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-auto-mupdate $@; else git-auto-mupdate $@; fi }
 function ra-mupdate { if [ "$(git rev-parse --is-inside-work-tree 2> /dev/null)" != "true" ]; then svn-mupdate $@; else git-mupdate $@; fi }
@@ -232,6 +239,35 @@ function ra-init-repo {
     return
   fi
   if [[ "$(aht $site repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
+}
+
+function git-searchpocolypse {
+  if [ -z "$1" ]; then
+    echo "Missing ticket number." && return
+  fi
+  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
+  diff=$(git --no-pager diff)
+  git --no-pager diff
+  if [ "$diff" == "" ]; then
+    echo "No instances of search.acquia.com found in settings.php files." && return
+  fi
+  read -p "Press enter to commit change above, or CTRL+c to quit..."
+  git add -A
+  git commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+}
+
+function svn-searchpocolypse {
+  if [ -z "$1" ]; then
+    echo "Missing ticket number." && return
+  fi
+  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
+  diff=$(svn diff)
+  svn diff
+  if [ "$diff" == "" ]; then
+    echo "No instances of search.acquia.com found in settings.php files." && return
+  fi
+  read -p "Press enter to commit change above, or CTRL+c to quit..."
+  svn commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
 }
 
 # SVN, Get Repository (get-repo-svn <docroot-name> <repository-url)
