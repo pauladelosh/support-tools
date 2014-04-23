@@ -890,3 +890,105 @@ curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
+
+# Disables securepages on the given docroot/environment for all multisites.
+function ra-disable-securepages {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-disable-securepages @docroot.env"
+    return
+  fi
+  if [[ `aht $1` =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment."
+    return
+  fi
+
+  # A loop of all sites is used instead of drush @sites, due to issues with that alias when
+  #  using aht.
+  for site in `aht $1 sites | grep -v \>`; do
+     aht $1 drush dis securepages -y -l "${site//[[:space:]]/}"
+  done
+}
+
+# Enables and configures stage_file_proxy on the RA environment.
+function ra-enable-file-proxy {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-enable-file-proxy @docroot"
+    echo "# Requires site to be in live-development"
+    return
+  fi
+  if [[ `aht $1.prod` =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment."
+    return
+  fi
+
+  sites=()
+  domains=$(aht $1.prod domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
+  for domain in $(echo "$domains"); do
+    conf_path=$(aht $1.prod drush ev 'print conf_path();' -l $domain)
+    # either this isn't a working site, or we've already made an entry for this multisite
+    if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" ]]; then
+      continue
+    fi
+    sites+=($conf_path)
+    echo "Setting up stage_file_proxy for $conf_path multisite..."
+    aht $1.ra drush vset stage_file_proxy_origin "http://$domain" -l $domain
+    aht $1.ra drush vset stage_file_proxy_origin_dir "$conf_path/files" -l $domain
+    aht $1.ra drush vset stage_file_proxy_use_imagecache_root TRUE -l $domain
+    aht $1.ra drush en stage_file_proxy -y -l $domain
+    echo ""
+  done
+
+  # Point default at the default Prod Acquia site. This is done because passing a bogus domain to
+  #  Drush will just point to the default site, so we may have ended up with a bogus file proxy
+  #  after the loop execution.
+  domain=$(echo "$domains" | tail -1)
+  aht $1.ra drush vset stage_file_proxy_origin "http://$domain" -l default
+  aht $1.ra drush vset stage_file_proxy_origin_dir "sites/default/files" -l default
+  aht $1.ra drush vset stage_file_proxy_use_imagecache_root TRUE -l default
+  aht $1.ra drush en stage_file_proxy -y -l default
+}
+
+# Transfer all databases from one environment to another, or a range of databases
+function ra-transfer-databases {
+  if [ -z "$3" ]; then
+    echo "# Usage: ra-transfer-databases @docroot sourceenv targetenv"
+    echo "#  You can also supply a range of databases like so:"
+    echo "#   ra-transfer-databases @docroot sourceenv targetenv <start>,<end>"
+    echo "#  You can also add the --watch flag at the end of the command to watch for task completion."
+    return
+  fi
+
+  if [ "$3" == "prod" ]; then
+    echo "You cannot copy databases to Prod using this command. Use migrate-to for this."
+    return
+  fi
+
+  if [[ `aht $1.$2` =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment $1.$2"
+    return
+  elif [[ `aht $1.$3` =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment $1.$3"
+    return
+  fi
+
+  databases=$(aht $1.$2 dbs | grep -v '\[' | sed -e 's/[[:space:]]//' -e '/^$/d' -e 's/\ .*//')
+  total=$(echo "$databases" | wc -l | sed 's/[[:space:]]*//')
+  if [ -n "$4" ] && [ "$4" != "--watch" ]; then
+    echo "About to copy $4 of $total databases from $2 to $3:"
+    databases=$(echo "$databases" | sed -n "$4p")
+  else
+    echo "About to copy $total databases from $2 to $3:"
+  fi
+  echo "$databases"
+  read -p "Press enter to continue or CTRL+c to quit..."
+  for database in $(echo "$databases"); do
+    aht $1.$2 dbs transfer $3 --database=$database
+  done
+
+  if [ "$5" == "--watch" ] || [ "$4" == "--watch" ]; then
+    while :; do clear; aht $1.$3 tasks --limit=30; sleep 10; done
+  else
+    aht $1.$3 tasks
+    echo "Run aht $1.$3 tasks to see when databases are finished copying."
+  fi
+}
