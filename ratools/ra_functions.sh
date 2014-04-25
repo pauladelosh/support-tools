@@ -167,7 +167,7 @@ grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | s
 fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
-if egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -q -v 'Installed-version-not-supported|SECURITY-UPDATE-available'; then 
+if ( egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -q -v 'Installed-version-not-supported|SECURITY-UPDATE-available' ) || ( egrep -w $RA_UNSUPPORTED_EXCEPTIONS /tmp/ra-audit-updates.tmp | egrep -q 'Installed-version-not-supported' | sort | uniq ); then 
   egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
   egrep -w $RA_UNSUPPORTED_EXCEPTIONS /tmp/ra-audit-updates.tmp | egrep 'Installed-version-not-supported' | sort | uniq
 else
