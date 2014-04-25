@@ -12,6 +12,37 @@ function isControlMasterActive
 }
 
 #
+#  Get bastion key
+#
+function getBastionKey
+{
+    eval echo $(grep -A 20 -E '^Host bastion$' ~/.ssh/ah_config | grep IdentityFile | head -n 1 | awk '{print $2}')
+}
+
+#
+#  Determine if the bastion key has been added to the agent
+#
+function isBastionKeyInAgent
+{
+    BASTION_KEY=$(getBastionKey)
+    ssh-add -l | grep "$BASTION_KEY" > /dev/null 2>&1
+    echo $?
+}
+
+#
+#  Adds bastion key
+#
+function addBastionKeyToAgent
+{
+    BASTION_KEY=$(getBastionKey)
+    if [[ $(uname) -eq "Darwin" ]]; then
+        ssh-add -K "$BASTION_KEY"
+    else
+        ssh-add "$BASTION_KEY"
+    fi
+}
+
+#
 #  Connect to the expect script of choice
 #
 function connectBastion
@@ -22,18 +53,49 @@ function connectBastion
 }
 
 #
+#  Kill any existing bastion connection
+#
+function disconnectBastion
+{
+    while true; do
+        read -p "Kill the existing bastion connection? (y/n) " yn
+            case $yn in
+                [Yy]* ) break;;
+                [Nn]* ) return;;
+                * ) echo "invalid response, try again";;
+            esac
+    done
+
+    kill -9 $(pgrep -f "ssh.*bastion") > /dev/null 2>&1
+	echo The bastion connection has been killed.
+}
+
+#
 #  Check if the bastion is connected, connect if it is not  
 #
 function mywik_main
 {
-    if [[ $(isControlMasterActive) -eq 0 ]]; then
-        echo The bastion connection is already active.
+    if [ "$1" == "kill" ]; then
+        disconnectBastion
     else
-        connectBastion
         if [[ $(isControlMasterActive) -eq 0 ]]; then
-            echo The bastion connection is active.
+	        echo The bastion connection is already active.
+            disconnectBastion
+    	else
+            if [[ $(isBastionKeyInAgent) -ne 0 ]]; then
+                echo "Public key was not found in ssh-agent; invoking ssh-add"
+                addBastionKeyToAgent
+            else
+                echo "Public key was found in ssh-agent"
+            fi
+            echo
+            connectBastion
+            if [[ $(isControlMasterActive) -eq 0 ]]; then
+                echo The bastion connection is active.
+            fi
         fi
     fi
 }
 
-mywik_main
+mywik_main $@
+
