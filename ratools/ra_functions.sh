@@ -102,6 +102,7 @@ function ra-audit {
 ######################################################
 # define proactive updates here (seperate with pipes):
 RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity"
+RA_UNSUPPORTED_EXCEPTIONS="acquia_connector|mollom"
 ######################################################
 local OPTIND
 DOCROOT=$1
@@ -166,14 +167,17 @@ grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | s
 fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
-if egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -q -v 'Installed-version-not-supported|SECURITY-UPDATE-available'
-  then egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
-  else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
+if egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -q -v 'Installed-version-not-supported|SECURITY-UPDATE-available'; then 
+  egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
+  egrep -w $RA_UNSUPPORTED_EXCEPTIONS /tmp/ra-audit-updates.tmp | egrep 'Installed-version-not-supported' | sort | uniq
+else
+  echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
 if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
 echo "=========="
 #egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+egrep -w $RA_UNSUPPORTED_EXCEPTIONS /tmp/ra-audit-updates.tmp | egrep 'Installed-version-not-supported' | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"; tput sgr0
@@ -194,8 +198,8 @@ if egrep -q 'Update-available|SECURITY-UPDATE-available' /tmp/ra-audit-updates.t
 fi
 echo
 echo -e "\033[1;33;148m[ Unsupported/Out-of-Scope Updates (do not perform) ]\033[39m"; tput sgr0
-if grep -q 'Installed-version-not-supported' /tmp/ra-audit-updates.tmp
-  then grep 'Installed-version-not-supported' /tmp/ra-audit-updates.tmp | sort | uniq
+if grep -q 'Installed-version-not-supported' /tmp/ra-audit-updates.tmp | egrep -v $RA_UNSUPPORTED_EXCEPTIONS
+  then grep 'Installed-version-not-supported' /tmp/ra-audit-updates.tmp | egrep -v $RA_UNSUPPORTED_EXCEPTIONS | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
 echo
