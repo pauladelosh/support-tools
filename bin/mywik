@@ -12,11 +12,19 @@ function isControlMasterActive
 }
 
 #
+#  Get list of PIDs for procs that ssh to a bastion
+#
+function getActiveBastionPids
+{
+    pgrep -f "ssh.*bastion"
+}
+
+#
 #  List active Bastion processes
 #
 function listActiveBastionProcesses
 {
-    BASTION_PIDS=`pgrep -f "ssh.*bastion" | paste -s -d, -`
+    BASTION_PIDS=$(getActiveBastionPids)
     if [ -n "$BASTION_PIDS" ]; then
         ps -o "pid,command" -wp $BASTION_PIDS
     fi
@@ -85,8 +93,13 @@ function disconnectBastion
 #
 function killBastion
 {
-    kill -9 $(pgrep -f "ssh.*bastion") > /dev/null 2>&1
-	echo The bastion connection has been killed.
+    BASTION_PIDS=$(getActiveBastionPids)
+    if [ -n "$BASTION_PIDS" ]; then
+        kill -9 $(getActiveBastionPids)
+        echo -e "Active bastion connections have been killed.\n"
+    else
+        echo There are no active bastion processes.
+    fi
 }
 
 #
@@ -120,4 +133,3 @@ function mywik_main
 }
 
 mywik_main $@
-
