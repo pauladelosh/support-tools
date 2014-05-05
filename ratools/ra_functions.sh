@@ -249,29 +249,36 @@ function git-searchpocolypse {
   if [ -z "$1" ]; then
     echo "Missing ticket number." && return
   fi
-  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
-  diff=$(git --no-pager diff)
-  git --no-pager diff
-  if [ "$diff" == "" ]; then
+  if [ -z `find . -name settings.php -exec grep 'search.acquia.com' {} \;` ]; then
     echo "No instances of search.acquia.com found in settings.php files." && return
   fi
-  read -p "Press enter to commit change above, or CTRL+c to quit..."
-  git add -A
-  git commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
+  git --no-pager diff
+  read -p "Would you like to commit the changes above? (y/n): " -r
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    git add -A
+    git commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  else
+    git reset --hard
+  fi
+
 }
 
 function svn-searchpocolypse {
   if [ -z "$1" ]; then
     echo "Missing ticket number." && return
   fi
-  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
-  diff=$(svn diff)
-  svn diff
-  if [ "$diff" == "" ]; then
+  if [ -z `find . -name settings.php -exec grep 'search.acquia.com' {} \;` ]; then
     echo "No instances of search.acquia.com found in settings.php files." && return
   fi
-  read -p "Press enter to commit change above, or CTRL+c to quit..."
-  svn commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
+  svn diff
+  read -p "Would you like to commit the changes above? (y/n): " -r
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    svn commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  else
+    svn revert -R .
+  fi
 }
 
 # SVN, Get Repository (get-repo-svn <docroot-name> <repository-url)
