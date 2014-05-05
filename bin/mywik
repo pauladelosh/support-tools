@@ -68,6 +68,7 @@ function disconnectBastion
 
     kill -9 $(pgrep -f "ssh.*bastion") > /dev/null 2>&1
 	echo The bastion connection has been killed.
+        mywik_main
 }
 
 #
