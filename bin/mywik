@@ -65,10 +65,17 @@ function disconnectBastion
                 * ) echo "invalid response, try again";;
             esac
     done
+        killBastion
+        mywik_main
+}
 
+#
+# Kills the SSH session
+#
+function killBastion
+{
     kill -9 $(pgrep -f "ssh.*bastion") > /dev/null 2>&1
 	echo The bastion connection has been killed.
-        mywik_main
 }
 
 #
@@ -77,7 +84,7 @@ function disconnectBastion
 function mywik_main
 {
     if [ "$1" == "kill" ]; then
-        disconnectBastion
+        killBastion
     else
         if [[ $(isControlMasterActive) -eq 0 ]]; then
 	        echo The bastion connection is already active.
