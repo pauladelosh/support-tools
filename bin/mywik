@@ -7,8 +7,20 @@
 #
 function isControlMasterActive
 {
-    pgrep -f "ssh.*bastion" > /dev/null 2>&1
-    echo $?
+    local BASTION_HOST="$1"
+    local BASTION_MUX_ACTIVE=$(ls /tmp/ssh_mux_${BASTION_HOST}* 2>/dev/null | wc -l | awk '{print $1}')
+
+    # We actually want to find all bastion PIDs, not just BASTION_HOST's
+    local BASTION_PIDS=$(getActiveBastionPids bastion | paste -s -d, -)
+
+    if [[ "$BASTION_MUX_ACTIVE" -ne "0" ]]; then
+        BASTION_MUX_ACTIVE="0"
+        if [[ -n "$BASTION_PIDS" ]]; then
+            BASTION_MUX_ACTIVE=$(lsof -p $(echo $BASTION_PIDS | paste -s -d, -) 2>/dev/null | grep /tmp/ssh_mux_${BASTION_HOST} | wc -l | awk '{print $1}')
+        fi
+    fi
+
+    echo $BASTION_MUX_ACTIVE
 }
 
 #
@@ -16,7 +28,8 @@ function isControlMasterActive
 #
 function getActiveBastionPids
 {
-    pgrep -f "ssh.*bastion"
+    local BASTION_HOST="$1"
+    pgrep -f "ssh.*${BASTION_HOST}"
 }
 
 #
@@ -24,7 +37,8 @@ function getActiveBastionPids
 #
 function listActiveBastionProcesses
 {
-    BASTION_PIDS=$(getActiveBastionPids)
+    local BASTION_HOST="$1"
+    local BASTION_PIDS=$(getActiveBastionPids $BASTION_HOST)
     if [ -n "$BASTION_PIDS" ]; then
         ps -o "pid,command" -wp $BASTION_PIDS
     fi
@@ -43,7 +57,7 @@ function getBastionKey
 #
 function isBastionKeyInAgent
 {
-    BASTION_KEY=$(getBastionKey)
+    local BASTION_KEY=$(getBastionKey)
     ssh-add -l | grep "$BASTION_KEY" > /dev/null 2>&1
     echo $?
 }
@@ -53,7 +67,7 @@ function isBastionKeyInAgent
 #
 function addBastionKeyToAgent
 {
-    BASTION_KEY=$(getBastionKey)
+    local BASTION_KEY=$(getBastionKey)
     if [[ $(uname) -eq "Darwin" ]]; then
         ssh-add -K "$BASTION_KEY"
     else
@@ -66,9 +80,11 @@ function addBastionKeyToAgent
 #
 function connectBastion
 {
+    local BASTION_HOST=$1
+
     DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && cd ../lib && pwd )"
     cd ~/.WiKID
-    $DIR/$( basename "${BASH_SOURCE[0]}" ).sh
+    $DIR/$( basename "${BASH_SOURCE[0]}" ).sh $BASTION_HOST
 }
 
 #
@@ -76,6 +92,8 @@ function connectBastion
 #
 function disconnectBastion
 {
+    local BASTION_HOST=$1
+
     while true; do
         read -p "Kill the existing bastion connection? (y/n) " yn
             case $yn in
@@ -84,8 +102,8 @@ function disconnectBastion
                 * ) echo "invalid response, try again";;
             esac
     done
-        killBastion
-        mywik_main
+        killBastion $BASTION_HOST
+        attemptConnection $BASTION_HOST
 }
 
 #
@@ -93,12 +111,37 @@ function disconnectBastion
 #
 function killBastion
 {
-    BASTION_PIDS=$(getActiveBastionPids)
+    local BASTION_HOST=$1
+    local BASTION_PIDS=$(getActiveBastionPids $BASTION_HOST)
     if [ -n "$BASTION_PIDS" ]; then
-        kill -9 $(getActiveBastionPids)
-        echo -e "Active bastion connections have been killed.\n"
+        kill -9 $BASTION_PIDS
+        echo -e "Active $BASTION_HOST connections have been killed.\n"
     else
         echo There are no active bastion processes.
+    fi
+}
+
+function attemptConnection
+{
+    local BASTION_HOST=$1
+
+    if [[ $(isControlMasterActive $BASTION_HOST) -ne "0" ]]; then
+        echo -e "One or more bastion connections may be active. Existing procs:\n"
+        listActiveBastionProcesses $BASTION_HOST
+        echo
+        disconnectBastion $BASTION_HOST
+    else
+        if [[ $(isBastionKeyInAgent) -ne 0 ]]; then
+            echo "Public key was not found in ssh-agent; invoking ssh-add"
+            addBastionKeyToAgent
+        else
+            echo "Public key was found in ssh-agent"
+        fi
+        echo
+        connectBastion $BASTION_HOST
+        if [[ $(isControlMasterActive $BASTION_HOST) -ne "0" ]]; then
+            echo The bastion connection is active.
+        fi
     fi
 }
 
@@ -107,29 +150,42 @@ function killBastion
 #
 function mywik_main
 {
-    if [ "$1" == "kill" ]; then
-        killBastion
-    else
-        if [[ $(isControlMasterActive) -eq 0 ]]; then
-            echo One or more bastion connections may be active. Existing procs:
-            echo
-            listActiveBastionProcesses
-            echo
-            disconnectBastion
-        else
-            if [[ $(isBastionKeyInAgent) -ne 0 ]]; then
-                echo "Public key was not found in ssh-agent; invoking ssh-add"
-                addBastionKeyToAgent
+    case $1 in
+        kill)
+            local BASTION_HOST=bastion
+            [[ -n "$2" ]] && BASTION_HOST=$2
+
+            killBastion $BASTION_HOST
+        ;;
+        status)
+            local BASTION_HOST=bastion
+            [[ -n "$2" ]] && BASTION_HOST=$2
+
+            if [[ $(isControlMasterActive $BASTION_HOST) -ne "0" ]]; then
+                echo -e "The bastion connection is active.\n"
+                listActiveBastionProcesses $BASTION_HOST
             else
-                echo "Public key was found in ssh-agent"
+                echo The bastion connection is not active
             fi
-            echo
-            connectBastion
-            if [[ $(isControlMasterActive) -eq 0 ]]; then
-                echo The bastion connection is active.
-            fi
-        fi
-    fi
+        ;;
+        "")
+            attemptConnection bastion
+        ;;
+        3|[eE][oO][pP]|bastion-3)
+            attemptConnection bastion-3
+        ;;
+        21|[uU][sS]|bastion-21)
+            attemptConnection bastion-21
+        ;;
+        22|[eE][uU]|bastion-22)
+            attemptConnection bastion-22
+        ;;
+        133|[aA][uU]|bastion-133)
+            attemptConnection bastion-133
+        ;;
+        *)
+            echo "Usage: bastion [<number>|au|eu|us|kill|status]"
+    esac
 }
 
 mywik_main $@
