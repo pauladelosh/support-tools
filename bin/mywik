@@ -12,6 +12,17 @@ function isControlMasterActive
 }
 
 #
+#  List active Bastion processes
+#
+function listActiveBastionProcesses
+{
+    BASTION_PIDS=`pgrep -f "ssh.*bastion" | paste -s -d, -`
+    if [ -n "$BASTION_PIDS" ]; then
+        ps -o "pid,command" -wp $BASTION_PIDS
+    fi
+}
+
+#
 #  Get bastion key
 #
 function getBastionKey
@@ -87,9 +98,12 @@ function mywik_main
         killBastion
     else
         if [[ $(isControlMasterActive) -eq 0 ]]; then
-	        echo The bastion connection is already active.
+            echo One or more bastion connections may be active. Existing procs:
+            echo
+            listActiveBastionProcesses
+            echo
             disconnectBastion
-    	else
+        else
             if [[ $(isBastionKeyInAgent) -ne 0 ]]; then
                 echo "Public key was not found in ssh-agent; invoking ssh-add"
                 addBastionKeyToAgent
