@@ -673,7 +673,7 @@ tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"; tput sgr0
-if git status | grep branch | cut -f4 -d" " | grep -w master
+if git status | grep branch | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
     case $yn in
@@ -731,7 +731,7 @@ git status
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
-echo "currently on git branch `git status | grep branch | cut -f4 -d" "`"
+echo "`git status | grep branch`"
 while true; do
     read -p "commit \"$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4.\" now? (y/n) " yn
     case $yn in
