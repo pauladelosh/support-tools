@@ -33,12 +33,12 @@ Note: you should give it a --uri argument if auditing a multisite install.
 Usage: 
   $0 [--uri=URI] [--mc|--dc] [--skip-(basic|drush|logs)] 
      [--user=BASICAUTHUSER:BASICAUTHPASSWORD]
-     sitename.env
+     @sitename.env
   
 Examples:
-  $0 --skip-basic eluniverso.prod  # Skips some basic checks
-  $0 --uri=www.eluniverso.com eluniverso.prod  # Give it a URI for drush
-  $0 --mc eluniverso.prod  # Forces managed cloud, use --dc for devcloud
+  $0 --skip-basic @eluniverso.prod  # Skips some basic checks
+  $0 --uri=www.eluniverso.com @eluniverso.prod  # Give it a URI for drush
+  $0 --mc @eluniverso.prod  # Forces managed cloud, use --dc for devcloud
 EOF
 }
 
@@ -164,8 +164,6 @@ tmpout2=/tmp/tmp.$$.2
 # Trim @ from sitename
 SITENAME=`echo $SITENAME |cut -c2-`
   
-# devcloud/not devcloud
-devcloud=`echo $web |grep -c srv-`
 # split site/env
 site=`echo $SITENAME |cut -f1 -d'.'`
 env=`echo $SITENAME |cut -f2 -d'.'`
@@ -182,8 +180,11 @@ else
 fi
 # Get the webs
 webs=`egrep "srv-|web-|ded-|staging-" $tmpout |grep -v ' \*' |cut -f2 -d' '`
+webs_raw=`egrep "srv-|web-|ded-|staging-" $tmpout |cut -f2 -d' '`
 # Get firstweb
 web=`ahtfirstweb $SITENAME`
+# devcloud/not devcloud
+devcloud=`echo $web |grep -c srv-`
 # Detect all dedicated balancers
 #dedicated_bals=`cat $tmpout |egrep 'bal-[0-9]+ *dedicated *[1-9]' |awk '{ print $1 }'`
 

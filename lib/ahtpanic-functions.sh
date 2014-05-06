@@ -75,7 +75,7 @@ function ahtsep() {
 # Finds which server a logfile lives at.
 # Usage: ahtfindlog sitename.env xyz.log [breakonfirst]
 function ahtfindlog() {
-  for nom in $webs
+  for nom in $webs_raw
   do
     here=`ahtssh $nom 'sudo find /var/log/sites/'$SITENAME'/logs/'"$nom/$1"' -size +1k 2>/dev/null'`
     if [ "${here:-x}" != x ]
@@ -302,6 +302,9 @@ function test_phpfpm_procs() {
       # Print the line
       print server " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "kB " total_mem "kB";
     }' |column -t
+  echo ""
+  #ahtaht procs
+  aht $STAGE @$SITENAME $URI procs
   ahtsep
 }
 
@@ -333,7 +336,7 @@ function test_dns() {
 function test_tasks() {
   days=5
   echo "Last $days days' workflow messages:"
-  ahtaht tasks --days=$days |egrep --color=always -i "^|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
+  ahtaht tasks --days=$days |egrep --color=always -i "^|code-push|Prod|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
   ahtcatnonempty $tmpout "${COLOR_GREEN}No messages found in last $days days."
   ahtsep
 }
@@ -354,7 +357,7 @@ else {
 echo "Drupal " . VERSION . "\n";
 }
 EOF
-  dest="/tmp/testpressflow_$$.php"
+  dest=/tmp/testpressflow_$$.php
   scp -q $tmpout $web:$dest 2>/dev/null
   ahtaht drush scr $dest >$tmpout2 2>/dev/null
   if [ `grep -c "Drupal 6" $tmpout2` -gt 0 ]
@@ -424,7 +427,7 @@ function test_modules() {
   
   # Check for offending modules
   # TODO: Separate criticals from warnings
-  egrep  "^(robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity)$" $tmpout >$tmpout2 2>/dev/null
+  egrep  "^(robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity|ip_geoloc|textsize)$" $tmpout >$tmpout2 2>/dev/null
   if [ `grep -c . $tmpout2` -gt 0 ]
   then
     echo $COLOR_RED
