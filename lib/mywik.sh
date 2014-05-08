@@ -9,6 +9,11 @@
 
 # Read the wikid token password and pin. This script assumes the SSH key
 # password is the same as the wikid token password.
+set bastion_host bastion
+switch [llength $argv] {
+        1       { set bastion_host [lindex $argv 0] }
+}
+
 stty -echo
 send_user "This script assumes your Bastion SSH Password and WiKID Password are set the same. If they are not you need to change your .bash_profile/.profile to use mywik2 instead of mywik.\n\n"
 send_user "Bastion SSH Password: "
@@ -64,9 +69,9 @@ wait
 # SSH and login to the bastion server.
 # Check for AH_SSH_CONFIG
 if {[info exists env(AH_SSH_CONFIG)]} {
-    spawn -noecho ssh -f -N -F $env(AH_SSH_CONFIG) bastion
+    spawn -noecho ssh -f -N -F $env(AH_SSH_CONFIG) $bastion_host
 } else {
-    spawn -noecho ssh -f -N bastion
+    spawn -noecho ssh -f -N $bastion_host
 }
 expect {
     "Password:" {
