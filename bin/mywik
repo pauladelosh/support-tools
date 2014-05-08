@@ -154,6 +154,20 @@ function mywik_main
         kill)
             local BASTION_HOST=bastion
             [[ -n "$2" ]] && BASTION_HOST=$2
+            case $BASTION_HOST in
+              [eE][oO][pP])
+                  BASTION_HOST=3
+              ;;
+              [uU][sS])
+                  BASTION_HOST=21
+              ;;
+              [eE][uU])
+                  BASTION_HOST=22
+              ;;
+              [aA][uU])
+                  BASTION_HOST=133
+              ;;
+            esac
 
             killBastion $BASTION_HOST
         ;;
@@ -184,8 +198,12 @@ function mywik_main
             attemptConnection bastion-133
         ;;
         *)
-            echo "Usage: bastion [<number>|au|eu|us|kill|status]"
+            bastion_usage
     esac
+}
+
+function bastion_usage() {
+    echo "Usage: bastion [<number>|au|eu|us|kill|status]"
 }
 
 mywik_main $@
