@@ -98,6 +98,12 @@ echo "    example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456"
 echo "  Fix settings.php files for the Search Apocalypse: "
 echo "    ra-searchpocolypse <ticket number>"
 echo "    example: ra-searchpocolypse 12345"
+echo "  Copy domains from Prod to the RA environment: "
+echo "    ra-copy-domains @<site> <optional sed command>"
+echo "    This command will copy all Prod domains onto RA with the prefix 'ra.'"
+echo "    If you would prefer a different naming scheme, add a sed command."
+echo "    example: ra-copy-domains @site"
+echo "    example: ra-copy-domains @site s/site.com/dev-ra.site.com/"
 echo ""
 }
 
@@ -1009,4 +1015,29 @@ function ra-transfer-databases {
     aht $1.$3 tasks
     echo "Run aht $1.$3 tasks to see when databases are finished copying."
   fi
+}
+
+# Create prefixed copies of Production domains onto RA environment
+function ra-copy-domains {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-copy-domains @docroot <optional sed replacement>"
+    return
+  fi
+  if [ -z "$2" ]; then 
+    expression="s/^/ra./"
+  else
+    expression="$2"
+  fi
+  domains=$(aht $1.prod domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
+  new_domains=""
+  for domain in $(echo "$domains"); do
+    new_domains+=$(echo $domain | sed $expression)
+    new_domains+=$'\n'
+  done
+  echo "$new_domains"
+  echo "About to add the above domains to $1.ra"
+  read -p "Press enter to continue or CTRL+c to quit..."
+  for domain in $(echo "$new_domains"); do
+    aht $1.ra domains add $domain
+  done
 }
