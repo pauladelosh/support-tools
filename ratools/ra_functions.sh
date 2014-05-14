@@ -944,7 +944,7 @@ function ra-enable-file-proxy {
   for domain in $(echo "$domains"); do
     conf_path=$(aht $1.prod drush ev 'print conf_path();' -l $domain)
     # either this isn't a working site, or we've already made an entry for this multisite
-    if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" ]]; then
+    if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" || "$conf_path" =~ "warning" ]]; then
       continue
     fi
     sites+=($conf_path)
