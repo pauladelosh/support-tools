@@ -1028,7 +1028,7 @@ function ra-copy-domains {
   else
     expression="$2"
   fi
-  domains=$(aht $1.prod domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
+  domains=$(aht $1.prod domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v 'prod.acquia-sites.com')
   new_domains=""
   for domain in $(echo "$domains"); do
     new_domains+=$(echo $domain | sed $expression)
