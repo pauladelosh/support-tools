@@ -48,6 +48,12 @@
 # Fix settings.php files for the Search Apocalypse:
 #   ra-searchpocolypse <ticket number>
 #   example: ra-searchpocolypse 12345
+# Copy domains to the RA environment: "
+#   ra-copy-domains @<docroot>.<environment> <optional sed command>"
+#   This command will copy all domains to RA with the prefix 'ra.'"
+#   If you would prefer a different naming scheme, add a sed command."
+#   example: ra-copy-domains @<docroot>.<environment>"
+#   example: ra-copy-domains @<docroot>.<environment> s/site.com/dev-ra.site.com/"
 #
 ############################################################################################
 
