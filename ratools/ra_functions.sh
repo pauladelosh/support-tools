@@ -944,6 +944,40 @@ function ra-disable-securepages {
   done
 }
 
+# Downloads the stage_file_proxy module as root on the RA environment.
+function ra-download-file-proxy {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-download-file-proxy @docroot"
+    return
+  fi
+  server_command=`aht $1.ra`
+  if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment."
+    return
+  fi
+  server=$(echo "$server_command" | grep staging | sed -e 's/^ //' -e 's/\ .*//')
+  docroot=$(echo "$1" | sed 's/@//')
+  echo "About to download stage_file_proxy on $server for $docroot.ra..."
+  read -p "Press enter to continue or CTRL+c to quit "
+  ssh $server sudo drush dl stage_file_proxy --root=/var/www/html/$docroot.ra/docroot
+}
+
+# Removes the stage_file_proxy module the RA environment.
+function ra-remove-file-proxy {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-remove-file-proxy @docroot"
+    return
+  fi
+  server_command=`aht $1.ra`
+  if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment."
+    return
+  fi
+  echo "About to remove the stage_file_proxy on $1.ra (using aht redeploy --force)..."
+  read -p "Press enter to continue or CTRL+c to quit "
+  aht $1.ra redeploy --force
+}
+
 # Enables and configures stage_file_proxy on the RA environment.
 function ra-enable-file-proxy {
   if [ -z "$1" ]; then
