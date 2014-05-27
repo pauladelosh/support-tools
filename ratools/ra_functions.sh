@@ -59,7 +59,7 @@
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0002 (2014-05-27)"
+RATOOLS_VERSION="Build 0003 (2014-05-27)"
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
