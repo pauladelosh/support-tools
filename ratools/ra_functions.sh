@@ -1017,10 +1017,10 @@ function ra-transfer-databases {
   fi
 }
 
-# Create prefixed copies of Production domains onto RA environment
+# Create prefixed copies of an environment's domains onto RA environment
 function ra-copy-domains {
   if [ -z "$1" ]; then
-    echo "# Usage: ra-copy-domains @docroot <optional sed replacement>"
+    echo "# Usage: ra-copy-domains @site.env <optional sed replacement>"
     return
   fi
   if [ -z "$2" ]; then 
@@ -1028,16 +1028,18 @@ function ra-copy-domains {
   else
     expression="$2"
   fi
-  domains=$(aht $1.prod domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v 'prod.acquia-sites.com')
+  source_env=$1
+  target_env=$(echo $1 | sed 's/\..*/.ra/')
+  domains=$(aht $source_env domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v '.acquia-sites.com')
   new_domains=""
   for domain in $(echo "$domains"); do
     new_domains+=$(echo $domain | sed $expression)
     new_domains+=$'\n'
   done
   echo "$new_domains"
-  echo "About to add the above domains to $1.ra"
+  echo "About to add the above domains to $target_env"
   read -p "Press enter to continue or CTRL+c to quit..."
   for domain in $(echo "$new_domains"); do
-    aht $1.ra domains add $domain
+    aht $target_env domains add $domain
   done
 }
