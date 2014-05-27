@@ -955,7 +955,7 @@ function ra-download-file-proxy {
     echo "Could not find sitegroup or environment."
     return
   fi
-  server=$(echo "$server_command" | grep staging | sed -e 's/^ //' -e 's/\ .*//')
+  server=$(echo "$server_command" | grep active-db | sed -e 's/^ //' -e 's/\ .*//')
   docroot=$(echo "$1" | sed 's/@//')
   echo "About to download stage_file_proxy on $server for $docroot.ra..."
   read -p "Press enter to continue or CTRL+c to quit "
