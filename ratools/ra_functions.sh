@@ -48,8 +48,21 @@
 # Fix settings.php files for the Search Apocalypse:
 #   ra-searchpocolypse <ticket number>
 #   example: ra-searchpocolypse 12345
+# Copy domains to the RA environment: "
+#   ra-copy-domains @<docroot>.<environment> <optional sed command>"
+#   This command will copy all domains to RA with the prefix 'ra.'"
+#   If you would prefer a different naming scheme, add a sed command."
+#   example: ra-copy-domains @<docroot>.<environment>"
+#   example: ra-copy-domains @<docroot>.<environment> s/site.com/dev-ra.site.com/"
 #
 ############################################################################################
+
+# Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
+# DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
+RATOOLS_VERSION="Build 0002 (2014-05-27)"
+
+# Output date and build of current toolset
+alias ra-version='echo $RATOOLS_VERSION'
 
 # Help
 alias ra-help='ratools-help'
@@ -91,6 +104,12 @@ echo "    example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456"
 echo "  Fix settings.php files for the Search Apocalypse: "
 echo "    ra-searchpocolypse <ticket number>"
 echo "    example: ra-searchpocolypse 12345"
+echo "  Copy domains to the RA environment: "
+echo "    ra-copy-domains @<docroot>.<environment> <optional sed command>"
+echo "    This command will copy all domains to RA with the prefix 'ra.'"
+echo "    If you would prefer a different naming scheme, add a sed command."
+echo "    example: ra-copy-domains @<docroot>.<environment>"
+echo "    example: ra-copy-domains @<docroot>.<environment> s/site.com/dev-ra.site.com/"
 echo ""
 }
 
@@ -249,29 +268,36 @@ function git-searchpocolypse {
   if [ -z "$1" ]; then
     echo "Missing ticket number." && return
   fi
-  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
-  diff=$(git --no-pager diff)
-  git --no-pager diff
-  if [ "$diff" == "" ]; then
+  if [ -z `find . -name settings.php -exec grep 'search.acquia.com' {} \;` ]; then
     echo "No instances of search.acquia.com found in settings.php files." && return
   fi
-  read -p "Press enter to commit change above, or CTRL+c to quit..."
-  git add -A
-  git commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
+  git --no-pager diff
+  read -p "Would you like to commit the changes above? (y/n): " -r
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    git add -A
+    git commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  else
+    git reset --hard
+  fi
+
 }
 
 function svn-searchpocolypse {
   if [ -z "$1" ]; then
     echo "Missing ticket number." && return
   fi
-  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
-  diff=$(svn diff)
-  svn diff
-  if [ "$diff" == "" ]; then
+  if [ -z `find . -name settings.php -exec grep 'search.acquia.com' {} \;` ]; then
     echo "No instances of search.acquia.com found in settings.php files." && return
   fi
-  read -p "Press enter to commit change above, or CTRL+c to quit..."
-  svn commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  find . -name settings.php -exec sed -i '' 's/search.acquia.com/useast1-c5.acquia-search.com/g' {} \;
+  svn diff
+  read -p "Would you like to commit the changes above? (y/n): " -r
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    svn commit -m "$RA_INITIALS@acq: Changes instances of search.acquia.com to useast1-c5.acquia-search.com in all settings.php files. Ticket #$1."
+  else
+    svn revert -R .
+  fi
 }
 
 # SVN, Get Repository (get-repo-svn <docroot-name> <repository-url)
@@ -673,7 +699,7 @@ tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"; tput sgr0
-if git status | grep branch | cut -f4 -d" " | grep -w master
+if git status | grep branch | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
     case $yn in
@@ -731,7 +757,7 @@ git status
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
-echo "currently on git branch `git status | grep branch | cut -f4 -d" "`"
+echo "`git status | grep branch`"
 while true; do
     read -p "commit \"$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4.\" now? (y/n) " yn
     case $yn in
@@ -930,7 +956,7 @@ function ra-enable-file-proxy {
   for domain in $(echo "$domains"); do
     conf_path=$(aht $1.prod drush ev 'print conf_path();' -l $domain)
     # either this isn't a working site, or we've already made an entry for this multisite
-    if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" ]]; then
+    if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" || "$conf_path" =~ "warning" ]]; then
       continue
     fi
     sites+=($conf_path)
@@ -995,4 +1021,31 @@ function ra-transfer-databases {
     aht $1.$3 tasks
     echo "Run aht $1.$3 tasks to see when databases are finished copying."
   fi
+}
+
+# Create prefixed copies of an environment's domains onto RA environment
+function ra-copy-domains {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-copy-domains @site.env <optional sed replacement>"
+    return
+  fi
+  if [ -z "$2" ]; then 
+    expression="s/^/ra./"
+  else
+    expression="$2"
+  fi
+  source_env=$1
+  target_env=$(echo $1 | sed 's/\..*/.ra/')
+  domains=$(aht $source_env domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v '.acquia-sites.com')
+  new_domains=""
+  for domain in $(echo "$domains"); do
+    new_domains+=$(echo $domain | sed $expression)
+    new_domains+=$'\n'
+  done
+  echo "$new_domains"
+  echo "About to add the above domains to $target_env"
+  read -p "Press enter to continue or CTRL+c to quit..."
+  for domain in $(echo "$new_domains"); do
+    aht $target_env domains add $domain
+  done
 }
