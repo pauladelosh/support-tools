@@ -59,7 +59,7 @@
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0003 (2014-05-27)"
+RATOOLS_VERSION="Build 0004 (2014-05-27)"
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
@@ -1047,6 +1047,10 @@ function ra-copy-domains {
     new_domains+=$(echo $domain | sed $expression)
     new_domains+=$'\n'
   done
+  echo "Current domains:"
+  aht $target_env domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r'
+  echo
+  echo "New domains:"
   echo "$new_domains"
   echo "About to add the above domains to $target_env"
   read -p "Press enter to continue or CTRL+c to quit..."
