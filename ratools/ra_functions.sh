@@ -59,7 +59,7 @@
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0003 (2014-05-27)"
+RATOOLS_VERSION="Build 0005 (2014-05-27)"
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
@@ -944,6 +944,40 @@ function ra-disable-securepages {
   done
 }
 
+# Downloads the stage_file_proxy module as root on the RA environment.
+function ra-download-file-proxy {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-download-file-proxy @docroot"
+    return
+  fi
+  server_command=`aht $1.ra`
+  if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment."
+    return
+  fi
+  server=$(echo "$server_command" | grep active-db | sed -e 's/^ //' -e 's/\ .*//')
+  docroot=$(echo "$1" | sed 's/@//')
+  echo "About to download stage_file_proxy on $server for $docroot.ra..."
+  read -p "Press enter to continue or CTRL+c to quit "
+  ssh $server sudo drush dl stage_file_proxy --root=/var/www/html/$docroot.ra/docroot
+}
+
+# Removes the stage_file_proxy module the RA environment.
+function ra-remove-file-proxy {
+  if [ -z "$1" ]; then
+    echo "# Usage: ra-remove-file-proxy @docroot"
+    return
+  fi
+  server_command=`aht $1.ra`
+  if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment."
+    return
+  fi
+  echo "About to remove the stage_file_proxy on $1.ra (using aht redeploy --force)..."
+  read -p "Press enter to continue or CTRL+c to quit "
+  aht $1.ra redeploy --force
+}
+
 # Enables and configures stage_file_proxy on the RA environment.
 function ra-enable-file-proxy {
   if [ -z "$1" ]; then
@@ -1047,6 +1081,10 @@ function ra-copy-domains {
     new_domains+=$(echo $domain | sed $expression)
     new_domains+=$'\n'
   done
+  echo "Current domains:"
+  aht $target_env domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r'
+  echo
+  echo "New domains:"
   echo "$new_domains"
   echo "About to add the above domains to $target_env"
   read -p "Press enter to continue or CTRL+c to quit..."
