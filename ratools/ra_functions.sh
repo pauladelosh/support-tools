@@ -40,7 +40,7 @@
 #   example: ra-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security
 # Add New Module:
 #   ra-mupdate-add <module> <version> <ticket number>
-#   example: ra-mupdate0add ctools 7.x-1.4 23456
+#   example: ra-mupdate-add ctools 7.x-1.4 23456
 # Revert Module:
 #   ra-mupdate-rev <module> <source version> <target version> <ticket number>
 #   Must be run from within containing module folder
@@ -48,18 +48,28 @@
 # Fix settings.php files for the Search Apocalypse:
 #   ra-searchpocolypse <ticket number>
 #   example: ra-searchpocolypse 12345
-# Copy domains to the RA environment: "
-#   ra-copy-domains @<docroot>.<environment> <optional sed command>"
-#   This command will copy all domains to RA with the prefix 'ra.'"
-#   If you would prefer a different naming scheme, add a sed command."
-#   example: ra-copy-domains @<docroot>.<environment>"
-#   example: ra-copy-domains @<docroot>.<environment> s/site.com/dev-ra.site.com/"
+# 5. RA environment related functions:
+#  Copy domains to the RA environment:
+#    ra-copy-domains @<docroot>.<environment> <optional sed command>
+#    This command will copy all domains to RA with the prefix 'ra.'
+#    If you would prefer a different naming scheme, add a sed command.
+#    example: ra-copy-domains @<docroot>.<environment>
+#    example: ra-copy-domains @<docroot>.<environment> s/site.com/dev-ra.site.com/
+#  Download the stage_file_proxy module on the RA environment:
+#    ra-download-file-proxy @<docroot>
+#    example: ra-download-file-proxy @radash
+#  Enable and configure the stage_file_proxy module on the RA environment:
+#    ra-enable-file-proxy @<docroot>
+#    example: ra-enable-file-proxy @radash
+#  Remove the stage_file_proxy module on the RA environment:
+#    ra-remove-file-proxy @<docroot>
+#    example: ra-remove-file-proxy @radash
 #
 ############################################################################################
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0005 (2014-05-27)"
+RATOOLS_VERSION="Build 0006 (2014-05-27)"
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
@@ -96,7 +106,7 @@ echo "    add --security to mark as a security update"
 echo "    example: ra-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security"
 echo "  Add New Module:"
 echo "    ra-mupdate-add <module> <version> <ticket number>"
-echo "    example: ra-mupdate0add ctools 7.x-1.4 23456"
+echo "    example: ra-mupdate-add ctools 7.x-1.4 23456"
 echo "  Revert Module:"
 echo "    ra-mupdate-rev <module> <source version> <target version> <ticket number>"
 echo "    Must be run from within containing module folder"
@@ -104,12 +114,22 @@ echo "    example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456"
 echo "  Fix settings.php files for the Search Apocalypse: "
 echo "    ra-searchpocolypse <ticket number>"
 echo "    example: ra-searchpocolypse 12345"
+echo "5. RA environment related functions: "
 echo "  Copy domains to the RA environment: "
 echo "    ra-copy-domains @<docroot>.<environment> <optional sed command>"
 echo "    This command will copy all domains to RA with the prefix 'ra.'"
 echo "    If you would prefer a different naming scheme, add a sed command."
 echo "    example: ra-copy-domains @<docroot>.<environment>"
 echo "    example: ra-copy-domains @<docroot>.<environment> s/site.com/dev-ra.site.com/"
+echo "  Download the stage_file_proxy module on the RA environment: "
+echo "    ra-download-file-proxy @<docroot>"
+echo "    example: ra-download-file-proxy @radash"
+echo "  Enable and configure the stage_file_proxy module on the RA environment: "
+echo "    ra-enable-file-proxy @<docroot>"
+echo "    example: ra-enable-file-proxy @radash"
+echo "  Remove the stage_file_proxy module on the RA environment: "
+echo "    ra-remove-file-proxy @<docroot>"
+echo "    example: ra-remove-file-proxy @radash"
 echo ""
 }
 
