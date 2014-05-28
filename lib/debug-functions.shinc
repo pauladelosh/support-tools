@@ -1,0 +1,229 @@
+#
+#  Debugging functions
+#
+
+#
+#  Init
+#
+function ahdebugInit()
+{
+    return 0
+}
+
+function addAnalysis()
+{
+    AHDEBUG_ANALYSIS="${AHDEBUG_ANALYSIS}\n${@}"
+}
+
+#
+#  Log the active bastion (and lingering ones)
+#
+function catalogBastionFunction()
+{
+    local dotfiles=(
+        "${HOME}/.bashrc"
+        "${HOME}/.zshrc"
+        "${HOME}/.bash_profile"
+        "${HOME}/.ah_profile"
+        "${HOME}/.profile"
+    )
+
+    shellLog "--EXISTING BASTION DELARATIONS--"
+    local nDeclarations=0
+    for ((n=0; n < ${#dotfiles[*]}; n++)) ; do
+        local line=
+        line=$(${GREP} -Es 'function *bastion' ${dotfiles[$n]})
+        if [[ $? -eq 0 ]]; then
+            shellLog "${dotfiles[$n]}\t${line}"
+            ((nDeclarations++))
+        fi
+    done
+
+    if [[ $nDeclarations -gt 1 ]]; then
+        addAnalysis "-- Multiple Declarations of 'bastion' function exist."
+        addAnalysis "As of May 2014 it should only be in ~/.ah_profile"
+        addAnalysis "You should remove redundant 'bastion' declarations from the above dotfiles.\n"
+    fi
+
+    local bastionFunc=$(type -f bastion 2>/dev/null || type bastion 2>/dev/null)
+    shellLog "--ACTIVE BASTION FUNC--"
+    if [[ -z "${bastionFunc}" ]]; then
+        addAnalysis "-- No active 'bastion' function available to bash."
+        addAnalysis "Since this is not a login shell, this may be okay..."
+        addAnalysis "You should run 'type bastion' locally to confirm, e.g.:"
+        addAnalysis "\t\033[0;37m$ \033[0;32mtype bastion"
+        addAnalysis "\t\033[0;37mbastion is a function\033[1;31m\n"
+        bastionFunc="bastion: Not found"
+    fi
+    shellLog "${bastionFunc}"
+
+    return 0
+}
+
+#
+#  Log a list of "dotfiles" from the user's home directory
+#
+function catalogDotfiles()
+{
+    shellLog "--LOCAL DOTFILES--"
+    shellLog "$(find $HOME -mindepth 1 -maxdepth 1 -name '.*' -exec /bin/ls -Fdhlo "{}" \;)"
+
+    return 0
+}
+
+#
+#  Log fingerprints of private keys
+#
+function catalogPrivateKeys()
+{
+    local sshDir="${HOME}/.ssh"
+    local fingerprints=( )
+    local nPrints=0
+    local i=
+    local n=
+
+    shellMessage "Cataloging private keys in ${sshDir}"
+    for i in $(listPrivateKeys "${sshDir}"); do
+        shellMessage "Please enter the passphrase for ${i}"
+        local pubKey="${SCRIPT_TEMP}/$(basename $i).pub"
+        ssh-keygen -yf "$i" > "${pubKey}"
+        fingerprints[$nPrints]=$(ssh-keygen -lf "${pubKey}" | sed -e "s#${pubKey}#${i}#")
+        ((nPrints++))
+    done
+
+    shellLog "--LOCAL PRIVATE KEYS--"
+    for ((n=0; n <= ${#fingerprints[*]}; n++)) ; do
+        shellLog "${fingerprints[$n]}"
+    done
+
+    return 0
+}
+
+#
+#  Log fingerprints of private keys
+#
+function catalogPrivateKeysInAgent()
+{
+    shellLog "--LOCAL PRIVATE KEYS IN AGENT--"
+    shellLog "$(ssh-add -l)"
+}
+
+#
+#  Log fingerprints of public keys
+#
+function catalogPublicKeys()
+{
+    local sshDir="${HOME}/.ssh"
+    local fingerprints=( )
+    local nPrints=0
+    local i=
+    local n=
+
+    for i in $(listPublicKeys "${sshDir}"); do
+        local pubKey="${i}"
+        local print=
+        print=$(ssh-keygen -lf "${pubKey}")
+        if [[ $? -eq 0 ]] ; then
+            fingerprints[$nPrints]=$(ssh-keygen -lf "${pubKey}")
+            fingerprints[$nPrints]="${fingerprints[$nPrints]} $i"
+            let "nPrints += 1"
+        fi
+    done
+
+    shellLog "--LOCAL PUBLIC KEYS--"
+    for ((n=0; n <= ${#fingerprints[*]}; n++)) ; do
+        shellLog "${fingerprints[$n]}"
+    done
+
+    return 0
+}
+
+#
+#  Log the active bastion (and lingering ones)
+#
+function catalogShellSourcing()
+{
+    local dotfiles=(
+        "${HOME}/.bashrc"
+        "${HOME}/.zshrc"
+        "${HOME}/.bash_profile"
+        "${HOME}/.ah_profile"
+        "${HOME}/.profile"
+    )
+
+    shellLog "--LOCAL SOURCERY--"
+    local nDeclarations=0
+    for ((n=0; n < ${#dotfiles[*]}; n++)) ; do
+        local line=
+        line=$(${GREP} -Es 'source' ${dotfiles[$n]})
+        if [[ $? -eq 0 ]]; then
+            shellLog "${dotfiles[$n]}\t${line}"
+            ((nDeclarations++))
+        fi
+    done
+
+    return 0
+}
+
+#
+#  Log the contents of the user's .ssh directory
+#
+function catalogSshDir()
+{
+    shellLog "--SSH FILES--"
+    shellLog "$(find "${HOME}/.ssh" -type f)"
+
+    return 0
+}
+
+#
+#  Log some relevant environmental variables
+#
+function catalogVars()
+{
+    shellLog "--LOCAL ENVIRONMENT--"
+    local n=
+    local checkVars=(
+        AH_SCP
+        AH_SFTP
+        AH_SSH
+        AH_SSH_CONFIG
+        BOXEN_ENV_DIR
+        BOXEN_GITHUB_LOGIN
+        BOXEN_HOME
+        EDITOR
+        HOME
+        HOMEBREW_ROOT
+        LANG
+        LC_CTYPE
+        LOGNAME
+        SHLVL
+        PATH
+        TERM_PROGRAM
+        USER
+    )
+
+    for ((n=0; n<${#checkVars[@]}; ++n)) do
+        local key=${checkVars[$n]}
+        shellLog "$key '${!key}'"
+    done;
+
+    return 0
+}
+
+#
+#  Returns a list of files under the given directory which are private keys
+#
+function listPrivateKeys()
+{
+    ${GREP} -RIl "PRIVATE KEY" "$1"
+}
+
+#
+#  Returns a list of files under the given directory which are public keys
+#
+function listPublicKeys()
+{
+    local excludes=" --exclude known_hosts --exclude config --exclude ah_config"
+    ${GREP} ${excludes} -RIL "PRIVATE KEY" "$1"
+}

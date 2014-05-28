@@ -1,0 +1,49 @@
+#
+#  Common functions
+#
+
+#
+#  Init
+#
+function shellInit()
+{
+    SHELL_SCRIPT=$(basename $0)
+    GREP=/usr/bin/grep
+    SCRIPT_TEMP=$(mktemp -d /tmp/${SHELL_SCRIPT}.XXXX)
+
+    return 0
+}
+
+#
+#  Output an informative message to the user
+#
+function shellMessage
+{
+    echo -e "\n\033[1m${SHELL_SCRIPT}: \033[1;34m${@}\033[0m"
+}
+
+#
+#  Output a non-fatal error message to the user
+#
+function shellError
+{
+    echo -e "\n\033[1m${SHELL_SCRIPT}: \033[1;31m${@}\033[0m"
+}
+
+#
+#  Output a fatal error message to the user and abort.
+#
+function shellFatal
+{
+    echo -e "\n\033[1m${SHELL_SCRIPT}: \033[0;31m${@}\033[0m"
+    totalRuntime
+    exit
+}
+
+#
+#  Output a message to the user & to the log
+#
+function shellLog
+{
+    echo -e "${@}" | tee -a "${SCRIPT_TEMP}/log"
+}
