@@ -152,14 +152,13 @@ function catalogShellSourcing()
     )
 
     shellLog "--LOCAL SOURCERY--"
-    local nDeclarations=0
     for ((n=0; n < ${#dotfiles[*]}; n++)) ; do
         local line=
-        line=$(${GREP} -Es 'source' ${dotfiles[$n]})
-        if [[ $? -eq 0 ]]; then
-            shellLog "${dotfiles[$n]}\t${line}"
-            ((nDeclarations++))
+        line=$(${GREP} -HEs '(source|[^A-Za-z0-9/]\.|^\.)' ${dotfiles[$n]} | perl -pe 's/:/\t/')
+        if [[ -z $line ]]; then
+            line=${dotfiles[$n]}
         fi
+        shellLog "${line}"
     done
 
     return 0
