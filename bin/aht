@@ -48,7 +48,12 @@ elseif (strtolower($ahtools_path) == 'test') {
   $ahtools_path = 'support_bin_test';
 }
 
+$bastionName = getenv('AHT_BASTION');
+if (empty($bastionName)) {
+    $bastionName = 'bastion';
+}
+
 $options = isset($_SERVER['AH_SSH_CONFIG']) ?  " -F {$_SERVER['AH_SSH_CONFIG']} " : '';
-$command = "ssh -tq {$options} bastion /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$stages} " . implode(' ', $argv);
+$command = "ssh -tq {$options} {$bastionName} /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$stages} " . implode(' ', $argv);
 passthru($command, $return_code);
 exit($return_code);
