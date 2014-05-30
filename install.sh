@@ -96,7 +96,10 @@ function bastion { mywik2 "$@" ; }' >> $ah_profile_file
       then
         echo "
 # set ahtools autocomplete
-complete -W '\$($DIR/aht --autocomplete)' aht" >> $ah_profile_file
+if [[ "$(basename ${SHELL})" = "bash" ]]; then
+  complete -W '\$($DIR/aht --autocomplete)' aht
+fi
+" >> $ah_profile_file
     fi
 
     # replace the username and private key variables
