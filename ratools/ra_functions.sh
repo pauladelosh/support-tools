@@ -243,8 +243,8 @@ if echo "$audit" | egrep -q 'Update-available|SECURITY-UPDATE-available'
 fi
 echo
 echo -e "\033[1;33;148m[ Unsupported/Out-of-Scope Updates (do not perform) ]\033[39m"; tput sgr0
-if echo "$audit" | grep -q 'Installed-version-not-supported' | egrep -v $RA_UNSUPPORTED_EXCEPTIONS
-  then echo "$audit" | grep 'Installed-version-not-supported' | egrep -v $RA_UNSUPPORTED_EXCEPTIONS | sort | uniq
+if echo "$audit" | egrep 'Installed-version-not-supported' | egrep -qv $RA_UNSUPPORTED_EXCEPTIONS
+  then echo "$audit" | egrep 'Installed-version-not-supported' | egrep -v $RA_UNSUPPORTED_EXCEPTIONS | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
 echo
