@@ -69,7 +69,10 @@
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0007 (2014-06-03)"
+RATOOLS_VERSION="Build 0008 (2014-07-30)"
+
+# Wrapper to log ra-up data to log file
+function ra-up-logged { mkdir -p ~/ra-up_logs; drush ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; } 
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
