@@ -19,6 +19,7 @@ Host bastion
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host bastion-21 bastion-22 bastion-133
   HostName %h.network.hosting.acquia.com
@@ -30,6 +31,7 @@ Host bastion-21 bastion-22 bastion-133
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host bastion-3
   HostName %h.castle.hosting.acquia.com
@@ -41,6 +43,7 @@ Host bastion-3
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host bastion-21.network.hosting.acquia.com bastion-22.network.hosting.acquia.com bastion-3.castle.hosting.acquia.com
   HostName %h
@@ -52,6 +55,7 @@ Host bastion-21.network.hosting.acquia.com bastion-22.network.hosting.acquia.com
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host svn-*.hosting.acquia.com
   HostName %h
