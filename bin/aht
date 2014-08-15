@@ -22,6 +22,10 @@ foreach ($argv as $arg_key => &$tmp_arg) {
   else if (preg_match('|\s|', $tmp_arg)) {
     $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
   }
+  else if (strpos($tmp_arg, '&') !== false) {
+    // Handle valid arguments that contain ampersands (e.g. URLs).
+    $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
+  }
 }
 
 if ($cache) {
