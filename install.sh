@@ -20,6 +20,9 @@ if [ -e ~/.bash_profile ]
 elif [ -e ~/.bash_login ]
   then
     profile_file=~/.bash_login
+elif [ -e ~/.bashrc ]
+  then
+    profile_file=~/.bashrc
 elif [ -e ~/.profile ]
   then
     profile_file=~/.profile
