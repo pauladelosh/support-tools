@@ -144,17 +144,25 @@ do
   # Done with options, the sitename comes last.
     @*)
       SITENAME=$1
-      break
       ;;
   esac
 
   shift
 done
 
+if [ ${SITENAME:-x} = x ]
+then
+  showhelp
+  exit 1
+fi
+
 echo "Running with these options:"
 echo "  Sitename: $SITENAME"
 echo "     Stage: $STAGE"
 echo "       URI: $URI"
+echo "BASICCHECK_FLAG: $BASICCHECK_FLAG"
+echo "     DRUSH_FLAG: $DRUSH_FLAG"
+echo "      LOGS_FLAG: $LOGS_FLAG"
 ahtsep
 
 # Set some vars
@@ -185,6 +193,9 @@ webs_raw=`egrep "srv-|web-|ded-|staging-" $tmpout |cut -f2 -d' '`
 web=`ahtfirstweb $SITENAME`
 # devcloud/not devcloud
 devcloud=`echo $web |grep -c srv-`
+# livedev/not livedev
+# Detect FPM from the aht output.
+LIVEDEV_FLAG=`grep -c -- "LIVEDEV" $tmpout`
 # Detect all dedicated balancers
 #dedicated_bals=`cat $tmpout |egrep 'bal-[0-9]+ *dedicated *[1-9]' |awk '{ print $1 }'`
 
@@ -204,6 +215,7 @@ then
   #fi
   
   test_php_memory_limit
+  test_hosting_release_version
 
   # Check process limit settings, number of skip spawns
   # Is site running php-cgi or FPM?
@@ -214,10 +226,12 @@ then
   else
     test_phpfpm_procs
     test_phpfpm_skips
+    test_phpfpm_errors
   fi
   test_dns
   test_varnish_stats
   test_tasks
+  test_anonsession
 fi
 
 # Run Drush-based checks
@@ -228,8 +242,9 @@ then
   # Run some more checks, but only if drush works.
   if [ $drushworks_flag -eq 1 ]
   then
+    test_poormanscron
+    test_errorreporting
     test_pressflow
-    test_anonsession
     test_modules
     test_cacheaudit
     test_duplicatemodules

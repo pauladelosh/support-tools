@@ -3,6 +3,7 @@
 #####################################
 # Functions
 #####################################
+AHTCOMMAND="aht"
 
 # SSHs into an address in a way that won't generate (too many?) strict warnings
 function ahtssh() {
@@ -13,7 +14,7 @@ function ahtssh() {
 # Usage: ahtdbtunnel site.env
 function ahtdbtunnel() {
   echo "Getting DB connection string:"
-  aht @$@ drush sql-connect
+  $AHTCOMMAND @$@ drush sql-connect
   echo "Running ssh tunnel to $@ on local port 33066..."
   db=`ahtactivedb $@`
   ahtssh -N -L 33066:localhost:3306 $db
@@ -22,11 +23,11 @@ function ahtdbtunnel() {
 # Print out the active DB server (e.g. fsdb-1234 or ded-1234)
 # Usage: ahtactivedb site.env
 function ahtactivedb() {
-  aht @$@ |fgrep active |cut -f2 -d' '
+  $AHTCOMMAND @$@ |fgrep active |cut -f2 -d' '
 }
 # Returns either the passive DB (if prod) or the active one
 function ahtpassiveoractivedb() {
-  aht $STAGE @$1 |tr -d '\015' | awk '
+  $AHTCOMMAND $STAGE @$1 |tr -d '\015' | awk '
   # Match xxx-123
   NR == 1 { found_active_flag = 0 }
   $1 ~ /^[a-z]+-[0-9]+/ {
@@ -91,8 +92,9 @@ function ahtfindlog() {
 
 # Shorthand aht command used by ahtaudit command (below)
 function ahtaht() {
-  #echo "** Aht command:    aht $STAGE @$SITENAME $URI $@" 1>&2
-  aht $STAGE @$SITENAME $URI $@ |tr -d '\015'
+  #echo "** Aht command:    $AHTCOMMAND $STAGE @$SITENAME $URI $@" 1>&2
+  #aht $STAGE @$SITENAME $URI $@ |tr -d '\015'
+  ahtest $STAGE @$SITENAME $URI $@ |tr -d '\015'
 }
 
 function ahtfiglet() {
@@ -114,7 +116,12 @@ function ahtcatnonempty() {
     then
       echo $3
     fi
-    cat $1
+    if [ "${4:-x}" = "TABLE" ]
+    then
+      cat $1 |column -t
+    else
+      cat $1
+    fi
   fi
 }
 
@@ -131,7 +138,7 @@ function test_code_deploy() {
     fi
   fi
   folder="/var/www/html/$site_argument"
-  echo "Checking deployed code across all webs in $folder"
+  echo "Checking deployed code across every webserver in $folder"
   cat /dev/null >$tmpout
   for web in $webs
   do
@@ -158,7 +165,7 @@ function test_code_deploy() {
         }
       }
       else {
-        print ""; print "OK. " max " folders found in deployed code."
+        print ""; print "  OK. " max " folders found in deployed code in every webserver."
       }
     }' $tmpout |egrep --color=always "^|PROBLEM"
   ahtsep
@@ -188,10 +195,10 @@ function test_nagios_info() {
       if [ `grep -c . $tmpout2` -gt 0 ]
       then
         head -15 $tmpout2 |egrep --color=always "^|"`date +%Y-%m-%d`
-        if [ `grep -c . $tmpout2` -gt 15 ]
-        then
+        #if [ `grep -c . $tmpout2` -gt 15 ]
+        #then
           echo "  ... Complete list at: ${nagios_url}"
-        fi
+        #fi
       else
         echo "  ${COLOR_GREEN}OK: No recent downtime found at ${nagios_url}"
       fi
@@ -232,10 +239,21 @@ function test_php_memory_limit() {
   ahtsep
 }
 
+# Check hosting release
+function test_hosting_release_version() {  
+  echo "Checking hosting release version:"
+  for web in $webs
+  do
+    echo -n "  $web: "
+    ssh -o LogLevel=quiet $web "sudo cat /var/acquia/HOSTING_VERSION"
+  done
+  ahtsep
+}
+
 # Get Varnish cached/uncached statistics
 function test_varnish_stats() {  
   echo "Varnish cached/uncached statistics for last 2 days"
-  ahtaht stats --start=yesterday --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
+  ahtaht stats --start=-5days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
   ahtsep
 }
   
@@ -304,7 +322,7 @@ function test_phpfpm_procs() {
     }' |column -t
   echo ""
   #ahtaht procs
-  aht $STAGE @$SITENAME $URI procs
+  $AHTCOMMAND $STAGE @$SITENAME $URI procs
   ahtsep
 }
 
@@ -321,6 +339,27 @@ function test_phpfpm_skips() {
   echo 'tail -5000 fpm-error.log | grep "you may need to increase pm.start_servers"' |ahtaht ssh logs |awk -F: '{ print $1 ":XX:XX" }' |sort |uniq -c  >$tmpout
   echo "Skip-spawns for today:"
   ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No skip spawns found.${COLOR_NONE}" "${COLOR_RED}"
+  ahtsep
+}
+
+#FPM number of errors
+function test_phpfpm_errors() {
+  echo "Checking count of SIGSEGV errors in fpm-error.log across all webs:"
+  site_argument=${site}
+  if [ $env != 'prod' ]
+  then
+    if [ $env == 'test' ]
+    then
+      site_argument=${site}stg
+    else
+      site_argument=$site$env
+    fi
+  fi
+  for web in $webs
+  do
+    echo -n "  $web: "
+    ssh -o LogLevel=quiet $web "sudo grep -c SIGSEGV /var/log/sites/${SITENAME}/logs/${web}/fpm-error.log"
+  done
   ahtsep
 }
 
@@ -358,7 +397,8 @@ echo "Drupal " . VERSION . "\n";
 }
 EOF
   dest=/tmp/testpressflow_$$.php
-  scp -q $tmpout $web:$dest 2>/dev/null
+  echo "  Copying $tmpout to $web:$dest ..."
+  scp -q $tmpout $web:$dest
   ahtaht drush scr $dest >$tmpout2 2>/dev/null
   if [ `grep -c "Drupal 6" $tmpout2` -gt 0 ]
   then
@@ -419,7 +459,34 @@ function test_anonsession() {
   ahtsep
 }
 
-# Varios tests around modules
+
+# Test for automatic drupal cron running (a.k.a. poormanscron)
+function test_poormanscron() {
+  echo "Checking for automatic drupal cron runs enabled (a.k.a. poormanscron):"
+  $AHTCOMMAND $STAGE @$SITENAME $URI drush ev 'echo variable_get("cron_safe_threshold", "ABC298")' |tr -d '\015' >$tmpout
+  if [ `grep -c "ABC298" $tmpout` -gt 0 ]
+  then
+    echo "  ${COLOR_RED}PROBLEM: Variable cron_safe_threshold is unset${COLOR_NONE}"
+  else
+    echo "  ${COLOR_YELLOW}Variable cron_safe_threshold is set to "`cat $tmpout`".${COLOR_NONE}"
+  fi
+  ahtsep
+}
+
+# Test for proper error logging
+function test_errorreporting() {
+  echo "Checking for proper error_reporting level:"
+  $AHTCOMMAND $STAGE @$SITENAME $URI drush ev '$level = ini_get("error_reporting"); if (!is_numeric($level)) { echo "ERROR: ini_get(error_reporting) did NOT return a numeric value! Return value:" . PHP_EOL; var_dump($level); } else if ($level<22519) { echo "ERROR: Level too low ($level)" . PHP_EOL; } else { echo "OK: Error level >22519 ($level)" . PHP_EOL; }' |tr -d '\015' >$tmpout
+  if [ `grep -c "ERROR" $tmpout` -gt 0 ]
+  then
+    echo "  ${COLOR_RED}PROBLEM:"`cat $tmpout`"${COLOR_NONE}"
+  else
+    echo "  ${COLOR_GREEN}"`cat $tmpout`".${COLOR_NONE}"
+  fi
+  ahtsep
+}
+
+# Various tests around modules
 function test_modules() {
   echo "Checking for any known offending modules that are enabled:"
   # Get list of all enabled modules
@@ -427,7 +494,7 @@ function test_modules() {
   
   # Check for offending modules
   # TODO: Separate criticals from warnings
-  egrep  "^(robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity|ip_geoloc|textsize)$" $tmpout >$tmpout2 2>/dev/null
+  egrep  "^(poormanscron|robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity|ip_geoloc|textsize)$" $tmpout >$tmpout2 2>/dev/null
   if [ `grep -c . $tmpout2` -gt 0 ]
   then
     echo $COLOR_RED
@@ -443,10 +510,10 @@ function test_modules() {
   
   # Check for how many modules enabled
   num=`grep -c . $tmpout`
-  if [ $num -gt 150 ]
+  if [ $num -gt 200 ]
   then
     echo "Checking number of modules enabled:"
-    echo "  ${COLOR_RED}WARNING: >150 modules enabled! ($num)"
+    echo "  ${COLOR_RED}WARNING: >200 modules enabled! ($num)"
     ahtfiglet $num' modules enabled!'
     echo "${COLOR_NONE}"
     ahtsep
@@ -470,7 +537,20 @@ function test_cacheaudit() {
   echo "Cacheaudit of site:"
   echo ""
   ahtaht cacheaudit >$tmpout 2>&1
-  awk '{ print "  " $0 }' $tmpout |grep -v "Disabled" |egrep --color=always '^|page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)'
+  #awk '{ print "  " $0 }' $tmpout |grep -v "Disabled" |egrep --color=always '^|page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)|DRUPAL_NO_CACHE'
+  awk '
+NR==1 { highlight=0 }
+/page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)|DRUPAL_NO_CACHE/ { 
+  highlight=1
+}
+## Just pipe the first portion of the cacheaudit output (first 10 lines)
+NR<=10 { 
+  print "  " $0;
+}
+/Enabled/ {
+  print (highlight ? "'$COLOR_RED'" : "") "  " $0 (highlight ? "'$COLOR_NONE'" : ""); 
+  highlight=0;
+}' $tmpout
   ahtsep
 }
 
@@ -537,7 +617,12 @@ function test_duplicatemodules() {
   echo "SELECT filename FROM system WHERE type IN ('module', 'theme', 'profile') AND status='enabled'" | ahtaht drush sql-cli |sed -e 's/\.module/.info/g' -e 's/\.theme/.info/g' >$tmpout2
   # Now show all duplicates. showing which one (if any) is really enabled.
   echo "Check for duplicate modules/themes:"
-  echo 'find modules themes sites profiles -name "*.info" -type f | grep -oe "[^/]*\.info" | sort | uniq -d | egrep -v "drupal_system_listing_(in|)compatible_test" | xargs -I{} find . -name "{}" |cut -f2- -d/' |ahtaht ssh html >$tmpout
+  prefix=""
+  if [ $LIVEDEV_FLAG -eq 1 ]
+  then
+    prefix="docroot/"
+  fi
+  echo 'find '$prefix'modules '$prefix'themes '$prefix'sites '$prefix'profiles -name "*.info" -type f | grep -oe "[^/]*\.info" | sort | uniq -d | egrep -v "drupal_system_listing_(in|)compatible_test" | xargs -I{} find . -name "{}" |cut -f2- -d/' |ahtaht ssh html >$tmpout
   if [ `grep -c . $tmpout` -gt 0 ]
   then
     # Print out list, inserting extra newline when last /xxxx component not equal.
@@ -663,3 +748,4 @@ function test_drupalwatchdog() {
     echo ""
   fi
 }
+
