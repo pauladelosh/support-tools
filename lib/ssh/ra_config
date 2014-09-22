@@ -1,0 +1,68 @@
+#############################################################################
+#
+#  Remote Administration Customers SSH Config
+#
+#############################################################################
+
+#############################################################################
+#
+#  Template for new customer sites
+#
+#############################################################################
+##
+##  Customer:  <customer name>
+##  Dashboard: <cci dashboard url>
+##
+#Host <customer>-web
+#  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
+#  HostName <webserver fully-qualified domain name or IP>
+#  User <customer-provided username>
+#  Port <port>
+#  ServerAliveInterval 60
+#  ForwardAgent yes
+#  StrictHostKeyChecking no
+#  IdentityFile ~/.ssh/id_rsa
+#
+#Host <customer>-db
+#  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
+#  HostName <webserver fully-qualified domain name or IP>
+#  User <customer-provided username>
+#  Port <port>
+#  ServerAliveInterval 60
+#  ForwardAgent yes
+#  StrictHostKeyChecking no
+#  IdentityFile ~/.ssh/id_rsa
+#
+
+
+#############################################################################
+#
+#  Customer Sites
+#
+#############################################################################
+
+
+#
+#  Customer:  Jonathan Webb
+#  Dashboard: https://cci.acquia.com/node/1954511/dashboard
+#
+Host jonathan-web
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
+  HostName 173.255.224.16
+  User acquia
+  Port 60666
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/id_rsa
+
+Host jonathan-db
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
+  HostName 173.255.224.16
+  User acquia
+  Port 60666
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile ~/.ssh/id_rsa
+
