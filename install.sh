@@ -162,7 +162,7 @@ if [ "$install_ssh" == "yes" ]
         acquia_bastion=$existing_bastion
     fi
 
-    cp -f $DIR/lib/acquia_ssh_config ~/.ssh/ah_config
+    cp -f $DIR/lib/ssh/acquia_ssh_config ~/.ssh/ah_config
 
     # replace the username and private key variables
     perl -pi -e s,--USERNAME--,$acquia_username,g $ssh_config_file
