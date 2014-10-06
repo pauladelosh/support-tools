@@ -31,17 +31,17 @@ Instructions:
 
 Functions: 
 Check site distribution and version (dvcheck @<docroot>.<environment>)
-RA Audit (ra-audit @<docroot>.<environment>)
-SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
-SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
-SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
-SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
-SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
-Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
-Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)
-Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)
-Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
-Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
+* RA Audit (ra-audit @<docroot>.<environment>)
+* SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
+* SVN, Module Security Update (svn-mupdate-sec <module> <source version> <target version> <ticket number>)
+* SVN, Module Update (svn-mupdate <module> <source version> <target version> <ticket number>)
+* SVN, Add New Module (svn-mupdate-add <module> <version> <ticket number>)
+* SVN, Revert Module (svn-mupdate-rev <module> <source version> <target version> <ticket number>)
+* Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
+* Git, Module Security Update (git-mupdate-sec <module> <source version> <target version> <ticket number>)
+* Git, Module Update (git-mupdate <module> <source-version> <target version> <ticket number>)
+* Git, Add New Module (git-mupdate-add <module> <version> <ticket number>)
+* Git, Revert Module (git-mupdate-rev <module> <source version> <target version> <ticket number>)
 
 Example: cd to docroot/sites/all/modules/, git-mupdate-sec ctools 7.x-2.1 7.x-2.3 15066-3333
 
