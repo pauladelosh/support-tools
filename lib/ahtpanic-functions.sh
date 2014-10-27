@@ -14,7 +14,7 @@ function ahtssh() {
 # Usage: ahtdbtunnel site.env
 function ahtdbtunnel() {
   echo "Getting DB connection string:"
-  $AHTCOMMAND @$@ drush sql-connect
+  $AHTCOMMAND @$@ drush $URI sql-connect
   echo "Running ssh tunnel to $@ on local port 33066..."
   db=`ahtactivedb $@`
   ahtssh -N -L 33066:localhost:3306 $db
@@ -94,7 +94,11 @@ function ahtfindlog() {
 function ahtaht() {
   #echo "** Aht command:    $AHTCOMMAND $STAGE @$SITENAME $URI $@" 1>&2
   #aht $STAGE @$SITENAME $URI $@ |tr -d '\015'
-  aht $STAGE @$SITENAME $URI $@ |tr -d '\015'
+  aht $STAGE @$SITENAME $@ |tr -d '\015'
+}
+# Shorthand aht command used by ahtaudit command (below)
+function ahtdrush() {
+  aht $STAGE @$SITENAME drush $URI $@ |tr -d '\015'
 }
 
 function ahtfiglet() {
@@ -422,7 +426,7 @@ EOF
   dest=/tmp/testpressflow_$$.php
   echo "  Copying $tmpout to $web:$dest ..."
   scp -q $tmpout $web:$dest
-  ahtaht drush scr $dest >$tmpout2 2>/dev/null
+  ahtdrush scr $dest >$tmpout2 2>/dev/null
   if [ `grep -c "Drupal 6" $tmpout2` -gt 0 ]
   then
     echo "  ${COLOR_RED}: WARNING: D6 installed; No Pressflow:"
@@ -458,7 +462,7 @@ function test_anonsession() {
       problem=1
       # Try to get anon. sessions from the DB table
       echo "    * ${COLOR_RED}10 most recent sessions set in {sessions} table:"
-      echo "SELECT uid,hostname,timestamp,FROM_UNIXTIME(timestamp),LEFT(session,80) FROM sessions WHERE uid = 0 ORDER BY timestamp DESC LIMIT 0,10;" |ahtaht --uri=$domain drush sql-cli |awk '{ print "      " $0 }'
+      echo "SELECT uid,hostname,timestamp,FROM_UNIXTIME(timestamp),LEFT(session,80) FROM sessions WHERE uid = 0 ORDER BY timestamp DESC LIMIT 0,10;" |ahtaht drush --uri=$domain sql-cli |awk '{ print "      " $0 }'
       echo "${COLOR_NONE}"
     else
       # Check for redirection
@@ -486,7 +490,7 @@ function test_anonsession() {
 # Test for automatic drupal cron running (a.k.a. poormanscron)
 function test_poormanscron() {
   echo "Checking for automatic drupal cron runs enabled (a.k.a. poormanscron):"
-  $AHTCOMMAND $STAGE @$SITENAME $URI drush ev 'echo variable_get("cron_safe_threshold", "ABC298")' |tr -d '\015' >$tmpout
+  $AHTCOMMAND $STAGE @$SITENAME drush $URI ev 'echo variable_get("cron_safe_threshold", "ABC298")' |tr -d '\015' >$tmpout
   if [ `grep -c "ABC298" $tmpout` -gt 0 ]
   then
     echo "  ${COLOR_RED}PROBLEM: Variable cron_safe_threshold is unset${COLOR_NONE}"
@@ -499,7 +503,7 @@ function test_poormanscron() {
 # Test for proper error logging
 function test_errorreporting() {
   echo "Checking for proper error_reporting level:"
-  $AHTCOMMAND $STAGE @$SITENAME $URI drush ev '$level = ini_get("error_reporting"); if (!is_numeric($level)) { echo "ERROR: ini_get(error_reporting) did NOT return a numeric value! Return value:" . PHP_EOL; var_dump($level); } else if ($level<22519) { echo "ERROR: Level too low ($level)" . PHP_EOL; } else { echo "OK: Error level >22519 ($level)" . PHP_EOL; }' |tr -d '\015' >$tmpout
+  $AHTCOMMAND $STAGE @$SITENAME drush $URI ev '$level = ini_get("error_reporting"); if (!is_numeric($level)) { echo "ERROR: ini_get(error_reporting) did NOT return a numeric value! Return value:" . PHP_EOL; var_dump($level); } else if ($level<22519) { echo "ERROR: Level too low ($level)" . PHP_EOL; } else { echo "OK: Error level >22519 ($level)" . PHP_EOL; }' |tr -d '\015' >$tmpout
   if [ `grep -c "ERROR" $tmpout` -gt 0 ]
   then
     echo "  ${COLOR_RED}PROBLEM:"`cat $tmpout`"${COLOR_NONE}"
@@ -513,7 +517,7 @@ function test_errorreporting() {
 function test_modules() {
   echo "Checking for any known offending modules that are enabled:"
   # Get list of all enabled modules
-  ahtaht drush pml --type=module --status=enabled --pipe |tr -d '\015' >$tmpout
+  ahtdrush pml --type=module --status=enabled --pipe >$tmpout
   
   # Check for offending modules
   # TODO: Separate criticals from warnings
@@ -547,7 +551,7 @@ function test_modules() {
   # If update module is enabled...
   if [ `grep -c update $tmpout` -eq 1 ]
   then
-    ahtaht drush upc --security-only --pipe --simulate |grep -v "wget" |tr -d '\015' >$tmpout 2>&1
+    ahtdrush upc --security-only --pipe --simulate |grep -v "wget"  >$tmpout 2>&1
     ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No modules need security updates.${COLOR_NONE}" "$COLOR_RED"
   else
     echo "  ${COLOR_YELLOW}Update.module disabled, can't check status of security updates.${COLOR_NONE}"
@@ -559,7 +563,7 @@ function test_modules() {
 function test_cacheaudit() {
   echo "Cacheaudit of site:"
   echo ""
-  ahtaht cacheaudit >$tmpout 2>&1
+  ahtaht $URI cacheaudit >$tmpout 2>&1
   #awk '{ print "  " $0 }' $tmpout |grep -v "Disabled" |egrep --color=always '^|page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)|DRUPAL_NO_CACHE'
   awk '
 NR==1 { highlight=0 }
@@ -580,7 +584,7 @@ NR<=10 {
 # Check DB size
 function test_dbsize() {
   echo "Showing DB data use:"
-  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }'
+  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }'
 SELECT IFNULL(B.engine,'Total') "Storage Engine",
 CONCAT(LPAD(REPLACE(FORMAT(B.DSize/POWER(1024,pw),3),',',''),17,' '),' ',
 SUBSTR(' KMGTP',pw+1,1),'B') "Data Size", CONCAT(LPAD(REPLACE(
@@ -598,7 +602,7 @@ EOF
   ahtsep
 
   echo "Showing largest database tables:"
-  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9][0-9]*\.[0-9][0-9][MG]'
+  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9][0-9]*\.[0-9][0-9][MG]'
 SELECT CONCAT(table_schema, '.', table_name) as Table_name,
 CONCAT(ROUND(table_rows / 1000000, 2), 'M') rows,
 CONCAT(ROUND(data_length / ( 1024 * 1024 * 1024 ), 2), 'G') DATA,
@@ -612,7 +616,7 @@ EOF
   ahtsep
 
   echo "Showing largest cache_form entries:"
-  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }'
+  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }'
 SELECT length(data)/1048576 AS length, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY length desc LIMIT 5;
 EOF
   ahtsep
@@ -643,7 +647,7 @@ function test_ahtaudit() {
 function test_duplicatemodules() {
   # Get the really-real enabled projects first:
   # TODO: doesn't work with table prefixes yet.
-  echo "SELECT filename FROM system WHERE type IN ('module', 'theme', 'profile') AND status='enabled'" | ahtaht drush sql-cli |sed -e 's/\.module/.info/g' -e 's/\.theme/.info/g' >$tmpout2
+  echo "SELECT filename FROM system WHERE type IN ('module', 'theme', 'profile') AND status='enabled'" | ahtdrush sql-cli |sed -e 's/\.module/.info/g' -e 's/\.theme/.info/g' >$tmpout2
   # Now show all duplicates. showing which one (if any) is really enabled.
   echo "Check for duplicate modules/themes:"
   prefix=""
@@ -697,7 +701,7 @@ function test_duplicatemodules() {
 # Check Drupal variables and size
 function test_vars() {
   echo "Checking size (in bytes) and quantity of Drupal variables:"
-  echo "SELECT count(1) as Num_of_Variables, max(length(value)) as Maximum_variable_size, sum(length(value)) as Combined_variables_size FROM variable\\G" |ahtaht drush sql-cli | sed -n '2,$p' >$tmpout
+  echo "SELECT count(1) as Num_of_Variables, max(length(value)) as Maximum_variable_size, sum(length(value)) as Combined_variables_size FROM variable\\G" |ahtdrush sql-cli | sed -n '2,$p' >$tmpout
   egrep --color=always "^|Num_of_Variables: [0-9][0-9][0-9][0-9][0-9]*|Maximum_variable_size: [0-9][0-9][0-9][0-9][0-9][0-9]*|Combined_variables_size: [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]*" $tmpout
   ahtsep
 }
@@ -705,7 +709,7 @@ function test_vars() {
 # Get last times for cache flushes
 function test_cacheflushes() {
   echo "Getting times of latest cache flushes in Drupal:"
-  ahtaht drush vget cache_flush | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout
+  ahtdrush vget cache_flush | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout
   today=`date +'%h %_d'`
   egrep --color=always "^|${today}" $tmpout
   ahtsep
