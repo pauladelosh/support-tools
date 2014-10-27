@@ -14,7 +14,7 @@ HELPER_SCRIPTS_PATH="."
 # See http://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
 COLOR_RED=$(tput setaf 1) #"\[\033[0;31m\]"
 COLOR_YELLOW=$(tput setaf 3) #"\[\033[0;33m\]"
-COLOR_GREEN=$(tput setaf 8) #"\[\033[0;32m\]"
+COLOR_GREEN=$(tput setaf 2) #"\[\033[0;32m\]"
 COLOR_GRAY=$(tput setaf 7) #"\[\033[2;37m\]"
 COLOR_NONE=$(tput sgr0) #"\[\033[0m\]"
 # Environment for aht runs
@@ -105,6 +105,15 @@ do
     --dc)
       STAGE=$1
       ;;
+    --ac)
+      STAGE=$1
+      ;;
+    --ace)
+      STAGE=$1
+      ;;
+    --stages=*)
+      STAGE=$1
+      ;;
     --skipbasic)
       BASICCHECK_FLAG=0
       ;;
@@ -125,11 +134,11 @@ do
       ;;
     --*)
       # error unknown (long) option $1
-      echo "Unknown option $1"
+      echo "${COLOR_RED}Unknown option $1${COLOR_NONE}"
       ;;
     -?)
       # error unknown (short) option $1
-      echo "Unknown option $1"
+      echo "${COLOR_RED}Unknown option $1${COLOR_NONE}"
       ;;
 
   # FUN STUFF HERE:
@@ -156,13 +165,20 @@ then
   exit 1
 fi
 
-echo "Running with these options:"
-echo "  Sitename: $SITENAME"
-echo "     Stage: $STAGE"
-echo "       URI: $URI"
-echo "BASICCHECK_FLAG: $BASICCHECK_FLAG"
-echo "     DRUSH_FLAG: $DRUSH_FLAG"
-echo "      LOGS_FLAG: $LOGS_FLAG"
+cat <<EOF
+Running with these options:
+  Sitename: $SITENAME
+     Stage: $STAGE
+       URI: $URI
+BASICCHECK_FLAG: $BASICCHECK_FLAG
+     DRUSH_FLAG: $DRUSH_FLAG
+      LOGS_FLAG: $LOGS_FLAG
+
+Color key:
+   ${COLOR_GREEN}GREEN: OK
+  ${COLOR_YELLOW}YELLOW: Warning
+     ${COLOR_RED}RED: Potentially bad or error!${COLOR_NONE}
+EOF
 ahtsep
 
 # Set some vars
@@ -215,6 +231,7 @@ then
   #fi
   
   test_php_memory_limit
+  test_puppet_log_check
   test_hosting_release_version
 
   # Check process limit settings, number of skip spawns
@@ -228,6 +245,7 @@ then
     test_phpfpm_skips
     test_phpfpm_errors
   fi
+  test_external_connections
   test_dns
   test_varnish_stats
   test_tasks

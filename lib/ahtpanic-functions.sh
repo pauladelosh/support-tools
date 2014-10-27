@@ -94,7 +94,7 @@ function ahtfindlog() {
 function ahtaht() {
   #echo "** Aht command:    $AHTCOMMAND $STAGE @$SITENAME $URI $@" 1>&2
   #aht $STAGE @$SITENAME $URI $@ |tr -d '\015'
-  ahtest $STAGE @$SITENAME $URI $@ |tr -d '\015'
+  aht $STAGE @$SITENAME $URI $@ |tr -d '\015'
 }
 
 function ahtfiglet() {
@@ -250,8 +250,20 @@ function test_hosting_release_version() {
   ahtsep
 }
 
+# Check puppet/other messages from syslog
+function test_puppet_log_check() {
+  echo "Checking puppet/other messages from /var/log/syslog in webs:"
+  # webs_raw includes out-of-rotation webs
+  for web in $webs_raw
+  do
+    echo "= $web =============";
+    ssh -o LogLevel=quiet $web "sudo tail -2000 /var/log/syslog" |egrep --color=always 'Out of memory|Killed process [0-9]* \([^\)]*\)|switching agent to|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*'
+  done
+  ahtsep
+}
+
 # Get Varnish cached/uncached statistics
-function test_varnish_stats() {  
+function test_varnish_stats() {
   echo "Varnish cached/uncached statistics for last 2 days"
   ahtaht stats --start=-5days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
   ahtsep
@@ -339,6 +351,17 @@ function test_phpfpm_skips() {
   echo 'tail -5000 fpm-error.log | grep "you may need to increase pm.start_servers"' |ahtaht ssh logs |awk -F: '{ print $1 ":XX:XX" }' |sort |uniq -c  >$tmpout
   echo "Skip-spawns for today:"
   ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No skip spawns found.${COLOR_NONE}" "${COLOR_RED}"
+  ahtsep
+}
+
+#Check for any stuck outgoing connections
+function test_external_connections() {
+  echo "Checking for any open external connections from all webs:"
+  for web in $webs
+  do
+    echo "= $web =============";
+    ssh -o LogLevel=quiet $web 'sudo lsof |awk "NR==1 || /^php.*TCP / { print }" | egrep -v ":mysql|:11211" |column -t';
+  done
   ahtsep
 }
 
@@ -585,6 +608,12 @@ ROUND(index_length / data_length, 2) idxfrac
 FROM information_schema.TABLES
 ORDER BY data_length + index_length DESC
 LIMIT 10;
+EOF
+  ahtsep
+
+  echo "Showing largest cache_form entries:"
+  cat <<EOF |ahtaht drush sql-cli |column -t |awk '{ print "  " $0 }'
+SELECT length(data)/1048576 AS length, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY length desc LIMIT 5;
 EOF
   ahtsep
 }
