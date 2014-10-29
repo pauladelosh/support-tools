@@ -615,9 +615,9 @@ LIMIT 10;
 EOF
   ahtsep
 
-  echo "Showing largest cache_form entries:"
-  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }'
-SELECT length(data)/1048576 AS length, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY length desc LIMIT 5;
+  echo "Showing largest cache_form entries from database:"
+  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^'
+SELECT concat(length(data)/1048576, "MB") AS Size, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY Size desc LIMIT 5;
 EOF
   ahtsep
 }
