@@ -268,8 +268,9 @@ function test_puppet_log_check() {
 
 # Get Varnish cached/uncached statistics
 function test_varnish_stats() {
-  echo "Varnish cached/uncached statistics for last 2 days"
-  ahtaht stats --start=-5days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
+  days=5
+  echo "Varnish cached/uncached statistics for last $days days"
+  ahtaht stats --start=-${days}days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
   ahtsep
 }
   
