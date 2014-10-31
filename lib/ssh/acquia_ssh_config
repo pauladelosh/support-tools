@@ -95,7 +95,7 @@ Host *.hosting.acquia.com
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
 
-Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
+Host dbmaster-*.network ded-*.network web-*.network staging-*.network fs-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
   ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.hosting.acquia.com
   User --USERNAME--
@@ -105,7 +105,7 @@ Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.net
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
 
-Host dbmaster-* ded-* web-* staging-* fsdb-* fsdbmesh-* custom-* managed-* bal-*
+Host dbmaster-* ded-* web-* staging-* fs-* fsdb-* fsdbmesh-* custom-* managed-* bal-*
   ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.prod.hosting.acquia.com
   User --USERNAME--
