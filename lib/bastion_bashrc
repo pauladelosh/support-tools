@@ -8,7 +8,7 @@
 #
 #    PREFIX NUMBER [ CMD file1 file2 ]
 #
-#  Where "PREFIX" is a server prefix: ded, web, fsdb, srv, or bal
+#  Where "PREFIX" is a server prefix: ded, web, fs, fsdb, srv, or bal
 #  And "NUMBER" is the server number, e.g. "srv 6"
 #
 #  You can also provide CMD arguments:
@@ -36,6 +36,7 @@
 #    web    web-NNN.prod.hosting.acquia.com
 #    stg    staging-NNN.prod.hosting.acquia.com
 #    bal    bal-NNN.prod.hosting.acquia.com
+#    fs     fs-NNN.prod.hosting.acquia.com
 #    fsdb   fsdb-NNN.prod.hosting.acquia.com
 #    fsdbm  fsdbmesh-NNN.prod.hosting.acquia.com
 #
@@ -114,7 +115,8 @@ function ded  { _ah_cmd_router ded-$1.prod $2 $3 $4 ; }
 function web  { _ah_cmd_router web-$1.prod $2 $3 $4 ; }
 function stg  { _ah_cmd_router staging-$1.prod $2 $3 $4 ; }
 function bal  { _ah_cmd_router bal-$1.prod $2 $3 $4 ; }
+function fs   { _ah_cmd_router fs-$1.prod $2 $3 $4 ; }
 function fsdb { _ah_cmd_router fsdb-$1.prod $2 $3 $4 ; }
 function fsdbm { _ah_cmd_router fsdbmesh-$1.prod $2 $3 $4 ; }
-function srv  { _ah_cmd_router srv-$1.devcloud $2 $3 $4 ; }
+function srv   { _ah_cmd_router srv-$1.devcloud $2 $3 $4 ; }
 function bald  { _ah_cmd_router bal-$1.devcloud $2 $3 $4 ; }
