@@ -249,6 +249,7 @@ then
   test_dns
   test_varnish_stats
   test_tasks
+  test_email_volume
   test_anonsession
 fi
 
@@ -260,11 +261,11 @@ then
   # Run some more checks, but only if drush works.
   if [ $drushworks_flag -eq 1 ]
   then
-    test_poormanscron
-    test_errorreporting
+    test_domain_sites_mapping
     test_pressflow
     test_modules
     test_cacheaudit
+    test_block_cache
     test_duplicatemodules
     test_vars
     test_cacheflushes

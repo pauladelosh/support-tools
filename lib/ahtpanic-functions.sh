@@ -129,6 +129,31 @@ function ahtcatnonempty() {
   fi
 }
 
+# Report the amount of email being sent by the webs
+# See: https://confluence.acquia.com/pages/viewpage.action?pageId=12158281
+function test_email_volume() {
+  olddir=`pwd`
+  tmpdir=/tmp/test-email-volume-$$
+  mkdir $tmpdir && cd $tmpdir
+  echo "Reporting on the amount of email sent by the webs for last 5 days:"
+  printf "  Fetching logs from: "
+  for web in $webs
+  do
+    printf " $web"
+    for logfile in mainlog mainlog.1 $(for i in {2..5} ; do echo "mainlog.$i.gz " ; done)
+    do
+      printf "."
+      rsync --archive --rsync-path="/usr/bin/sudo /usr/bin/rsync" $web:/var/log/exim4/$logfile $web-$logfile
+    done
+  done
+  echo "done."
+  ls | grep -v '.gz' | xargs -I foo gzip foo
+  zgrep 'Completed' * | grep -o '[0-9]\{4\}-[0-9]*-[0-9]*' | sort | uniq -c
+  ahtsep
+  rm -rf $tmpdir
+  cd $olddir
+}
+
 # Check that all webs have the same code deployed
 function test_code_deploy() {
   site_argument=$site
@@ -261,7 +286,7 @@ function test_puppet_log_check() {
   for web in $webs_raw
   do
     echo "= $web =============";
-    ssh -o LogLevel=quiet $web "sudo tail -2000 /var/log/syslog" |egrep --color=always 'Out of memory|Killed process [0-9]* \([^\)]*\)|switching agent to|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*'
+    ssh -o LogLevel=quiet $web "sudo tail -2000 /var/log/syslog" |egrep --color=always 'Out of memory|Killed process [0-9]* \([^\)]*\)|AH_SPLIT_BRAIN|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*'
   done
   ahtsep
 }
@@ -300,11 +325,11 @@ function test_phpcgi_procs() {
     /DefaultMaxClass/ { 
       max_docroot=$2;
       # Get memory info from server.
-      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " free -m |grep Mem" |getline;
+      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " free -m |egrep Mem" |getline;
       total_mem=$2; 
       free_mem=$3;
       # Print the line
-      print server " " max_overall "  " total_running " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "kB " total_mem "kB";
+      print server " " max_overall "  " total_running " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "MB " total_mem "MB";
     }' |column -t
   ahtsep
 }
@@ -335,7 +360,7 @@ function test_phpfpm_procs() {
       total_mem=$2; 
       free_mem=$3;
       # Print the line
-      print server " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "kB " total_mem "kB";
+      print server " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "MB " total_mem "MB";
     }' |column -t
   echo ""
   #ahtaht procs
@@ -405,6 +430,29 @@ function test_tasks() {
   echo "Last $days days' workflow messages:"
   ahtaht tasks --days=$days |egrep --color=always -i "^|code-push|Prod|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
   ahtcatnonempty $tmpout "${COLOR_GREEN}No messages found in last $days days."
+  ahtsep
+}
+
+function test_block_cache() {
+  echo "Checking for problematic block cache (modules not explicitly defining block caching):"
+  aht $STAGE @$SITENAME drush $URI ev 'echo "Module|Block-delta|Cache|Info\n"; $m = module_implements("block_info"); foreach ($m as $module) { $b = module_invoke($module, "block_info"); foreach ($b as $id=>$block) { echo "$module|$id|" . (empty($block["cache"])?"undefined":$block["cache"]) . "|" . $block["info"] . "\n"; } }' |column -s'|' -t
+  ahtsep
+}
+
+function test_domain_sites_mapping() {
+  echo "Showing domain -> site mapping:"
+  ahtaht domains |tr -d '\015' | sed -e 's/\*/XXX/g' >$tmpout
+  count=`grep -c . $tmpout`
+  if [ $count -gt 15 ]
+  then
+    echo "${COLOR_YELLOW}  ** More than 15 domains found ($count); checking only first 15 **${COLOR_NONE}";
+  fi
+  # Cycle thru domains and check for session cookies.
+  for domain in `head -15 $tmpout`
+  do
+    echo " == Domain: $domain";
+    ahtaht drush st --uri=$domain | grep " path" | awk '{ print "  " $0 }'; 
+  done
   ahtsep
 }
 
@@ -487,33 +535,6 @@ function test_anonsession() {
   ahtsep
 }
 
-
-# Test for automatic drupal cron running (a.k.a. poormanscron)
-function test_poormanscron() {
-  echo "Checking for automatic drupal cron runs enabled (a.k.a. poormanscron):"
-  $AHTCOMMAND $STAGE @$SITENAME drush $URI ev 'echo variable_get("cron_safe_threshold", "ABC298")' |tr -d '\015' >$tmpout
-  if [ `grep -c "ABC298" $tmpout` -gt 0 ]
-  then
-    echo "  ${COLOR_RED}PROBLEM: Variable cron_safe_threshold is unset${COLOR_NONE}"
-  else
-    echo "  ${COLOR_YELLOW}Variable cron_safe_threshold is set to "`cat $tmpout`".${COLOR_NONE}"
-  fi
-  ahtsep
-}
-
-# Test for proper error logging
-function test_errorreporting() {
-  echo "Checking for proper error_reporting level:"
-  $AHTCOMMAND $STAGE @$SITENAME drush $URI ev '$level = ini_get("error_reporting"); if (!is_numeric($level)) { echo "ERROR: ini_get(error_reporting) did NOT return a numeric value! Return value:" . PHP_EOL; var_dump($level); } else if ($level<22519) { echo "ERROR: Level too low ($level)" . PHP_EOL; } else { echo "OK: Error level >22519 ($level)" . PHP_EOL; }' |tr -d '\015' >$tmpout
-  if [ `grep -c "ERROR" $tmpout` -gt 0 ]
-  then
-    echo "  ${COLOR_RED}PROBLEM:"`cat $tmpout`"${COLOR_NONE}"
-  else
-    echo "  ${COLOR_GREEN}"`cat $tmpout`".${COLOR_NONE}"
-  fi
-  ahtsep
-}
-
 # Various tests around modules
 function test_modules() {
   echo "Checking for any known offending modules that are enabled:"
@@ -564,7 +585,7 @@ function test_modules() {
 function test_cacheaudit() {
   echo "Cacheaudit of site:"
   echo ""
-  ahtaht $URI cacheaudit >$tmpout 2>&1
+  ahtaht cacheaudit $URI >$tmpout 2>&1
   #awk '{ print "  " $0 }' $tmpout |grep -v "Disabled" |egrep --color=always '^|page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)|DRUPAL_NO_CACHE'
   awk '
 NR==1 { highlight=0 }
@@ -636,7 +657,7 @@ function test_ahtaudit() {
   else
     drushworks_flag=1
     echo $COLOR_YELLOW
-    cat $tmpout |grep error |tr -d '\015' |sed 's:\x1B\[[0-9;]*[mK]::g' |sed 's/\[error\]//g' |sed 's/[ \t]*$//' |awk '{ print "  " $0 }'
+    cat $tmpout |grep '\[error\]' |tr -d '\015' |sed 's:\x1B\[[0-9;]*[mK]::g' |sed 's/\[error\]//g' |sed 's/[ \t]*$//' |awk '{ print "  " $0 }'
     echo "$COLOR_NONE"
     echo "* See canned suggestions at:
   https://support.acquia.com/doc/index.php/Performance_AHT_AUDIT_advise"
