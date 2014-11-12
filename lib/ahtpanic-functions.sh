@@ -428,7 +428,7 @@ function test_dns() {
 function test_tasks() {
   days=5
   echo "Last $days days' workflow messages:"
-  ahtaht tasks --days=$days |egrep --color=always -i "^|code-push|Prod|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
+  ahtaht tasks --days=$days -all |egrep --color=always -i "^|purge-domain|save.site_config_setting|php.ini|code-push|Prod|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
   ahtcatnonempty $tmpout "${COLOR_GREEN}No messages found in last $days days."
   ahtsep
 }
