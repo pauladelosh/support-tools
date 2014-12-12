@@ -85,6 +85,10 @@ expect {
         send "$password\n"
         log_user 1
     }
+    -re "Permission denied.*" {
+        send_user "$expect_out(buffer)\n"
+        exit
+    }
 }
 expect {
     "Password:" {
