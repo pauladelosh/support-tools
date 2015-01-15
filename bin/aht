@@ -1,12 +1,38 @@
 #!/usr/bin/env php
 <?php
+
+/**
+ * Returns a string containing the client version.
+ *
+ * @return string
+ */
+function getVersion()
+{
+    $version = '';
+    if (!$version) {
+        $repository = __DIR__ . '/../.git';
+        if (file_exists($repository)) {
+            $repository = realpath($repository);
+            $tag_offset = "\$(git --git-dir={$repository} describe --tags --long 2>/dev/null)";
+            $version = exec("echo {$tag_offset}");
+        }
+    }
+    return $version;
+}
+
+$sshOptions = array('-tq');
+$ahtOptions = array();
 $result_dir = $_SERVER['HOME'] . '/.ah';
 @mkdir($result_dir, 0777, TRUE);
 $result_file = $result_dir . '/ah_' . rand(0,9999999);
 $script = array_shift($argv);
 $cache = FALSE;
 $clear = FALSE;
+$stagesSet = false;
 foreach ($argv as $arg_key => &$tmp_arg) {
+  if (strstr($tmp_arg,'--stages') || in_array($tmp_arg, array('--ac', '--ace', '--dc', '--mc', '--network'))) {
+    $stagesSet = true;
+  }
   if ($tmp_arg == '--cache') {
     $cache = TRUE;
     unset($argv[$arg_key]);
@@ -44,7 +70,9 @@ if ($cache) {
 
 $ahtools_path = getenv('AHTPATH');
 $ahtools_envs = getenv('AHSTAGES');
-$stages = empty($ahtools_envs) ? '' : "--stages={$ahtools_envs}";
+if (!$stagesSet && !empty($ahtools_envs)) {
+    $ahtOptions[] = "--stages={$ahtools_envs}";
+}
 if (empty($ahtools_path)) {
   $ahtools_path = 'support_bin';
 }
@@ -57,7 +85,26 @@ if (empty($bastionName)) {
     $bastionName = 'bastion';
 }
 
-$options = isset($_SERVER['AH_SSH_CONFIG']) ?  " -F {$_SERVER['AH_SSH_CONFIG']} " : '';
-$command = "ssh -tq {$options} {$bastionName} /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$stages} " . implode(' ', $argv);
+// Pass SSH Config to ssh and to AHT
+if (isset($_SERVER['AH_SSH_CONFIG'])) {
+    $sshOptions[] = "-F {$_SERVER['AH_SSH_CONFIG']}";
+    $ahtOptions[] = "--client-ssh-config={$_SERVER['AH_SSH_CONFIG']}";
+}
+
+// Add client-version to options
+if (preg_match('/^[a-z0-9.+-]+$/', getVersion(), $matches)) {
+    $ahtOptions[] = "--client-tools-version={$matches[0]}";
+}
+
+$sshOptionStr = implode(' ', $sshOptions);
+$ahtOptionStr = implode(' ', $ahtOptions);
+$command = sprintf(
+    "ssh %s %s /vol/ebs1/ahsupport/%s/ahtools %s %s",
+    $sshOptionStr,
+    $bastionName,
+    $ahtools_path,
+    $ahtOptionStr,
+    implode(' ', $argv)
+);
 passthru($command, $return_code);
 exit($return_code);
