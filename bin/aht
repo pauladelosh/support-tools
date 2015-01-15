@@ -28,7 +28,11 @@ $result_file = $result_dir . '/ah_' . rand(0,9999999);
 $script = array_shift($argv);
 $cache = FALSE;
 $clear = FALSE;
+$stagesSet = false;
 foreach ($argv as $arg_key => &$tmp_arg) {
+  if (strstr($tmp_arg,'--stages') || in_array($tmp_arg, array('--ac', '--ace', '--dc', '--mc', '--network'))) {
+    $stagesSet = true;
+  }
   if ($tmp_arg == '--cache') {
     $cache = TRUE;
     unset($argv[$arg_key]);
@@ -66,7 +70,7 @@ if ($cache) {
 
 $ahtools_path = getenv('AHTPATH');
 $ahtools_envs = getenv('AHSTAGES');
-if (!empty($ahtools_envs)) {
+if (!$stagesSet && !empty($ahtools_envs)) {
     $ahtOptions[] = "--stages={$ahtools_envs}";
 }
 if (empty($ahtools_path)) {
