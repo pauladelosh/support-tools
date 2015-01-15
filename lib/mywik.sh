@@ -1,4 +1,4 @@
-#!/usr/bin/env expect -f
+#!/usr/bin/env expect
 #
 # This expect script prompts for a wikid token password and pin, obtains the
 # wikid passcode, and uses it to log in to the bastion host. It assumes the
