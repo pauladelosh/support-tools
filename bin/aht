@@ -1,5 +1,26 @@
 #!/usr/bin/env php
 <?php
+
+/**
+ * Returns a string containing the client version.
+ *
+ * @return string
+ */
+function getVersion()
+{
+    $version = '';
+    if (!$version) {
+        $repository = __DIR__ . '/../.git';
+        if (file_exists($repository)) {
+            $repository = realpath($repository);
+            $tag_offset = "\$(git --git-dir={$repository} describe --tags --long 2>/dev/null)";
+            $version = exec("echo {$tag_offset}");
+        }
+    }
+    return $version;
+}
+
+$ahtOptions = array();
 $result_dir = $_SERVER['HOME'] . '/.ah';
 @mkdir($result_dir, 0777, TRUE);
 $result_file = $result_dir . '/ah_' . rand(0,9999999);
@@ -44,7 +65,9 @@ if ($cache) {
 
 $ahtools_path = getenv('AHTPATH');
 $ahtools_envs = getenv('AHSTAGES');
-$stages = empty($ahtools_envs) ? '' : "--stages={$ahtools_envs}";
+if (!empty($ahtools_envs)) {
+    $ahtOptions[] = "--stages={$ahtools_envs}";
+}
 if (empty($ahtools_path)) {
   $ahtools_path = 'support_bin';
 }
@@ -58,6 +81,13 @@ if (empty($bastionName)) {
 }
 
 $options = isset($_SERVER['AH_SSH_CONFIG']) ?  " -F {$_SERVER['AH_SSH_CONFIG']} " : '';
-$command = "ssh -tq {$options} {$bastionName} /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$stages} " . implode(' ', $argv);
+
+// Add client-version to options
+if (preg_match('/^[a-z0-9.+-]+$/', getVersion(), $matches)) {
+    $ahtOptions[] = "--client-tools-version={$matches[0]}";
+}
+
+$ahtOptionStr = implode(' ', $ahtOptions);
+$command = "ssh -tq {$options} {$bastionName} /vol/ebs1/ahsupport/{$ahtools_path}/ahtools {$ahtOptionStr} " . implode(' ', $argv);
 passthru($command, $return_code);
 exit($return_code);
