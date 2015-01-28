@@ -45,7 +45,7 @@ function catalogBastionFunction()
         addAnalysis "You should remove redundant 'bastion' declarations from the above dotfiles.\n"
     fi
 
-    local bastionFunc=$(type -f bastion 2>/dev/null || type bastion 2>/dev/null)
+    local bastionFunc=$(bash -lc "type -f bastion" 2>/dev/null || bash -lc "type bastion" 2>/dev/null)
     shellLog "--ACTIVE BASTION FUNC--"
     if [[ -z "${bastionFunc}" ]]; then
         addAnalysis "-- No active 'bastion' function available to bash."

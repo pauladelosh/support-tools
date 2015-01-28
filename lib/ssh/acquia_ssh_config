@@ -19,6 +19,7 @@ Host bastion
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host bastion-21 bastion-22 bastion-133
   HostName %h.network.hosting.acquia.com
@@ -30,6 +31,7 @@ Host bastion-21 bastion-22 bastion-133
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host bastion-3
   HostName %h.castle.hosting.acquia.com
@@ -41,6 +43,7 @@ Host bastion-3
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host bastion-21.network.hosting.acquia.com bastion-22.network.hosting.acquia.com bastion-3.castle.hosting.acquia.com
   HostName %h
@@ -52,6 +55,7 @@ Host bastion-21.network.hosting.acquia.com bastion-22.network.hosting.acquia.com
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+  ProxyCommand none
 
 Host svn-*.hosting.acquia.com
   HostName %h
@@ -91,7 +95,7 @@ Host *.hosting.acquia.com
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
 
-Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
+Host dbmaster-*.network ded-*.network web-*.network staging-*.network fs-*.network fsdb-*.network custom-*.network managed-*.network bal-*.network bal-*.devcloud
   ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.hosting.acquia.com
   User --USERNAME--
@@ -101,7 +105,7 @@ Host dbmaster-*.network ded-*.network web-*.network staging-*.network fsdb-*.net
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
 
-Host dbmaster-* ded-* web-* staging-* fsdb-* fsdbmesh-* custom-* managed-* bal-*
+Host dbmaster-* ded-* web-* staging-* fs-* fsdb-* fsdbmesh-* custom-* managed-* bal-*
   ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
   HostName %h.prod.hosting.acquia.com
   User --USERNAME--

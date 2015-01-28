@@ -20,6 +20,9 @@ if [ -e ~/.bash_profile ]
 elif [ -e ~/.bash_login ]
   then
     profile_file=~/.bash_login
+elif [ -e ~/.bashrc ]
+  then
+    profile_file=~/.bashrc
 elif [ -e ~/.profile ]
   then
     profile_file=~/.profile
@@ -97,7 +100,7 @@ function bastion { mywik2 "$@" ; }' >> $ah_profile_file
         echo "
 # set ahtools autocomplete
 if [[ "$(basename ${SHELL})" = "bash" ]]; then
-  complete -W '\$($DIR/aht --autocomplete)' aht
+  complete -W '\$($DIR/bin/aht --autocomplete)' aht
 fi
 " >> $ah_profile_file
     fi
@@ -162,7 +165,7 @@ if [ "$install_ssh" == "yes" ]
         acquia_bastion=$existing_bastion
     fi
 
-    cp -f $DIR/lib/acquia_ssh_config ~/.ssh/ah_config
+    cp -f $DIR/lib/ssh/acquia_ssh_config ~/.ssh/ah_config
 
     # replace the username and private key variables
     perl -pi -e s,--USERNAME--,$acquia_username,g $ssh_config_file

@@ -68,7 +68,7 @@ function isBastionKeyInAgent
 function addBastionKeyToAgent
 {
     local BASTION_KEY=$(getBastionKey)
-    if [[ $(uname) -eq "Darwin" ]]; then
+    if [[ $(uname) == "Darwin" ]]; then
         ssh-add -K "$BASTION_KEY"
     else
         ssh-add "$BASTION_KEY"

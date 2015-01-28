@@ -1,4 +1,4 @@
-#!/usr/bin/env expect -f
+#!/usr/bin/env expect
 #
 # This expect script prompts for a wikid token password and pin, obtains the
 # wikid passcode, and uses it to log in to the bastion host. It assumes the
@@ -81,6 +81,10 @@ expect {
     "SSH passphrase:" {
         send "$password\n"
         log_user 1
+    }
+    -re "Permission denied.*" {
+        send_user "$expect_out(buffer)\n"
+        exit
     }
 }
 expect {
