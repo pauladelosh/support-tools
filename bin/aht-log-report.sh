@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Run this script within the folder where access.log, drupal-requests.log
+# USAGE:
+#   bash bin/aht-log-report.sh [path to logs folder] sitegroup
+# Log folder path is where access.log, drupal-requests.log
 # and php-errors.log are located
 
 # TODO: SEE tickets...
@@ -10,8 +12,7 @@
 # the output below.
 topcount=5     #Number of lines per 'top' report
 portion=200000 #Latest # of lines to process in log, when log is too large
-slowtime=5     #Slow request time in secs.
-days=5         #Days back to report for some reports.
+slowtime=3     #Slow request time in secs.
 
 tmpout=/tmp/ahtlogreport.$$.tmp
 tmpout2=/tmp/ahtlogreport2.$$.tmp
@@ -84,6 +85,9 @@ function ahtcatnonempty() {
 ################################
 # START
 ################################
+logfiledir=$1
+sitename=$2
+cd $1
 
 echo "Check for low disk space on $hostname:"
 df -k |tr -s ' ' |grep "/dev/sd" |awk -F' ' '
@@ -112,7 +116,6 @@ echo "Total byte sizes for logs on $hostname:"
 stat *.log --format="%s %n" | sort -nr |awk '{ printf("%.1fM\t%s\n",$1/1024/1024, $2 ($1+0 > 10000000 ? " '$COLOR_YELLOW'**WARNING**'$COLOR_NONE'" : "")) }' |ahttable "Size\tFilename"
 ahtsep
 
-sitename=$1
 slowout=/tmp/slow.$$.txt
 cat /dev/null >$slowout
 echo "Per-hour requests and slow requests for $sitename on $hostname: (Note: Times are GMT+0)"
@@ -186,7 +189,7 @@ ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($4,2,15) "|"
 ahtsep
 
 echo "Count of hits with 'page=...' arguments like Views, etc. by User-agent on $hostname:"
-ahtcat access.log |egrep 'page=[1-9]' | cut -f6 -d'"' |ahtcounttop
+ahtcat access.log |egrep 'page=[1-9]' | cut -f6 -d'"' |egrep --color=always "^|Drupal" |ahtcounttop
 ahtsep
 
 #echo "Count of top image requests unnecessarily bootstrapping Drupal:"
@@ -199,7 +202,7 @@ ahtcatnonempty $tmpout2 "${COLOR_GREEN}No calls to cron.php via HTTP request fou
 ahtsep
 
 echo "Count of top error messages in php-errors.log on $hostname:"
-cut -f2- -d']' php-errors.log |ahtcounttop |egrep --color=always "^|PHP Fatal error"
+cut -f2- -d']' php-errors.log |sed -e 's/ request_id="[^"]*"//' -e 's/tried to allocate [0-9]*/tried to allocate [number]/' |ahtcounttop |egrep --color=always "^|PHP Fatal error"
 #ahtcatnonempty $tmpout "${COLOR_GREEN}No errors found." "${COLOR_RED}"
 ahtsep
 

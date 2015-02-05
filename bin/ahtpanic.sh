@@ -192,8 +192,8 @@ SITENAME=`echo $SITENAME |cut -c2-`
 site=`echo $SITENAME |cut -f1 -d'.'`
 env=`echo $SITENAME |cut -f2 -d'.'`
   
-# Dump aht --inet output, highlight load avgs >= 1.00
-ahtaht --load |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)' | tee $tmpout
+# Dump aht --inet output, highlight load avgs >= 1.00 AND c1.mediums
+ahtaht --load |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)|c1.medium' | tee $tmpout
 ahtsep
 # Detect FPM from the aht output.
 if [ `grep -c -- "-fpm" $tmpout` -gt 0 ]
@@ -215,9 +215,15 @@ LIVEDEV_FLAG=`grep -c -- "LIVEDEV" $tmpout`
 # Detect all dedicated balancers
 #dedicated_bals=`cat $tmpout |egrep 'bal-[0-9]+ *dedicated *[1-9]' |awk '{ print $1 }'`
 
+# DEBUG STUFF HERE!
+#test_puppet_log_check
+#exit
+
+
 # Run basic checks
 if [ $BASICCHECK_FLAG = 1 ]
 then
+  test_show_panic_links
   if [ $devcloud -eq 0 ]
   then
     test_code_deploy

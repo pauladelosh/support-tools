@@ -93,7 +93,7 @@ else
   do
     msg=`echo $msg |tr '*' ' '`
     echo "Count of top '$msg' messages on $logfilename:"
-    ahtcat $logfilename |awk -F '|' '$3=="'"$msg"'" { print $9 }' |ahtcounttop |egrep --color=always "^|^  *[1-9][0-9][0-9][0-9][0-9]*" |egrep --color=always -i "^|exception|error"
+    ahtcat $logfilename |awk -F '|' '$3=="'"$msg"'" { print $9 }' |sed -e 's/ request_id="[^"]*"//' |ahtcounttop |egrep --color=always "^|^  *[1-9][0-9][0-9][0-9][0-9]*" |egrep --color=always -i "^|exception|error"
     ahtsep
   done
 
@@ -102,7 +102,7 @@ else
   ahtsep
 
   echo "Recent cron runs from $logfilename:"
-  ahtcat $logfilename |awk -F '|' '$3=="cron" { print $1 "|" $9 }' |tail -10 |egrep -i --color=always "^|exception" >$tmpout
+  ahtcat $logfilename |awk -F '|' '$3=="cron" { print $1 "|" $9 }' |sed -e 's/ request_id="[^"]*"//' |tail -10 |egrep -i --color=always "^|exception" >$tmpout
   ahtcatnonempty $tmpout "${COLOR_RED}No cron runs found.${COLOR_NONE}"
   ahtsep
   
@@ -112,7 +112,7 @@ else
   cat /dev/null >$tmpout
   for file in $logfiles
   do 
-    zgrep -e 'module .*abled' $file| cut -f1,9 -d'|' |egrep -i --color=always "^|${today_date}" >>$tmpout
+    zgrep -e 'module .*abled' $file| cut -f1,9 -d'|' |sed -e 's/ request_id="[^"]*"//' |egrep -i --color=always "^|${today_date}" >>$tmpout
   done
   ahtcatnonempty $tmpout "${COLOR_GREEN}No modules enabled/disabled in last 5 days.${COLOR_NONE}"
   ahtsep

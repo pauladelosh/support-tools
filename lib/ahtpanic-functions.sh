@@ -7,7 +7,12 @@ AHTCOMMAND="aht"
 
 # SSHs into an address in a way that won't generate (too many?) strict warnings
 function ahtssh() {
-  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet $@ |tr -d '\015'
+  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config $@ |tr -d '\015'
+}
+
+function ahtssh2() {
+  #echo "SSHing to $@" >&2 #To stderr
+  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config $@
 }
 
 # Create SSL tunnel to DB on local port 33066
@@ -96,6 +101,10 @@ function ahtaht() {
   #aht $STAGE @$SITENAME $URI $@ |tr -d '\015'
   aht $STAGE @$SITENAME $@ |tr -d '\015'
 }
+function ahtaht2() {
+  aht $STAGE @$SITENAME $@
+}
+
 # Shorthand aht command used by ahtaudit command (below)
 function ahtdrush() {
   aht $STAGE @$SITENAME drush $URI $@ |tr -d '\015'
@@ -143,7 +152,7 @@ function test_email_volume() {
     for logfile in mainlog mainlog.1 $(for i in {2..5} ; do echo "mainlog.$i.gz " ; done)
     do
       printf "."
-      rsync --archive --rsync-path="/usr/bin/sudo /usr/bin/rsync" $web:/var/log/exim4/$logfile $web-$logfile
+      rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $web:/var/log/exim4/$logfile $web-$logfile
     done
   done
   echo "done."
@@ -171,7 +180,7 @@ function test_code_deploy() {
   cat /dev/null >$tmpout
   for web in $webs
   do
-    echo "$web: " `ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet $web "find $folder -maxdepth 3 -type d |wc -l"` >>$tmpout
+    echo "$web: " `ahtssh2 $web "find $folder -maxdepth 3 -type d |wc -l"` >>$tmpout
   done
   awk -F: '
     { n=$2+0; }
@@ -194,9 +203,14 @@ function test_code_deploy() {
         }
       }
       else {
-        print ""; print "  OK. " max " folders found in deployed code in every webserver."
+        print ""; print "'$COLOR_GREEN'  OK. " max " folders found in deployed code in every webserver."
       }
     }' $tmpout |egrep --color=always "^|PROBLEM"
+  ahtsep
+}
+
+function test_show_panic_links() {
+  ahtaht2 panic |head -20 |grep --color=none http
   ahtsep
 }
 
@@ -264,7 +278,7 @@ function test_balancer_graphs() {
 # Get PHP memory limit
 function test_php_memory_limit() {
   echo "Checking memory limits/use:"
-  ahtaht ini-grep memory |egrep --color=always "^|[2-9][0-9][0-9][0-9]*"
+  ahtaht ini-grep memory_limit |egrep --color=always "^|[2-9][0-9][0-9][0-9]*"
   ahtsep
 }
 
@@ -274,7 +288,7 @@ function test_hosting_release_version() {
   for web in $webs
   do
     echo -n "  $web: "
-    ssh -o LogLevel=quiet $web "sudo cat /var/acquia/HOSTING_VERSION"
+    ahtssh2 $web "sudo cat /var/acquia/HOSTING_VERSION"
   done
   ahtsep
 }
@@ -282,11 +296,13 @@ function test_hosting_release_version() {
 # Check puppet/other messages from syslog
 function test_puppet_log_check() {
   echo "Checking puppet/other messages from /var/log/syslog in webs:"
+  date_time=`date -u +'%h %_d %H:'`
   # webs_raw includes out-of-rotation webs
   for web in $webs_raw
   do
     echo "= $web =============";
-    ssh -o LogLevel=quiet $web "sudo tail -2000 /var/log/syslog" |egrep --color=always 'Out of memory|Killed process [0-9]* \([^\)]*\)|AH_SPLIT_BRAIN|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*'
+    ahtssh2 $web "sudo tail -3000 /var/log/syslog" >$tmpout
+    grep -v "AH_SPLIT_BRAIN: Split brain detected: db=acquia" $tmpout | egrep 'Out of memory|Killed process [0-9]* \([^\)]*\)|AH_SPLIT_BRAIN|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*' |egrep --color "^|$date_time"
   done
   ahtsep
 }
@@ -325,7 +341,7 @@ function test_phpcgi_procs() {
     /DefaultMaxClass/ { 
       max_docroot=$2;
       # Get memory info from server.
-      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " free -m |egrep Mem" |getline;
+      "ahtssh2 " server " free -m |egrep Mem" |getline;
       total_mem=$2; 
       free_mem=$3;
       # Print the line
@@ -339,7 +355,6 @@ function test_phpfpm_procs() {
   echo "Checking PHP-FPM proc limits/status:"
   echo $webs |tr ' ' '\n' |awk '
     function alert(value, flag) {
-      #return (flag ? "'$COLOR_RED'" : "") value "'$COLOR_NONE'";
       return value (flag ? "⚠warn!" : "");
     }
     BEGIN { 
@@ -351,20 +366,27 @@ function test_phpfpm_procs() {
     # For each server
     {
       server=$0
+      cmd = "ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config " server " \"";
       # Get max fpm processes config
-      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " grep pm.max_children /var/www/site-fpm/'$SITENAME'/pool.d/*conf |cut -f2 -d'='" |getline max_docroot
+      cmd = cmd "grep pm.max_children /var/www/site-fpm/'$SITENAME'/pool.d/*conf |cut -f2 -d=";
       # Get number of processes running per docroot
-      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " ps -ef |grep -c \"[0-9] php-fpm: pool " dotless_sitename "\"" |getline docroot_running;
+      cmd = cmd " && ps -ef |grep -c [0-9].php-fpm:.pool." dotless_sitename;
       # Get memory info from server.
-      "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet " server " free -m |grep Mem" |getline;
+      cmd = cmd " && free -m |grep Mem"
+      cmd = cmd "\""
+      #print cmd;
+      cmd |getline max_docroot;
+      cmd |getline docroot_running;
+      cmd |getline
       total_mem=$2; 
       free_mem=$3;
+      close(cmd)
+
       # Print the line
       print server " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "MB " total_mem "MB";
     }' |column -t
   echo ""
-  #ahtaht procs
-  $AHTCOMMAND $STAGE @$SITENAME $URI procs
+  ahtaht2 procs
   ahtsep
 }
 
@@ -390,7 +412,7 @@ function test_external_connections() {
   for web in $webs
   do
     echo "= $web =============";
-    ssh -o LogLevel=quiet $web 'sudo lsof |awk "NR==1 || /^php.*TCP / { print }" | egrep -v ":mysql|:11211" |column -t';
+    ahtssh2 $web 'sudo lsof |awk "NR==1 || /^php.*TCP / { print }" | egrep -v ":mysql|:11211" |column -t';
   done
   ahtsep
 }
@@ -411,7 +433,7 @@ function test_phpfpm_errors() {
   for web in $webs
   do
     echo -n "  $web: "
-    ssh -o LogLevel=quiet $web "sudo grep -c SIGSEGV /var/log/sites/${SITENAME}/logs/${web}/fpm-error.log"
+    ahtssh2 $web "sudo grep -c SIGSEGV /var/log/sites/${SITENAME}/logs/${web}/fpm-error.log"
   done
   ahtsep
 }
@@ -428,7 +450,7 @@ function test_dns() {
 function test_tasks() {
   days=5
   echo "Last $days days' workflow messages:"
-  ahtaht tasks --days=$days -all |egrep --color=always -i "^|purge-domain|save.site_config_setting|php.ini|code-push|Prod|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
+  ahtaht tasks --days=$days --limit=50 --all |egrep --color=always -i "^|db-migrate|purge-domain|save.site_config_setting|php.ini|code-push|Prod|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
   ahtcatnonempty $tmpout "${COLOR_GREEN}No messages found in last $days days."
   ahtsep
 }
@@ -474,7 +496,8 @@ echo "Drupal " . VERSION . "\n";
 EOF
   dest=/tmp/testpressflow_$$.php
   echo "  Copying $tmpout to $web:$dest ..."
-  scp -q $tmpout $web:$dest
+  rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $tmpout $web:$dest
+  
   ahtdrush scr $dest >$tmpout2 2>/dev/null
   if [ `grep -c "Drupal 6" $tmpout2` -gt 0 ]
   then
@@ -543,7 +566,7 @@ function test_modules() {
   
   # Check for offending modules
   # TODO: Separate criticals from warnings
-  egrep  "^(poormanscron|robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity|ip_geoloc|textsize)$" $tmpout >$tmpout2 2>/dev/null
+  egrep  "^(poormanscron|robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity|ip_geoloc|textsize|menu_minipanels)$" $tmpout >$tmpout2 2>/dev/null
   if [ `grep -c . $tmpout2` -gt 0 ]
   then
     echo $COLOR_RED
@@ -638,7 +661,7 @@ EOF
   ahtsep
 
   echo "Showing largest cache_form entries from database:"
-  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^'
+  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^.*'
 SELECT concat(length(data)/1048576, "MB") AS Size, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY Size desc LIMIT 5;
 EOF
   ahtsep
@@ -749,14 +772,15 @@ function test_logs() {
     ahtsep
     return
   fi
-  tmpscript=/tmp/ahtaudit_script.$$.bash
+  tmpscript=/mnt/tmp/ahtaudit_script.$$.bash
   findlog=`ahtfindlog $logfilename breakonfirst`
   if [ ${findlog:-x} != x ]
   then
     server=`echo $findlog |cut -f1 -d:`
     logfile=`echo $findlog |cut -f2 -d:`
+    logfiledir=`dirname $logfile`
     echo "  $logfile is in $server."
-    scp -q $scriptname $server:$tmpscript 2>/dev/null
+    rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
     site_argument=$site
     if [ $env != 'prod' ]
     then
@@ -768,7 +792,7 @@ function test_logs() {
       fi
     fi
     ahtsep
-    echo "bash $tmpscript $site_argument" | ahtaht ssh logs 
+    echo "sudo bash $tmpscript $logfiledir $site_argument" | ahtssh $server 
   else
     echo "  ${COLOR_YELLOW}No $logfilename found!${COLOR_NONE}"
     echo ""
@@ -788,14 +812,14 @@ function test_drupalwatchdog() {
     ahtsep
     return
   fi
-  tmpscript=/tmp/ahtaudit_script.$$.bash
+  tmpscript=/mnt/tmp/ahtaudit_script.$$.bash
   findlog=`ahtfindlog $logfilename breakonfirst`
   if [ ${findlog:-x} != x ]
   then
     server=`echo $findlog |cut -f1 -d:`
     logfile=`echo $findlog |cut -f2 -d:`
     echo "  $logfile is in $server."
-    scp -q $scriptname $server:$tmpscript 2>/dev/null
+    rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
     ahtsep
     echo "sudo bash $tmpscript $logfile" | ahtssh $server 
   else
