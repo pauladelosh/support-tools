@@ -266,7 +266,7 @@ function module-cache-check {
 if [ -d ~/Sites/releases/modules/$1/$2 ]
   then echo "module $1-$2 found in cache"
 elif echo $2 | grep -q "\-dev"
-  then echo "module $1-$2 is dev, not downloading"
+  then echo "module $1-$2 is dev, not downloading for diff check."
 else
   echo "module $1-$2 not found in cache; downloading..."
   mkdir -p ~/Sites/releases/modules/$1/$2
@@ -513,9 +513,6 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   done
 fi
 homepath=`pwd`
-if echo $2 | grep -q "\-dev"
-  then echo -e "\033[0;31;148m"ERROR: source version $2 is a dev version. use svn-mupdate to perform this update manually."\033[39m"; tput sgr0 && return
-fi
 module-cache-check $1 $2
 module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
@@ -820,9 +817,6 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     done
 fi
 homepath=`pwd`
-if echo $2 | grep -q "\-dev"
-  then echo -e "\033[0;31;148m"ERROR: source version $2 is a dev version. use git-mupdate to perform this update manually."\033[39m"; tput sgr0 && return
-fi
 module-cache-check $1 $2
 module-cache-check $1 $3
 if [ $1 = "acquia_connector" ]; then modname=acquia_agent
