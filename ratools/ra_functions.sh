@@ -138,7 +138,7 @@ echo ""
 }
 
 # Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-function dvpcheck { aht $1 drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush5 vget install_profile; }
+function dvpcheck { aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush vget install_profile; }
 
 # RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))
 function ra-audit {
@@ -174,11 +174,11 @@ while getopts ":p:c:" opt; do
   esac
 done
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
-aht $DOCROOT drush5 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht $DOCROOT drush5 vget install_profile
+aht $DOCROOT drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+aht $DOCROOT drush vget install_profile
 echo
 echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
-aht $DOCROOT drush5 status
+aht $DOCROOT drush status
 echo
 echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
 echo -n "dev:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
@@ -193,7 +193,7 @@ echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sg
 audit=""
 for site in `aht $DOCROOT sites | grep -v \>`; do
   echo $site
-  current_audit=`aht $DOCROOT drush5 upc --pipe --uri=$site`
+  current_audit=`aht $DOCROOT drush upc --pipe --uri=$site`
   audit+="$current_audit"
   audit+=$'\n'
   echo "$current_audit" | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo;
