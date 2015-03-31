@@ -11,6 +11,7 @@
 # RA_INITIALS=""
 # SVN_USERNAME=""
 # SVN_PASSWORD=""
+# RA_PATCHES= "~/<path-to-drupal/patch/files" # No trailing backslash! # No trailing backslash!  No relative paths!
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
@@ -411,9 +412,9 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
-  then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
-  else echo -e "\033[0;31;148mno suitable patch found (tried to find ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
+if ls  $RA_PATCHES/$1 | grep -q $1-$2_to_$3.patch
+  then echo -e "\033[0;32;148msuitable patch found: $RA_PATCHES/$1/$1-$2_to_$3.patch\033[39m"
+  else echo -e "\033[0;31;148mno suitable patch found (tried to find $RA_PATCHES/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
@@ -440,7 +441,7 @@ if echo ${PWD##*/} | grep -q docroot
       esac
     done
 fi
-patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
+patch -p1 < $RA_PATCHES/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
@@ -719,9 +720,9 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-if ls  ~/Sites/releases/version-patches/$1 | grep -q $1-$2_to_$3.patch
-  then echo -e "\033[0;32;148msuitable patch found: ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch\033[39m"
-  else echo -e "\033[0;31;148mno suitable patch found (tried to find ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
+if ls  $RA_PATCHES/$1 | grep -q $1-$2_to_$3.patch
+  then echo -e "\033[0;32;148msuitable patch found: $RA_PATCHES/$1/$1-$2_to_$3.patch\033[39m"
+  else echo -e "\033[0;31;148mno suitable patch found (tried to find $RA_PATCHES/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
 fi
 tput sgr0
 read -p "Press return to continue, or ctrl-c to stop..."
@@ -748,7 +749,7 @@ if echo ${PWD##*/} | grep -q docroot
       esac
     done
 fi
-patch -p1 < ~/Sites/releases/version-patches/$1/$1-$2_to_$3.patch;
+patch -p1 < $RA_PATCHES/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0

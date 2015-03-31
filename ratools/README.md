@@ -4,14 +4,15 @@ A collection of Remote Administration tools currently in use.  Generally in flux
 
 Installation
 --------------------
-1.  Install Core Patches repo: ```git clone git@github.com:acquiacat/Drupal-Core-Git-Patches.git ~/Sites/releases/version-patches```  
+1.  Install Core Patches repo: ```git clone git@github.com:acquiacat/Drupal-Core-Git-Patches.git```  Note the path for 'RA_PATCHES' below.
 2.  Add the lines below to your .bash_profile
-2.  Change "XYZ" to your initials
-3.  Change the path to your local checkout of this repository
+3.  Change "XYZ" to your initials
+4.  Change the path to your local checkout of this repository
 ```
 RA_INITIALS="XYZ"
 SVN_USERNAME="acquia_ahsupport_username"
 SVN_PASSWORD="verysecureopspassword123"
+RA_PATCHES= "/<full-path-to-drupal/patch/files" # No trailing backslash!  No relative paths!
 source ~/{path-to-support-tools}/ratools/ra_functions.sh
 ```
 
