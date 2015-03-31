@@ -31,14 +31,15 @@ function showhelp() {
 This is a sniff-out-everything script that uncovers a lot of potential problems.
 Note: you should give it a --uri argument if auditing a multisite install.
 Usage: 
-  $0 [--uri=URI] [--mc|--dc] [--skip-(basic|drush|logs)] 
+  $0 [--uri=URI] [--mc|--dc|--ace] [--skip-(basic|drush|logs)] 
      [--user=BASICAUTHUSER:BASICAUTHPASSWORD]
+     [--stages=(ace|prod|ac|devcloud|network|smb|acsf|wmg|umg|all)]
      @sitename.env
   
 Examples:
-  $0 --skip-basic @eluniverso.prod  # Skips some basic checks
-  $0 --uri=www.eluniverso.com @eluniverso.prod  # Give it a URI for drush
-  $0 --mc @eluniverso.prod  # Forces managed cloud, use --dc for devcloud
+  $0 --skip-basic @mysite.prod  # Skips some basic checks
+  $0 --uri=www.mysite.com @mysite.prod  # Give it a URI for drush
+  $0 --mc @mysite.prod  # Forces managed cloud, use --dc for devcloud
 EOF
 }
 
@@ -193,7 +194,7 @@ site=`echo $SITENAME |cut -f1 -d'.'`
 env=`echo $SITENAME |cut -f2 -d'.'`
   
 # Dump aht --inet output, highlight load avgs >= 1.00 AND c1.mediums
-ahtaht --load |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)|c1.medium' | tee $tmpout
+ahtaht s:i --load |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)|c1.medium' | tee $tmpout
 ahtsep
 # Detect FPM from the aht output.
 if [ `grep -c -- "-fpm" $tmpout` -gt 0 ]
@@ -255,7 +256,7 @@ then
   test_dns
   test_varnish_stats
   test_tasks
-  test_email_volume
+  #test_email_volume
   test_anonsession
 fi
 
