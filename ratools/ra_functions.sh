@@ -70,7 +70,7 @@
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0009 (2015-03-31)"
+RATOOLS_VERSION="Build 0010 (2015-03-31)"
 
 # Wrapper to log ra-up data to log file
 function ra-up-logged { mkdir -p ~/ra-up_logs; drush ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; } 
@@ -1083,6 +1083,43 @@ function ra-transfer-databases {
   else
     aht $1.$3 tasks
     echo "Run aht $1.$3 tasks to see when databases are finished copying."
+  fi
+}
+
+# Backup all databases on an environment, or a range of databases
+function ra-backup-databases {
+  if [ -z "$3" ]; then
+    echo "# Usage: ra-backup-databases @docroot targetenv"
+    echo "#  You can also supply a range of databases like so:"
+    echo "#   ra-backup-databases @docroot targetenv <start>,<end>"
+    echo "#  You can also add the --watch flag at the end of the command to watch for task completion."
+    return
+  fi
+
+  if [[ `aht $1.$2` =~ "Could not find sitegroup" ]]; then
+    echo "Could not find sitegroup or environment $1.$2"
+    return
+  fi
+
+  databases=$(aht $1.$2 dbs | grep -v '\[' | sed -e 's/[[:space:]]//' -e '/^$/d' -e 's/\ .*//')
+  total=$(echo "$databases" | wc -l | sed 's/[[:space:]]*//')
+  if [ -n "$3" ] && [ "$3" != "--watch" ]; then
+    echo "About to backup $3 of $total databases on $2:"
+    databases=$(echo "$databases" | sed -n "$3p")
+  else
+    echo "About to backup $total databases on $2:"
+  fi
+  echo "$databases"
+  read -p "Press enter to continue or CTRL+c to quit..."
+  for database in $(echo "$databases"); do
+    aht $1.$2 dbs backup-db --database=$database
+  done
+
+  if [ "$4" == "--watch" ] || [ "$3" == "--watch" ]; then
+    while :; do clear; aht $1.$2 tasks --limit=30; sleep 10; done
+  else
+    aht $1.$2 tasks
+    echo "Run aht $1.$2 tasks to see when databases are finished copying."
   fi
 }
 
