@@ -11,7 +11,7 @@
 # RA_INITIALS=""
 # SVN_USERNAME=""
 # SVN_PASSWORD=""
-# RA_PATCHES= "~/<path-to-drupal/patch/files" # No trailing backslash! # No trailing backslash!  No relative paths!
+# RA_PATCHES= "~/<path-to-drupal/patch/files" # No trailing backslash!  No relative paths!
 # source ~/<path-to-support-tools>/ratools/ra_functions.sh
 #
 # Instructions:
@@ -245,6 +245,12 @@ if echo "$audit" | egrep -q 'Update-available|SECURITY-UPDATE-available'
   then echo "$audit" | egrep 'Update-available|SECURITY-UPDATE-available' | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
+# Adding per RA-257
+if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
+echo "=========="
+echo "$audit" | grep Update-available | egrep -v '\-dev|\-unstable|\-alpha|\-beta|\-rc' | grep -v -w drupal | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+fi
+
 echo
 echo -e "\033[1;33;148m[ Unsupported/Out-of-Scope Updates (do not perform) ]\033[39m"; tput sgr0
 if echo "$audit" | egrep 'Installed-version-not-supported' | egrep -qv $RA_UNSUPPORTED_EXCEPTIONS
