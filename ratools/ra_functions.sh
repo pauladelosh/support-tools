@@ -144,7 +144,7 @@ function dvpcheck { aht $1 drush php-eval 'echo (function_exists("drupal_page_ca
 function ra-audit {
 ######################################################
 # define proactive updates here (seperate with pipes):
-RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity"
+RA_PROACTIVE_UPDATES="acquia_connector|acquia_search|mollom|apachesolr|apachesolr_multisitesearch|search_api_acquia|search_api|entity|acquia_lift|personalize|visitor_actions"
 RA_UNSUPPORTED_EXCEPTIONS="acquia_connector|mollom"
 ######################################################
 local OPTIND
