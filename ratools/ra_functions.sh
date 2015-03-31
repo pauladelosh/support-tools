@@ -70,7 +70,7 @@
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0008 (2014-07-30)"
+RATOOLS_VERSION="Build 0009 (2015-03-31)"
 
 # Wrapper to log ra-up data to log file
 function ra-up-logged { mkdir -p ~/ra-up_logs; drush ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; } 
@@ -187,11 +187,11 @@ echo -n "ra:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.ra repo
 echo -n "prod:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.prod repo
 echo
 echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"; tput sgr0
-aht $DOCROOT sites | grep -v \>
+aht $DOCROOT application:sites | grep -v \>
 echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sgr0
 audit=""
-for site in `aht $DOCROOT sites | grep -v \>`; do
+for site in `aht $DOCROOT application:sites | grep -v \>`; do
   echo $site
   current_audit=`aht $DOCROOT drush upc --pipe --uri=$site`
   audit+="$current_audit"
@@ -285,7 +285,7 @@ function ra-init-repo {
   else
   site=$1
   fi
-  if (yes 1 | aht $site | grep -q Please); then
+  if (yes 1 | aht $site site:info | grep -q Please); then
   echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
     echo "Example: ra-init-repo --mc $site source_tag target_branch"
     return
@@ -956,14 +956,14 @@ function ra-disable-securepages {
     echo "# Usage: ra-disable-securepages @docroot.env"
     return
   fi
-  if [[ `aht $1` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1 site:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
   fi
 
   # A loop of all sites is used instead of drush @sites, due to issues with that alias when
   #  using aht.
-  for site in `aht $1 sites | grep -v \>`; do
+  for site in `aht $1 application:sites | grep -v \>`; do
      aht $1 drush dis securepages -y -l "${site//[[:space:]]/}"
   done
 }
@@ -974,7 +974,7 @@ function ra-download-file-proxy {
     echo "# Usage: ra-download-file-proxy @docroot"
     return
   fi
-  server_command=`aht $1.ra`
+  server_command=`aht $1.ra site:info`
   if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
@@ -992,7 +992,7 @@ function ra-remove-file-proxy {
     echo "# Usage: ra-remove-file-proxy @docroot"
     return
   fi
-  server_command=`aht $1.ra`
+  server_command=`aht $1.ra site:info`
   if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
@@ -1009,7 +1009,7 @@ function ra-enable-file-proxy {
     echo "# Requires site to be in live-development"
     return
   fi
-  if [[ `aht $1.prod` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1.prod site:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
   fi
@@ -1056,10 +1056,10 @@ function ra-transfer-databases {
     return
   fi
 
-  if [[ `aht $1.$2` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1.$2 site:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment $1.$2"
     return
-  elif [[ `aht $1.$3` =~ "Could not find sitegroup" ]]; then
+  elif [[ `aht $1.$3 site:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment $1.$3"
     return
   fi
