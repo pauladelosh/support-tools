@@ -180,7 +180,7 @@ function test_code_deploy() {
   cat /dev/null >$tmpout
   for web in $webs
   do
-    echo "$web: " `ahtssh2 $web "find $folder -maxdepth 3 -type d |wc -l"` >>$tmpout
+    echo "$web: " `ahtssh2 $web "find $folder -maxdepth 4 -type d |wc -l"` >>$tmpout
   done
   awk -F: '
     { n=$2+0; }
