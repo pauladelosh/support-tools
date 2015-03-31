@@ -7,7 +7,7 @@ if [ "$( which java )" ]; then
     mkdir .WiKID
   fi
   cd .WiKID
-  java -cp $DIR/wikidtoken-3.1.25.jar com.wikidsystems.jw.JWcl 050019123119
+  java -cp $DIR/wikidtoken-3.1.30.jar com.wikidsystems.jw.JWcl 050019123119
 else
   echo "Java JRE NOT INSTALLED. Please install and re-run wikid"
 fi

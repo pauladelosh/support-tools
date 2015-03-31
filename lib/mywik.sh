@@ -59,6 +59,12 @@ expect {
         send_user "Acquia PIN Incorrect.\n"
         exit
     }
+    "proxy hostname : DIRECT" {
+        exp_continue
+    }
+    "No Proxy" {
+        exp_continue
+    }
     -re "Passcode: (.*)\n" {
         set passcode $expect_out(1,string)
     }
