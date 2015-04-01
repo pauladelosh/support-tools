@@ -1064,7 +1064,7 @@ function ra-transfer-databases {
     return
   fi
 
-  databases=$(aht $1.$2 dbs | grep -v '\[' | sed -e 's/[[:space:]]//' -e '/^$/d' -e 's/\ .*//')
+  databases=$(aht $1.$2 db:list | grep -v '\[' | sed -e 's/[[:space:]]//' -e '/^$/d' -e 's/\ .*//')
   total=$(echo "$databases" | wc -l | sed 's/[[:space:]]*//')
   if [ -n "$4" ] && [ "$4" != "--watch" ]; then
     echo "About to copy $4 of $total databases from $2 to $3:"
@@ -1075,7 +1075,7 @@ function ra-transfer-databases {
   echo "$databases"
   read -p "Press enter to continue or CTRL+c to quit..."
   for database in $(echo "$databases"); do
-    aht $1.$2 dbs transfer $3 --database=$database
+    aht $1.$2 db:transfer $3 --database=$database
   done
 
   if [ "$5" == "--watch" ] || [ "$4" == "--watch" ]; then
@@ -1101,7 +1101,7 @@ function ra-backup-databases {
     return
   fi
 
-  databases=$(aht $1.$2 dbs | grep -v '\[' | sed -e 's/[[:space:]]//' -e '/^$/d' -e 's/\ .*//')
+  databases=$(aht $1.$2 db:list | grep -v '\[' | sed -e 's/[[:space:]]//' -e '/^$/d' -e 's/\ .*//')
   total=$(echo "$databases" | wc -l | sed 's/[[:space:]]*//')
   if [ -n "$3" ] && [ "$3" != "--watch" ]; then
     echo "About to backup $3 of $total databases on $2:"
@@ -1112,7 +1112,7 @@ function ra-backup-databases {
   echo "$databases"
   read -p "Press enter to continue or CTRL+c to quit..."
   for database in $(echo "$databases"); do
-    aht $1.$2 dbs backup-db --database=$database
+    aht $1.$2 db:backup-create --database=$database
   done
 
   if [ "$4" == "--watch" ] || [ "$3" == "--watch" ]; then
