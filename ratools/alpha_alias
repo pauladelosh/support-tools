@@ -148,7 +148,7 @@ alias ahst="aht @$SITENAME.prod --uri=default drush status"
 alias ahsi="aht @$SITENAME.prod application:sites"
 alias ahsup="aht @$SITENAME.prod --uri=default drush upc --pipe --security-only"    
 alias ahaup="aht @$SITENAME.prod --uri=default drush upc --pipe"                  
-alias ahuli="aht @$SITENAME.prod --uri=default uli"                                
+alias ahuli="aht @$SITENAME.prod application:login"
 alias ahrepo="aht @$SITENAME.prod repo" 
 alias ahpmi="aht @$SITENAME.prod drush pmi <module>"      ######################  Need function for this                                   
 }
@@ -297,7 +297,7 @@ echo "ahst       aht @$SITENAME.prod --uri=default drush status"
 echo "ahsi       aht @$SITENAME.prod application:sites"
 echo "ahsup      aht @$SITENAME.prod --uri=default drush upc --pipe --security-only"
 echo "ahaup      aht @$SITENAME.prod --uri=default drush upc --pipe"
-echo "ahuli      aht @$SITENAME.prod --uri=default uli"
+echo "ahuli      aht @$SITENAME.prod application:login"
 echo "ahrepo     aht @$SITENAME.prod repo" 
 #echo "ahupdb     aht @$SITENAME.test drush --uri=default updb"   ####################################   need function with env
 
