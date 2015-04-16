@@ -39,6 +39,7 @@
 #    fs     fs-NNN.prod.hosting.acquia.com
 #    fsdb   fsdb-NNN.prod.hosting.acquia.com
 #    fsdbm  fsdbmesh-NNN.prod.hosting.acquia.com
+#    svn    svn-NNN.prod.hosting.acquia.com
 #
 #  Dev Cloud Prefix Legend
 #    srv    srv-NNN.devcloud.hosting.acquia.com
@@ -118,5 +119,6 @@ function bal  { _ah_cmd_router bal-$1.prod $2 $3 $4 ; }
 function fs   { _ah_cmd_router fs-$1.prod $2 $3 $4 ; }
 function fsdb { _ah_cmd_router fsdb-$1.prod $2 $3 $4 ; }
 function fsdbm { _ah_cmd_router fsdbmesh-$1.prod $2 $3 $4 ; }
+function svn  { _ah_cmd_router svn-$1.prod $2 $3 $4 ; }
 function srv   { _ah_cmd_router srv-$1.devcloud $2 $3 $4 ; }
 function bald  { _ah_cmd_router bal-$1.devcloud $2 $3 $4 ; }
