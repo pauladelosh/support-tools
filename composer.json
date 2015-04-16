@@ -1,0 +1,21 @@
+{
+    "name": "acquia/Support-Tools",
+    "description": "Acquia Support Tools",
+    "homepage": "https://github.com/acquia/Support-Tools",
+    "authors": [
+        {
+            "name": "See contributors",
+            "homepage": "https://github.com/acquia/Support-Tools/graphs/contributors"
+        }
+    ],
+    "keywords": ["acquia","aht"],
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "Acquia\\Support\\ToolsWrapper\\": "src/"
+        }
+    },
+    "require": {
+        "symfony/console": "~2.5"
+    }
+}

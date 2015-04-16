@@ -1,110 +1,11 @@
 #!/usr/bin/env php
 <?php
 
-/**
- * Returns a string containing the client version.
- *
- * @return string
- */
-function getVersion()
-{
-    $version = '';
-    if (!$version) {
-        $repository = __DIR__ . '/../.git';
-        if (file_exists($repository)) {
-            $repository = realpath($repository);
-            $tag_offset = "\$(git --git-dir={$repository} describe --tags --long 2>/dev/null)";
-            $version = exec("echo {$tag_offset}");
-        }
-    }
-    return $version;
-}
+date_default_timezone_set('UTC');
 
-$sshOptions = array('-tq');
-$ahtOptions = array();
-$result_dir = $_SERVER['HOME'] . '/.ah';
-@mkdir($result_dir, 0777, TRUE);
-$result_file = $result_dir . '/ah_' . rand(0,9999999);
-$script = array_shift($argv);
-$cache = FALSE;
-$clear = FALSE;
-$stagesSet = false;
-foreach ($argv as $arg_key => &$tmp_arg) {
-  if (strstr($tmp_arg,'--stages') || in_array($tmp_arg, array('--ac', '--ace', '--dc', '--mc', '--network'))) {
-    $stagesSet = true;
-  }
-  if ($tmp_arg == '--cache') {
-    $cache = TRUE;
-    unset($argv[$arg_key]);
-  }
-  else if ($tmp_arg == '--cache-clear') {
-    $cache = TRUE;
-    $clear = TRUE;
-    unset($argv[$arg_key]);
-  }
-  else if ($tmp_arg == '--autocomplete') {
-    $cache = TRUE;
-  }
-  else if (preg_match('|\s|', $tmp_arg)) {
-    $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
-  }
-  else if (strpos($tmp_arg, '&') !== false) {
-    // Handle valid arguments that contain ampersands (e.g. URLs).
-    $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
-  }
-}
+require __DIR__.'/../vendor/autoload.php';
 
-if ($cache) {
-  $key = sha1(json_encode(array('aht', $argv)));
-  $result_file = $result_dir . '/ah_' . $key;
-
-  if ($clear) {
-    @unlink($result_file);
-  }
-
-  if (file_exists($result_file) && filemtime($result_file) < (time() + 86400)) {
-    echo file_get_contents($result_file);
-    exit;
-  }
-}
-
-$ahtools_path = getenv('AHTPATH');
-$ahtools_envs = getenv('AHSTAGES');
-if (!$stagesSet && !empty($ahtools_envs)) {
-    $ahtOptions[] = "--stages={$ahtools_envs}";
-}
-if (empty($ahtools_path)) {
-  $ahtools_path = 'support_bin';
-}
-elseif (strtolower($ahtools_path) == 'test') {
-  $ahtools_path = 'support_bin_test';
-}
-
-$bastionName = getenv('AHT_BASTION');
-if (empty($bastionName)) {
-    $bastionName = 'bastion';
-}
-
-// Pass SSH Config to ssh and to AHT
-if (isset($_SERVER['AH_SSH_CONFIG'])) {
-    $sshOptions[] = "-F {$_SERVER['AH_SSH_CONFIG']}";
-    $ahtOptions[] = "--client-ssh-config={$_SERVER['AH_SSH_CONFIG']}";
-}
-
-// Add client-version to options
-if (preg_match('/^[a-z0-9.+-]+$/', getVersion(), $matches)) {
-    $ahtOptions[] = "--client-tools-version={$matches[0]}";
-}
-
-$sshOptionStr = implode(' ', $sshOptions);
-$ahtOptionStr = implode(' ', $ahtOptions);
-$command = sprintf(
-    "ssh %s %s /vol/ebs1/ahsupport/%s/ahtools %s %s",
-    $sshOptionStr,
-    $bastionName,
-    $ahtools_path,
-    $ahtOptionStr,
-    implode(' ', $argv)
+$aht = new \Acquia\Support\ToolsWrapper\AhtWrapperApplication(
+    new \Acquia\Support\ToolsWrapper\AhtWrapperExecutionContext()
 );
-passthru($command, $return_code);
-exit($return_code);
+exit($aht->runAht($argv));
