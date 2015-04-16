@@ -144,3 +144,13 @@ Host *.e2a.us
   ForwardAgent yes
   StrictHostKeyChecking no
   IdentityFile --KEYNAME--
+
+Host java*.search-service.hosting.acquia.com nx*.search-service.hosting.acquia.com
+  ProxyCommand ssh -F ~/.ssh/ah_config bastion nc %h %p
+  HostName %h
+  User --USERNAME--
+  Port 40506
+  ServerAliveInterval 60
+  ForwardAgent yes
+  StrictHostKeyChecking no
+  IdentityFile --KEYNAME--
