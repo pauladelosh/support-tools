@@ -4,8 +4,8 @@
 # written by Matt Lavoie
 # based on original scripts by George Cassie and Maria McDowell
 #
-# add the following block to ~/.bash_profile to use the ratools scripts. 
-# make sure to uncomment the variable lines and set them to your information. 
+# add the following block to ~/.bash_profile to use the ratools scripts.
+# make sure to uncomment the variable lines and set them to your information.
 #
 # set ratools variables and include the script
 # RA_INITIALS=""
@@ -73,7 +73,7 @@
 RATOOLS_VERSION="Build 0010 (2015-03-31)"
 
 # Wrapper to log ra-up data to log file
-function ra-up-logged { mkdir -p ~/ra-up_logs; drush ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; } 
+function ra-up-logged { mkdir -p ~/ra-up_logs; drush ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; }
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
@@ -216,7 +216,7 @@ echo "$audit" | grep SECURITY-UPDATE-available | grep -v -w drupal | sort | uniq
 fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
-if ( echo "$audit" | egrep -w $RA_PROACTIVE_UPDATES | egrep -q -v 'Installed-version-not-supported|SECURITY-UPDATE-available' ) || ( echo "$audit" | egrep -w $RA_UNSUPPORTED_EXCEPTIONS | egrep -q 'Installed-version-not-supported' | sort | uniq ); then 
+if ( echo "$audit" | egrep -w $RA_PROACTIVE_UPDATES | egrep -q -v 'Installed-version-not-supported|SECURITY-UPDATE-available' ) || ( echo "$audit" | egrep -w $RA_UNSUPPORTED_EXCEPTIONS | egrep -q 'Installed-version-not-supported' | sort | uniq ); then
   echo "$audit" | egrep -w $RA_PROACTIVE_UPDATES | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
   echo "$audit" | egrep -w $RA_UNSUPPORTED_EXCEPTIONS | egrep 'Installed-version-not-supported' | sort | uniq
 else
@@ -451,7 +451,7 @@ patch -p1 < $RA_PATCHES/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
-while svn status --no-ignore | egrep -q '\.orig|\.rej'; do 
+while svn status --no-ignore | egrep -q '\.orig|\.rej'; do
   svn status --no-ignore | egrep '\.rej|\.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   echo "to change into repository and find all reject/original files: cd `pwd` && svn status --no-ignore | egrep '.orig|.rej'"
@@ -551,7 +551,7 @@ for modinfopath in `find . -name $modname.info`
                       then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                       else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
-                else 
+                else
                   echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
                   while true; do read -p "update potentially modified module anyways? (y/n) " yn
                     case $yn in
@@ -574,7 +574,7 @@ for modinfopath in `find . -name $modname.info`
                   done
                 fi
                 cd $homepath
-                break;; 
+                break;;
               [Nn]* ) break;;
               * ) echo "invalid response, try again";;
             esac
@@ -662,7 +662,7 @@ svn commit -m "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Tick
 # Git, Get Repository (get-repo-git <docroot-name> <repository-url)
 function get-repo-git { cd ~/Sites/clients; mkdir $1; cd $1; git clone $2; }
 
-# Git, Initialize Repository 
+# Git, Initialize Repository
 # Usage: git-init-repo @<docroot>.<environment> <source_tag> <target_branch>
 # git-init-repo @<docroot>.<environment> <target_branch>
 function git-init-repo {
@@ -756,7 +756,7 @@ patch -p1 < $RA_PATCHES/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
-while git status | egrep -q '\.orig|\.rej'; do 
+while git status | egrep -q '\.orig|\.rej'; do
   git status | egrep '\.rej|\.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   echo "to change into repository and locate all reject/original files: cd `pwd` && git status | egrep '.orig|.rej'"
@@ -852,7 +852,7 @@ for modinfopath in `find . -name $modname.info`
                       then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                       else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
-                else 
+                else
                   echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
                   while true; do read -p "update potentially modified module anyways? (y/n) " yn
                     case $yn in
@@ -1015,7 +1015,7 @@ function ra-enable-file-proxy {
   fi
 
   sites=()
-  domains=$(aht $1.prod domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
+  domains=$(aht $1.prod domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
   for domain in $(echo "$domains"); do
     conf_path=$(aht $1.prod drush ev 'print conf_path();' -l $domain)
     # either this isn't a working site, or we've already made an entry for this multisite
@@ -1129,21 +1129,21 @@ function ra-copy-domains {
     echo "# Usage: ra-copy-domains @site.env <optional sed replacement>"
     return
   fi
-  if [ -z "$2" ]; then 
+  if [ -z "$2" ]; then
     expression="s/^/ra./"
   else
     expression="$2"
   fi
   source_env=$1
   target_env=$(echo $1 | sed 's/\..*/.ra/')
-  domains=$(aht $source_env domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v '.acquia-sites.com')
+  domains=$(aht $source_env domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v '.acquia-sites.com')
   new_domains=""
   for domain in $(echo "$domains"); do
     new_domains+=$(echo $domain | sed $expression)
     new_domains+=$'\n'
   done
   echo "Current domains:"
-  aht $target_env domains | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r'
+  aht $target_env domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r'
   echo
   echo "New domains:"
   echo "$new_domains"
