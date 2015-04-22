@@ -760,7 +760,7 @@ while git status | egrep -q '\.orig|\.rej'; do
   git status | egrep '\.rej|\.orig'
   echo -e "\033[0;31;148mERROR: original/reject files found! open a new window, resolve all issues, and remove any orig/rej files.\033[39m"; tput sgr0
   echo "to change into repository and locate all reject/original files: cd `pwd` && git status | egrep '.orig|.rej'"
-  echo "to remove all reject/original files: git status | egrep '.orig|.rej' | awk '{print \$2}' | xargs rm"
+  echo "to remove all reject/original files: git status | egrep '.orig|.rej' | awk '{print \$1}' | xargs rm"
   echo "cd `pwd`; git status | egrep '\.orig|\.rej'" | pbcopy
   echo
   read -p "Press return to retry, or ctrl-c to stop...";
