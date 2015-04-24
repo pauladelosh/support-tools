@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ############################################################################################
 # remote admin bash functions
 #
@@ -151,7 +152,7 @@ local OPTIND
 DOCROOT=$1
 shift
 while getopts ":p:c:" opt; do
-  case $opt in
+  case ${opt} in
     p)
       DOCROOT="'--$OPTARG $DOCROOT'"
       echo -e "\033[1;33;148m[ Hosting Platform Specified ]\033[39m"; tput sgr0
@@ -161,7 +162,7 @@ while getopts ":p:c:" opt; do
     c)
       local RA_AUDIT_UPDCMD="true"
       #RA_AUDIT_VCS=`echo $OPTARG | cut -f2 -d"=" | cut -f1 -d","`
-      #RA_AUDIT_TICKNUM=`echo $OPTARG | cut -f2 -d"=" | cut -f2 -d","`
+      #RA_AUDIT_TICKNUM=`echo $OPTARG | cut -f2 -d "=" | cut -f2 -d ","`
       RA_AUDIT_TICKNUM=$OPTARG
       #if [ $RA_AUDIT_VCS != "git" ] && [ $RA_AUDIT_VCS != "svn" ]
       #  then echo "ERROR: invalid VCS specified (must be git/svn): exiting" && exit
@@ -174,26 +175,26 @@ while getopts ":p:c:" opt; do
   esac
 done
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
-aht $DOCROOT drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht $DOCROOT drush vget install_profile
+aht ${DOCROOT} drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+aht ${DOCROOT} drush vget install_profile
 echo
 echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
-aht $DOCROOT drush status
+aht ${DOCROOT} drush status
 echo
 echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
-echo -n "dev:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
-echo -n "stage:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.test repo
-echo -n "ra:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.ra repo
-echo -n "prod:   "; aht `echo $DOCROOT | cut -f2 -d "'" | cut -f1 -d "."`.prod repo
+echo -n "dev:   "; aht `echo ${DOCROOT} | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
+echo -n "stage:   "; aht `echo ${DOCROOT} | cut -f2 -d "'" | cut -f1 -d "."`.test repo
+echo -n "ra:   "; aht `echo ${DOCROOT} | cut -f2 -d "'" | cut -f1 -d "."`.ra repo
+echo -n "prod:   "; aht `echo ${DOCROOT} | cut -f2 -d "'" | cut -f1 -d "."`.prod repo
 echo
 echo -e "\033[1;33;148m[ Multisite Check ]\033[39m"; tput sgr0
-aht $DOCROOT application:sites | grep -v \>
+aht ${DOCROOT} application:sites | grep -v \>
 echo
 echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sgr0
 audit=""
-for site in `aht $DOCROOT application:sites | grep -v \>`; do
-  echo $site
-  current_audit=`aht $DOCROOT drush upc --pipe --uri=$site`
+for site in `aht ${DOCROOT} application:sites | grep -v \> | tr -d "\r"`; do
+  echo ${site}
+  current_audit=`aht ${DOCROOT} drush pm-updatestatus --format=csv '--list-separator= ' --fields=name,existing_version,candidate_version,status_msg --uri=${site}`
   audit+="$current_audit"
   audit+=$'\n'
   echo "$current_audit" | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo;
@@ -205,56 +206,57 @@ if echo "$audit" | grep -q -w drupal
 fi
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"; tput sgr0
-if echo "$audit" | grep SECURITY-UPDATE-available | grep -v -w -q drupal
-  then echo "$audit" | grep SECURITY-UPDATE-available | grep -v -w drupal | sort | uniq
+if echo "$audit" | grep "SECURITY UPDATE available" | grep -v -w -q drupal
+  then echo "$audit" | grep "SECURITY UPDATE available" | grep -v -w drupal | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
+if [[ ${RA_AUDIT_UPDCMD} == "true" ]]; then
 echo "=========="
 #grep SECURITY-UPDATE-available /tmp/ra-audit-updates.tmp | grep -v -w drupal | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
-echo "$audit" | grep SECURITY-UPDATE-available | grep -v -w drupal | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
+#echo "$audit" | grep "SECURITY UPDATE available" | grep -v -w drupal | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM --security/"
+echo "$audit" | grep "SECURITY UPDATE available" | grep -v -w drupal | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM --security/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
-if ( echo "$audit" | egrep -w $RA_PROACTIVE_UPDATES | egrep -q -v 'Installed-version-not-supported|SECURITY-UPDATE-available' ) || ( echo "$audit" | egrep -w $RA_UNSUPPORTED_EXCEPTIONS | egrep -q 'Installed-version-not-supported' | sort | uniq ); then
-  echo "$audit" | egrep -w $RA_PROACTIVE_UPDATES | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq
-  echo "$audit" | egrep -w $RA_UNSUPPORTED_EXCEPTIONS | egrep 'Installed-version-not-supported' | sort | uniq
+if ( echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -q -v "Installed version not supported|SECURITY UPDATE available" ) || ( echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep -q "Installed version not supported" | sort | uniq ); then
+  echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | sort | uniq
+  echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep "Installed version not supported" | sort | uniq
 else
   echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
+if [[ ${RA_AUDIT_UPDCMD} == "true" ]]; then
 echo "=========="
 #egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
-echo "$audit" | egrep -w $RA_PROACTIVE_UPDATES | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
-echo "$audit" | egrep -w $RA_UNSUPPORTED_EXCEPTIONS | egrep 'Installed-version-not-supported' | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep "Installed version not supported" | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"; tput sgr0
-if echo "$audit" | egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' | egrep -q -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'"
-  then echo "$audit" | egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq
+if echo "$audit" | egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' | egrep -q -v -w "'$RA_PROACTIVE_UPDATES|Installed version not supported|SECURITY UPDATE available'"
+  then echo "$audit" | egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed version not supported|SECURITY UPDATE available'" | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
-if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
+if [[ ${RA_AUDIT_UPDCMD} == "true" ]]; then
 echo "=========="
 #egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' /tmp/ra-audit-updates.tmp | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
-echo "$audit" | egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed-version-not-supported|SECURITY-UPDATE-available'" | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+echo "$audit" | egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' | egrep -v -w "'$RA_PROACTIVE_UPDATES|Installed version not supported|SECURITY UPDATE available'" | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"; tput sgr0
-if echo "$audit" | egrep -q 'Update-available|SECURITY-UPDATE-available'
-  then echo "$audit" | egrep 'Update-available|SECURITY-UPDATE-available' | sort | uniq
+if echo "$audit" | egrep -q "Update available|SECURITY UPDATE available"
+  then echo "$audit" | egrep "Update available|SECURITY UPDATE available" | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
 # Adding per RA-257
-if [[ $RA_AUDIT_UPDCMD == "true" ]]; then
+if [[ ${RA_AUDIT_UPDCMD} == "true" ]]; then
 echo "=========="
-echo "$audit" | grep Update-available | egrep -v '\-dev|\-unstable|\-alpha|\-beta|\-rc' | grep -v -w drupal | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+echo "$audit" | grep "Update available" | egrep -v '\-dev|\-unstable|\-alpha|\-beta|\-rc' | grep -v -w drupal | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM/"
 fi
 
 echo
 echo -e "\033[1;33;148m[ Unsupported/Out-of-Scope Updates (do not perform) ]\033[39m"; tput sgr0
-if echo "$audit" | egrep 'Installed-version-not-supported' | egrep -qv $RA_UNSUPPORTED_EXCEPTIONS
-  then echo "$audit" | egrep 'Installed-version-not-supported' | egrep -v $RA_UNSUPPORTED_EXCEPTIONS | sort | uniq
+if echo "$audit" | egrep "Installed version not supported" | egrep -qv ${RA_UNSUPPORTED_EXCEPTIONS}
+  then echo "$audit" | egrep "Installed version not supported" | egrep -v ${RA_UNSUPPORTED_EXCEPTIONS} | sort | uniq
   else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
 echo
@@ -291,12 +293,12 @@ function ra-init-repo {
   else
   site=$1
   fi
-  if (yes 1 | aht $site site:info | grep -q Please); then
+  if (yes 1 | aht ${site} site:info | grep -q Please); then
   echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
     echo "Example: ra-init-repo --mc $site source_tag target_branch"
     return
   fi
-  if [[ "$(aht $site repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
+  if [[ "$(aht ${site} repo)" = *git* ]]; then git-init-repo $@; else svn-init-repo $@; fi
 }
 
 function git-searchpocolypse {
@@ -336,7 +338,7 @@ function svn-searchpocolypse {
 }
 
 # SVN, Get Repository (get-repo-svn <docroot-name> <repository-url)
-function get-repo-svn { cd ~/Sites/clients; mkdir $1; cd $1; svn checkout --username $SVN_USERNAME --password $SVN_PASSWORD $2; }
+function get-repo-svn { cd ~/Sites/clients; mkdir $1; cd $1; svn checkout --username ${SVN_USERNAME} --password ${SVN_PASSWORD} $2; }
 
 # SVN, Initialize Repository
 # Usage: svn-init-repo @<docroot>.<environment> <source_tag> <target_branch>
@@ -362,41 +364,41 @@ site=$1
     base=${1%.*}
     docroot=${base#@*}
     acqenv=${1#*.}
-    if [ -d ./$docroot ]; then
+    if [ -d ./${docroot} ]; then
 echo "Error: Directory $docroot already exists"
         return
 fi
-repo="$(aht $site repo)"
-    if [[ $repo =~ "live development" ]]; then
+repo="$(aht ${site} repo)"
+    if [[ ${repo} =~ "live development" ]]; then
 repo=$(echo "$repo" | grep svn)
-    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+    elif [[ ${repo} =~ "Could not find sitegroup or environment" ]]; then
 echo "Could not find sitegroup or environment." && return;
     fi
-url=$(echo $repo | tr -d '\r')
+url=$(echo ${repo} | tr -d '\r')
     baseurl=$(echo "$url" | sed "s/$docroot\/.*/$docroot/")
     if [ $# -eq 2 ]; then
-source_url=$url
+source_url=${url}
       target_branch=$2
     else
-source_url=$baseurl/$2
+source_url=${baseurl}/$2
       target_branch=$3
     fi
 source_tag=$(echo "$source_url" | sed "s/.*$docroot\///")
-    mkdir $docroot && cd $docroot
-    svn checkout --username=$SVN_USERNAME --password=$SVN_PASSWORD $baseurl/trunk
+    mkdir ${docroot} && cd ${docroot}
+    svn checkout --username=${SVN_USERNAME} --password=${SVN_PASSWORD} ${baseurl}/trunk
     while true; do
 echo "\"svn copy $source_url $baseurl/branches/$target_branch -m \"$RA_INITIALS@acq: Branch from $source_tag to implement updates.\"\""
         read -p "OK to create/commit branch $target_branch from $source_tag using above command? (y/n) " yn
-        case $yn in
+        case ${yn} in
             [Yy]* ) break;;
             [Nn]* ) return;;
             * ) echo "invalid response, try again";;
         esac
 done
-svn copy $source_url $baseurl/branches/$target_branch -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
+svn copy ${source_url} ${baseurl}/branches/${target_branch} -m "$RA_INITIALS@acq: Branch from $source_tag to implement updates."
     echo "RECORD REVISION NUMBER IN VCS"
     cd trunk
-    svn switch ^/branches/$target_branch
+    svn switch ^/branches/${target_branch}
 }
 
 # SVN, Core Update (svn-cupdate <distribution> <source version> <target version> <ticket number>)
@@ -418,7 +420,7 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-if ls  $RA_PATCHES/$1 | grep -q $1-$2_to_$3.patch
+if ls  ${RA_PATCHES}/$1 | grep -q $1-$2_to_$3.patch
   then echo -e "\033[0;32;148msuitable patch found: $RA_PATCHES/$1/$1-$2_to_$3.patch\033[39m"
   else echo -e "\033[0;31;148mno suitable patch found (tried to find $RA_PATCHES/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
 fi
@@ -429,7 +431,7 @@ echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"; tput sgr0
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -440,14 +442,14 @@ if echo ${PWD##*/} | grep -q docroot
   then :;
   else while true; do
     read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
-      case $yn in
+      case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
       esac
     done
 fi
-patch -p1 < $RA_PATCHES/$1/$1-$2_to_$3.patch;
+patch -p1 < ${RA_PATCHES}/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
@@ -467,13 +469,13 @@ echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"; tput sgr0
 FILETYPE='*.info'
  INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
- files=( $(find $INCLUDEONLY -name "$FILETYPE") )
+ files=( $(find ${INCLUDEONLY} -name "$FILETYPE") )
 for file in "${files[@]}"; do
-  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' $file
-  sed -i '' '/version = "[0-9]*.[0-9]*"/d' $file
-  sed -i '' '/project = "drupal"/d' $file
-  sed -i '' '/datestamp = "[0-9]*"/d' $file
-  echo 'Checking' $file
+  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' ${file}
+  sed -i '' '/version = "[0-9]*.[0-9]*"/d' ${file}
+  sed -i '' '/project = "drupal"/d' ${file}
+  sed -i '' '/datestamp = "[0-9]*"/d' ${file}
+  echo 'Checking' ${file}
 done
 echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
@@ -488,7 +490,7 @@ echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
 echo "currently on svn branch `svn info | grep URL | cut -f2 -d" "`"
 while true; do
     read -p "commit \"$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4.\" now? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) svn commit -m "$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
         [Nn]* ) echo -e "\033[0;31;148mchanges not commited\033[39m"; break;;
         * ) echo "invalid response, try again";;
@@ -505,7 +507,7 @@ if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -523,18 +525,18 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "ubercart" ]; then modname=uc_cart
   else modname=$1
 fi
-for modinfopath in `find . -name $modname.info`
+for modinfopath in `find . -name ${modname}.info`
   do
-    if [ $modname = acquia_agent ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      elif [ $modname = user_relationship ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      elif [ $modname = uc_cart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      else modpath=`dirname $(dirname $modinfopath)`
+    if [ ${modname} = acquia_agent ]; then modpath=`dirname $(dirname $(dirname ${modinfopath}))`
+      elif [ ${modname} = user_relationship ]; then modpath=`dirname $(dirname $(dirname ${modinfopath}))`
+      elif [ ${modname} = uc_cart ]; then modpath=`dirname $(dirname $(dirname ${modinfopath}))`
+      else modpath=`dirname $(dirname ${modinfopath})`
     fi
-    if grep "version = \"$2\"" $modinfopath > /dev/null
+    if grep "version = \"$2\"" ${modinfopath} > /dev/null
       then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
-          case $yn in
-              [Yy]* ) cd $modpath
-                echo -e "\033[1;33;148m"checking to see if $1 at $modpath is modified..."\033[39m"; tput sgr0
+          case ${yn} in
+              [Yy]* ) cd ${modpath}
+                echo -e "\033[1;33;148m"checking to see if $1 at ${modpath} is modified..."\033[39m"; tput sgr0
                 diff -rq $1 ~/Sites/releases/modules/$1/$2/$1
                 if [ $? -ne 1 ]
                   then
@@ -552,9 +554,9 @@ for modinfopath in `find . -name $modname.info`
                       else svn commit -m "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
                 else
-                  echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
+                  echo -e "\033[1;33;148m"WARNING: $1 at ${modpath} appears to be modified"\033[39m"; tput sgr0
                   while true; do read -p "update potentially modified module anyways? (y/n) " yn
-                    case $yn in
+                    case ${yn} in
                     [Yy]* ) svn rm "$1"
                     if [ "$5" = "--security" ]
                       then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
@@ -573,13 +575,13 @@ for modinfopath in `find . -name $modname.info`
                     esac
                   done
                 fi
-                cd $homepath
+                cd ${homepath}
                 break;;
               [Nn]* ) break;;
               * ) echo "invalid response, try again";;
             esac
            done
-      else echo -e "\033[1;33;148m"NOTICE: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
+      else echo -e "\033[1;33;148m"NOTICE: $1 at ${modpath} is not version $2\; skipping"\033[39m"; tput sgr0
     fi
   done
 }
@@ -594,7 +596,7 @@ if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && r
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -623,7 +625,7 @@ if ls | grep -w $1; then echo "$1 already exists: exiting" && return; fi
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -645,7 +647,7 @@ if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && r
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -680,14 +682,14 @@ site=$1
     base=${1%.*}
     docroot=${base#@*}
     acqenv=${1#*.}
-    if [ -d ./$docroot ]; then
+    if [ -d ./${docroot} ]; then
 echo "Error: Directory $docroot already exists" && return;
     fi
-mkdir $docroot && cd $docroot
-    repo="$(aht $site repo)"
-    if [[ $repo =~ "live development" ]]; then
+mkdir ${docroot} && cd ${docroot}
+    repo="$(aht ${site} repo)"
+    if [[ ${repo} =~ "live development" ]]; then
 repo=$(echo "$repo" | grep svn)
-    elif [[ $repo =~ "Could not find sitegroup or environment" ]]; then
+    elif [[ ${repo} =~ "Could not find sitegroup or environment" ]]; then
 echo "Could not find sitegroup or environment." && return;
     fi
 if [ $# -eq 2 ]; then
@@ -698,10 +700,10 @@ source_tag=$2
         target_branch=$3
     fi
 git clone ${repo% *}
-    cd $docroot
+    cd ${docroot}
     git pull --all
-    git checkout $source_tag
-    git checkout -b $target_branch
+    git checkout ${source_tag}
+    git checkout -b ${target_branch}
 }
 
 # Git, Core Update (git-cupdate <distribution> <source version> <target version> <ticket number>)
@@ -723,7 +725,7 @@ if [ -z "$4" ]
   then echo -e "\033[0;31;148mmissing ticket number: exiting\033[39m" && return
   else echo -e "\033[0;32;148mticket number:  $4\033[39m"
 fi
-if ls  $RA_PATCHES/$1 | grep -q $1-$2_to_$3.patch
+if ls  ${RA_PATCHES}/$1 | grep -q $1-$2_to_$3.patch
   then echo -e "\033[0;32;148msuitable patch found: $RA_PATCHES/$1/$1-$2_to_$3.patch\033[39m"
   else echo -e "\033[0;31;148mno suitable patch found (tried to find $RA_PATCHES/$1/$1-$2_to_$3.patch): exiting\033[39m" && return
 fi
@@ -734,7 +736,7 @@ echo -e "\033[1;33;148m[ running patch $1-$2_to_$3 ]\033[39m"; tput sgr0
 if git status | grep branch | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -745,14 +747,14 @@ if echo ${PWD##*/} | grep -q docroot
   then :;
   else while true; do
     read -p "WARNING: you are currently not in docroot. Continue? (y/n) " yn
-      case $yn in
+      case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
       esac
     done
 fi
-patch -p1 < $RA_PATCHES/$1/$1-$2_to_$3.patch;
+patch -p1 < ${RA_PATCHES}/$1/$1-$2_to_$3.patch;
 read -p "Press return to continue, or ctrl-c to stop..."
 echo
 echo -e "\033[1;33;148m[ checking for reject/original files ]\033[39m"; tput sgr0
@@ -772,13 +774,13 @@ echo
 echo -e "\033[1;33;148m[ removing version numbers ]\033[39m"; tput sgr0
 FILETYPE='*.info'
  INCLUDEONLY='modules themes profiles/minimal profiles/standard profiles/testing'
- files=( $(find $INCLUDEONLY -name "$FILETYPE") )
+ files=( $(find ${INCLUDEONLY} -name "$FILETYPE") )
 for file in "${files[@]}"; do
-  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' $file
-  sed -i '' '/version = "[0-9]*.[0-9]*"/d' $file
-  sed -i '' '/project = "drupal"/d' $file
-  sed -i '' '/datestamp = "[0-9]*"/d' $file
-  echo 'Checking' $file
+  sed -i '' '/; Information added by drupal.org packaging script on [0-9]*-[0-9]*-[0-9]*/d' ${file}
+  sed -i '' '/version = "[0-9]*.[0-9]*"/d' ${file}
+  sed -i '' '/project = "drupal"/d' ${file}
+  sed -i '' '/datestamp = "[0-9]*"/d' ${file}
+  echo 'Checking' ${file}
 done
 echo 'Checked' ${#files[@]} 'files and removed drupal.org packaging data'
 read -p "Press return to continue, or ctrl-c to stop..."
@@ -792,7 +794,7 @@ echo -e "\033[1;33;148m[ commiting changes ]\033[39m"; tput sgr0
 echo "`git status | grep branch`"
 while true; do
     read -p "commit \"$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4.\" now? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) git commit -m "$RA_INITIALS@Acq: Update from $1 $2 to $3. Ticket #$4."; echo -e "\033[0;32;148mchanges commited\033[39m"; break;;
         [Nn]* ) echo -e "\033[0;31;148mchanges not commited\033[39m"; break;;
         * ) echo "invalid response, try again";;
@@ -809,7 +811,7 @@ if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
           [Yy]* ) break;;
           [Nn]* ) return;;
           * ) echo "invalid response, try again";;
@@ -827,18 +829,18 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "ubercart" ]; then modname=uc_cart
   else modname=$1
 fi
-for modinfopath in `find . -name $modname.info`
+for modinfopath in `find . -name ${modname}.info`
   do
-    if [ $modname = acquia_agent ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      elif [ $modname = user_relationship ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      elif [ $modname = uc_cart ]; then modpath=`dirname $(dirname $(dirname $modinfopath))`
-      else modpath=`dirname $(dirname $modinfopath)`
+    if [ ${modname} = acquia_agent ]; then modpath=`dirname $(dirname $(dirname ${modinfopath}))`
+      elif [ ${modname} = user_relationship ]; then modpath=`dirname $(dirname $(dirname ${modinfopath}))`
+      elif [ ${modname} = uc_cart ]; then modpath=`dirname $(dirname $(dirname ${modinfopath}))`
+      else modpath=`dirname $(dirname ${modinfopath})`
     fi
-    if grep "version = \"$2\"" $modinfopath > /dev/null
+    if grep "version = \"$2\"" ${modinfopath} > /dev/null
       then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
-          case $yn in
-              [Yy]* ) cd $modpath
-                echo -e "\033[1;33;148m"checking to see if $1 at $modpath is modified..."\033[39m"; tput sgr0
+          case ${yn} in
+              [Yy]* ) cd ${modpath}
+                echo -e "\033[1;33;148m"checking to see if $1 at ${modpath} is modified..."\033[39m"; tput sgr0
                 diff -rq $1 ~/Sites/releases/modules/$1/$2/$1
                 if [ $? -ne 1 ]
                   then
@@ -853,9 +855,9 @@ for modinfopath in `find . -name $modname.info`
                       else git commit -am "$RA_INITIALS@Acq: Module Update, updating $1-$3 at $modpath from $2. Ticket #$4."
                     fi
                 else
-                  echo -e "\033[1;33;148m"WARNING: $1 at $modpath appears to be modified"\033[39m"; tput sgr0
+                  echo -e "\033[1;33;148m"WARNING: $1 at ${modpath} appears to be modified"\033[39m"; tput sgr0
                   while true; do read -p "update potentially modified module anyways? (y/n) " yn
-                    case $yn in
+                    case ${yn} in
                     [Yy]* ) git rm -rf "$1"
                     cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     git add "$1"
@@ -869,13 +871,13 @@ for modinfopath in `find . -name $modname.info`
                     esac
                   done
                 fi
-                cd $homepath
+                cd ${homepath}
                 break;;
               [Nn]* ) break;;
               * ) echo "invalid response, try again";;
             esac
            done
-      else echo -e "\033[1;33;148m"NOTICE: $1 at $modpath is not version $2\; skipping"\033[39m"; tput sgr0
+      else echo -e "\033[1;33;148m"NOTICE: $1 at ${modpath} is not version $2\; skipping"\033[39m"; tput sgr0
     fi
   done
 }
@@ -890,7 +892,7 @@ if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && r
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -915,7 +917,7 @@ if ls | grep -w $1; then echo "$1 already exists: exiting" && return; fi
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -937,7 +939,7 @@ if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && r
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
-    case $yn in
+    case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) return;;
         * ) echo "invalid response, try again";;
@@ -983,7 +985,7 @@ function ra-download-file-proxy {
   docroot=$(echo "$1" | sed 's/@//')
   echo "About to download stage_file_proxy on $server for $docroot.ra..."
   read -p "Press enter to continue or CTRL+c to quit "
-  ssh $server sudo drush dl stage_file_proxy --root=/var/www/html/$docroot.ra/docroot
+  ssh ${server} sudo drush dl stage_file_proxy --root=/var/www/html/${docroot}.ra/docroot
 }
 
 # Removes the stage_file_proxy module the RA environment.
@@ -1017,17 +1019,17 @@ function ra-enable-file-proxy {
   sites=()
   domains=$(aht $1.prod domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
   for domain in $(echo "$domains"); do
-    conf_path=$(aht $1.prod drush ev 'print conf_path();' -l $domain)
+    conf_path=$(aht $1.prod drush ev 'print conf_path();' -l ${domain})
     # either this isn't a working site, or we've already made an entry for this multisite
     if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" || "$conf_path" =~ "warning" ]]; then
       continue
     fi
-    sites+=($conf_path)
+    sites+=(${conf_path})
     echo "Setting up stage_file_proxy for $conf_path multisite..."
-    aht $1.ra drush vset stage_file_proxy_origin "http://$domain" -l $domain
-    aht $1.ra drush vset stage_file_proxy_origin_dir "$conf_path/files" -l $domain
-    aht $1.ra drush vset stage_file_proxy_use_imagecache_root TRUE -l $domain
-    aht $1.ra drush en stage_file_proxy -y -l $domain
+    aht $1.ra drush vset stage_file_proxy_origin "http://$domain" -l ${domain}
+    aht $1.ra drush vset stage_file_proxy_origin_dir "$conf_path/files" -l ${domain}
+    aht $1.ra drush vset stage_file_proxy_use_imagecache_root TRUE -l ${domain}
+    aht $1.ra drush en stage_file_proxy -y -l ${domain}
     echo ""
   done
 
@@ -1075,7 +1077,7 @@ function ra-transfer-databases {
   echo "$databases"
   read -p "Press enter to continue or CTRL+c to quit..."
   for database in $(echo "$databases"); do
-    aht $1.$2 db:transfer $3 --database=$database
+    aht $1.$2 db:transfer $3 --database=${database}
   done
 
   if [ "$5" == "--watch" ] || [ "$4" == "--watch" ]; then
@@ -1112,7 +1114,7 @@ function ra-backup-databases {
   echo "$databases"
   read -p "Press enter to continue or CTRL+c to quit..."
   for database in $(echo "$databases"); do
-    aht $1.$2 db:backup-create --database=$database
+    aht $1.$2 db:backup-create --database=${database}
   done
 
   if [ "$4" == "--watch" ] || [ "$3" == "--watch" ]; then
@@ -1136,20 +1138,20 @@ function ra-copy-domains {
   fi
   source_env=$1
   target_env=$(echo $1 | sed 's/\..*/.ra/')
-  domains=$(aht $source_env domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v '.acquia-sites.com')
+  domains=$(aht ${source_env} domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r' | grep -v '.acquia-sites.com')
   new_domains=""
   for domain in $(echo "$domains"); do
-    new_domains+=$(echo $domain | sed $expression)
+    new_domains+=$(echo ${domain} | sed ${expression})
     new_domains+=$'\n'
   done
   echo "Current domains:"
-  aht $target_env domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r'
+  aht ${target_env} domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r'
   echo
   echo "New domains:"
   echo "$new_domains"
   echo "About to add the above domains to $target_env"
   read -p "Press enter to continue or CTRL+c to quit..."
   for domain in $(echo "$new_domains"); do
-    aht $target_env domains:list add $domain
+    aht ${target_env} domains:list add ${domain}
   done
 }
