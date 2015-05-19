@@ -26,7 +26,7 @@ final class AhtWrapperApplication extends Application
     private $ahtRealms = null;
 
     /** @var string $ahtPath */
-    private $ahtPath = 'support_bin';
+    private $ahtPath = 'aht/prod';
 
     /** @var array $arguments The array of arguments passed to the executable which invoked this class */
     private $arguments = [];
@@ -165,7 +165,7 @@ final class AhtWrapperApplication extends Application
     {
         $value = getenv($key);
         if (!empty($value)) {
-            $this->ahtPath = (strtolower($value) == 'test') ? 'support_bin_test' : $value;
+            $this->ahtPath = (strtolower($value) == 'test') ? 'aht/test' : $value;
         }
         $this->debugMsg(sprintf('%s="%s"', $key, $this->ahtPath));
     }
