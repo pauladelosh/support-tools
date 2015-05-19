@@ -38,7 +38,7 @@ class AhtWrapperApplicationTest extends \PHPUnit_Framework_TestCase
             ->method('passthru')
             ->with(
                 $this->equalTo(
-                    'ssh -tq bastion /vol/ebs1/ahsupport/support_bin/ahtools --client-tools-version=dev '
+                    'ssh -tq bastion /vol/ebs1/ahsupport/aht/prod/ahtools --client-tools-version=dev '
                 )
             );
 
@@ -59,10 +59,10 @@ class AhtWrapperApplicationTest extends \PHPUnit_Framework_TestCase
             ->method('passthru')
             ->withConsecutive(
                 $this->equalTo(
-                    'ssh -tq srv-123 /vol/ebs1/ahsupport/support_bin/ahtools --client-tools-version=dev '
+                    'ssh -tq srv-123 /vol/ebs1/ahsupport/aht/prod/ahtools --client-tools-version=dev '
                 ),
                 $this->equalTo(
-                    'ssh -tq srv-123.dev.internal.acquia.com /vol/ebs1/ahsupport/support_bin/ahtools --client-tools-version=dev '
+                    'ssh -tq srv-123.dev.internal.acquia.com /vol/ebs1/ahsupport/aht/prod/ahtools --client-tools-version=dev '
                 )
             );
 
@@ -94,7 +94,7 @@ class AhtWrapperApplicationTest extends \PHPUnit_Framework_TestCase
             ->method('passthru')
             ->with(
                 $this->equalTo(
-                    "ssh -tq -F {$path} bastion /vol/ebs1/ahsupport/support_bin/ahtools --client-ssh-config={$path} --client-tools-version=dev "
+                    "ssh -tq -F {$path} bastion /vol/ebs1/ahsupport/aht/prod/ahtools --client-ssh-config={$path} --client-tools-version=dev "
                 )
             );
 
@@ -116,10 +116,10 @@ class AhtWrapperApplicationTest extends \PHPUnit_Framework_TestCase
             ->method('passthru')
             ->withConsecutive(
                 $this->equalTo(
-                    "ssh -tq bastion /vol/ebs1/ahsupport/support_bin/ahtools --stages=foo,bar --client-tools-version=dev "
+                    "ssh -tq bastion /vol/ebs1/ahsupport/aht/prod/ahtools --stages=foo,bar --client-tools-version=dev "
                 ),
                 $this->equalTo(
-                    "ssh -tq bastion /vol/ebs1/ahsupport/support_bin/ahtools --client-tools-version=dev --stages=baz"
+                    "ssh -tq bastion /vol/ebs1/ahsupport/aht/prod/ahtools --client-tools-version=dev --stages=baz"
                 )
             );
 
@@ -146,14 +146,14 @@ class AhtWrapperApplicationTest extends \PHPUnit_Framework_TestCase
             ->method('passthru')
             ->withConsecutive(
                 $this->equalTo(
-                    'ssh -tq bastion /vol/ebs1/ahsupport/support_bin_test/ahtools --client-tools-version=dev '
+                    'ssh -tq bastion /vol/ebs1/ahsupport/aht/test/ahtools --client-tools-version=dev '
                 ),
                 $this->equalTo(
                     'ssh -tq bastion /vol/ebs1/ahsupport/foo/ahtools --client-tools-version=dev '
                 )
             );
 
-        // keyword "test" should pick support_bin_test
+        // keyword "test" should pick aht/test path
         putenv("AHTPATH=test");
         $this->ahtWrapperFactory($executionObserver)->runAht($this->argv);
 
