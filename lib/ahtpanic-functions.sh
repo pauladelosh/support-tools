@@ -152,7 +152,7 @@ function test_email_volume() {
     for logfile in mainlog mainlog.1 $(for i in {2..5} ; do echo "mainlog.$i.gz " ; done)
     do
       printf "."
-      rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $web:/var/log/exim4/$logfile $web-$logfile
+      rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no -o LogLevel=quiet" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $web:/var/log/exim4/$logfile $web-$logfile
     done
   done
   echo "done."
@@ -210,7 +210,7 @@ function test_code_deploy() {
 }
 
 function test_show_panic_links() {
-  ahtaht2 panic |head -20 |grep --color=none http
+  ahtaht2 panic --links
   ahtsep
 }
 
@@ -275,6 +275,23 @@ function test_balancer_graphs() {
   ahtsep
 }
 
+
+# Check for XFS freeze
+function test_xfs_freeze() {
+  echo "Checking XFS freeze:"
+  aht $STAGE @$SITENAME ssh --db "ps auxf | grep -A3 [a]h-freeze-mountpoint" >$tmpout
+  if [ `grep -c . $tmpout` -gt 0 ]
+  then
+    echo "${COLOR_YELLOW}POTENTIAL PROBLEM!!! Found xfs frozen:"
+    cat $tmpout
+    echo ""
+    echo "  See: https://backlog.acquia.com/browse/OP-42914 and https://backlog.acquia.com/browse/CL-10193"
+  else
+    echo "  ${COLOR_GREEN}OK, No freeze found."
+  fi
+  ahtsep
+}
+
 # Get PHP memory limit
 function test_php_memory_limit() {
   echo "Checking memory limits/use:"
@@ -294,8 +311,8 @@ function test_hosting_release_version() {
 }
 
 # Check puppet/other messages from syslog
-function test_puppet_log_check() {
-  echo "Checking puppet/other messages from /var/log/syslog in webs:"
+function test_syslog_check() {
+  echo "Checking for important /var/log/syslog messages on webs:"
   date_time=`date -u +'%h %_d %H:'`
   # webs_raw includes out-of-rotation webs
   for web in $webs_raw
@@ -310,7 +327,7 @@ function test_puppet_log_check() {
 # Get Varnish cached/uncached statistics
 function test_varnish_stats() {
   days=5
-  echo "Varnish cached/uncached statistics for last $days days"
+  echo "Varnish cached/uncached statistics for last $days days:"
   ahtaht stats --start=-${days}days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
   ahtsep
 }
@@ -417,6 +434,14 @@ function test_external_connections() {
   ahtsep
 }
 
+# Check for bad session.gc_ settings
+function test_php_session_gc() {
+  echo "Checking php.ini session.gc_* settings:"
+  ahtaht php:ini-grep session.gc_ |egrep --color=always "^|overrides"
+  ahtsep
+}
+
+
 #FPM number of errors
 function test_phpfpm_errors() {
   echo "Checking count of SIGSEGV errors in fpm-error.log across all webs:"
@@ -463,7 +488,7 @@ function test_block_cache() {
 
 function test_domain_sites_mapping() {
   echo "Showing domain -> site mapping:"
-  ahtaht domains |tr -d '\015' | sed -e 's/\*/XXX/g' >$tmpout
+  ahtaht domains:list |tr -d '\015' | sed -e 's/\*/XXX/g' >$tmpout
   count=`grep -c . $tmpout`
   if [ $count -gt 15 ]
   then
@@ -496,7 +521,7 @@ echo "Drupal " . VERSION . "\n";
 EOF
   dest=/tmp/testpressflow_$$.php
   echo "  Copying $tmpout to $web:$dest ..."
-  rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $tmpout $web:$dest
+  rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no -o LogLevel=quiet" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $tmpout $web:$dest
   
   ahtdrush scr $dest >$tmpout2 2>/dev/null
   if [ `grep -c "Drupal 6" $tmpout2` -gt 0 ]
@@ -515,7 +540,7 @@ function test_anonsession() {
   echo "Checking for anonymous user sessions:"
   problem=0
   # Get valid domains (only those marked "OK" by aht domain-check)
-  ahtaht dc |grep "ok" |awk '{ print $1 }' >$tmpout
+  ahtaht domains:check |grep "ok" |awk '{ print $1 }' >$tmpout
   count=`grep -c . $tmpout`
   if [ $count -gt 15 ]
   then
@@ -780,7 +805,7 @@ function test_logs() {
     logfile=`echo $findlog |cut -f2 -d:`
     logfiledir=`dirname $logfile`
     echo "  $logfile is in $server."
-    rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
+    rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no -o LogLevel=quiet" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
     site_argument=$site
     if [ $env != 'prod' ]
     then
@@ -819,7 +844,7 @@ function test_drupalwatchdog() {
     server=`echo $findlog |cut -f1 -d:`
     logfile=`echo $findlog |cut -f2 -d:`
     echo "  $logfile is in $server."
-    rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
+    rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no -o LogLevel=quiet" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
     ahtsep
     echo "sudo bash $tmpscript $logfile" | ahtssh $server 
   else

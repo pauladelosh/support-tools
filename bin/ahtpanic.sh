@@ -142,7 +142,6 @@ do
       echo "${COLOR_RED}Unknown option $1${COLOR_NONE}"
       ;;
 
-  # FUN STUFF HERE:
   # Split apart combined short options
   #  -*)
   #    split=$1
@@ -151,9 +150,12 @@ do
   #    continue
   #    ;;
 
-  # Done with options, the sitename comes last.
+  # Done with options
     @*)
       SITENAME=$1
+      ;;
+    http*)
+      URI="--uri=$1"
       ;;
   esac
 
@@ -162,8 +164,24 @@ done
 
 if [ ${SITENAME:-x} = x ]
 then
-  showhelp
-  exit 1
+  if [ ${URI:-x} = x ]
+  then
+    showhelp
+    exit 1
+  else
+    uri=`echo $URI |cut -f2 -d=`
+    # sed command removes ANSI sequences
+    # see: http://crunchbang.org/forums/viewtopic.php?id=15321
+    tmp=`aht fd http://origin.mdemulher.abril.com.br |sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" |tail -1 |awk '{print $1 }'`
+    if [ $? -eq 0 ]
+    then
+      SITENAME="@$tmp"
+      echo "Using sitename @$tmp calculated from $URI"
+    else
+      echo "Could not find site for URI $uri"
+      exit 1
+    fi
+  fi
 fi
 
 cat <<EOF
@@ -220,6 +238,14 @@ LIVEDEV_FLAG=`grep -c -- "LIVEDEV" $tmpout`
 #test_puppet_log_check
 #exit
 
+# Check if there are any important notes
+#if [ `grep -c "This subscription has important notes in CCI:"` -gt 0 ]
+#then
+#  echo "${COLOR_RED}IMPORTANT NOTES:"
+#  awk 'NR==1 { show=0 } show==1 { if (length($0)>6) print } /This subscription has important notes in CCI/ { show=1 }' $tmpout
+#  ahtsep
+#fi
+
 
 # Run basic checks
 if [ $BASICCHECK_FLAG = 1 ]
@@ -237,8 +263,9 @@ then
   #  test_balancer_graphs
   #fi
   
+  test_xfs_freeze
   test_php_memory_limit
-  test_puppet_log_check
+  test_syslog_check
   test_hosting_release_version
 
   # Check process limit settings, number of skip spawns
@@ -252,6 +279,7 @@ then
     test_phpfpm_skips
     test_phpfpm_errors
   fi
+  test_php_session_gc
   test_external_connections
   test_dns
   test_varnish_stats

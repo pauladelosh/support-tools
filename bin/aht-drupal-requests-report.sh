@@ -112,7 +112,7 @@ else
   cat /dev/null >$tmpout
   for file in $logfiles
   do 
-    zgrep -e 'module .*abled' $file| cut -f1,9 -d'|' |sed -e 's/ request_id="[^"]*"//' |egrep -i --color=always "^|${today_date}" >>$tmpout
+    zgrep -e 'module .*abled' $file| cut -f1,9 -d'|' |sed -e 's/ request_id="[^"]*"//' |egrep -i --color=always "^|${today_date}|(dblog|statistics) module enabled|" >>$tmpout
   done
   ahtcatnonempty $tmpout "${COLOR_GREEN}No modules enabled/disabled in last 5 days.${COLOR_NONE}"
   ahtsep
