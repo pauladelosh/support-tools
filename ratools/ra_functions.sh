@@ -71,7 +71,7 @@
 
 # Current date and build of tools. increment build number by one. format: "build zzzz (yyyy-mm-dd)"
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
-RATOOLS_VERSION="Build 0010 (2015-03-31)"
+RATOOLS_VERSION="Build 0011 (2015-07-07)"
 
 # Wrapper to log ra-up data to log file
 function ra-up-logged { mkdir -p ~/ra-up_logs; drush ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; }
@@ -218,7 +218,8 @@ echo "$audit" | grep "SECURITY UPDATE available" | grep -v -w drupal | sort | un
 fi
 echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
-if ( echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -q -v "Installed version not supported|SECURITY UPDATE available" ) || ( echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep -q "Installed version not supported" | sort | uniq ); then
+# Modified the conditional per RA-1265.
+if ( echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -q -v "Installed version not supported|SECURITY UPDATE available" ) || ( echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep -q "Installed version not supported"); then
   echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | sort | uniq
   echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep "Installed version not supported" | sort | uniq
 else
