@@ -74,7 +74,7 @@
 RATOOLS_VERSION="Build 0011 (2015-07-07)"
 
 # Wrapper to log ra-up data to log file
-function ra-up-logged { mkdir -p ~/ra-up_logs; drush ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; }
+function ra-up-logged { mkdir -p ~/ra-up_logs; drush7 ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; }
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
@@ -139,9 +139,9 @@ echo ""
 }
 
 # Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-function dvpcheck { aht $1 drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush vget install_profile; }
+function dvpcheck { aht $1 drush7 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush7 vget install_profile; }
 
-# RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform))
+# RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform)
 function ra-audit {
 ######################################################
 # define proactive updates here (seperate with pipes):
@@ -175,11 +175,11 @@ while getopts ":p:c:" opt; do
   esac
 done
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
-aht ${DOCROOT} drush php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht ${DOCROOT} drush vget install_profile
+aht ${DOCROOT} drush7 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+aht ${DOCROOT} drush7 vget install_profile
 echo
 echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
-aht ${DOCROOT} drush status
+aht ${DOCROOT} drush7 status
 echo
 echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
 echo -n "dev:   "; aht `echo ${DOCROOT} | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
@@ -194,7 +194,7 @@ echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sg
 audit=""
 for site in `aht ${DOCROOT} application:sites | grep -v \> | tr -d "\r"`; do
   echo ${site}
-  current_audit=`aht ${DOCROOT} drush pm-updatestatus --format=csv '--list-separator= ' --fields=name,existing_version,candidate_version,status_msg --uri=${site}`
+  current_audit=`aht ${DOCROOT} drush7 pm-updatestatus --format=csv '--list-separator= ' --fields=name,existing_version,candidate_version,status_msg --uri=${site}`
   audit+="$current_audit"
   audit+=$'\n'
   echo "$current_audit" | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo;
@@ -225,11 +225,12 @@ if ( echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -q -v "Installed v
 else
   echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
+
 if [[ ${RA_AUDIT_UPDCMD} == "true" ]]; then
 echo "=========="
 #egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
-echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
-echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep "Installed version not supported" | sort | uniq | sed -e "s/^/ra-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
+echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM/"
+echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep "Installed version not supported" | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM/"
 fi
 echo
 echo -e "\033[1;33;148m[ Available Development Updates ]\033[39m"; tput sgr0
@@ -967,7 +968,7 @@ function ra-disable-securepages {
   # A loop of all sites is used instead of drush @sites, due to issues with that alias when
   #  using aht.
   for site in `aht $1 application:sites | grep -v \>`; do
-     aht $1 drush dis securepages -y -l "${site//[[:space:]]/}"
+     aht $1 drush7 dis securepages -y -l "${site//[[:space:]]/}"
   done
 }
 
@@ -986,7 +987,7 @@ function ra-download-file-proxy {
   docroot=$(echo "$1" | sed 's/@//')
   echo "About to download stage_file_proxy on $server for $docroot.ra..."
   read -p "Press enter to continue or CTRL+c to quit "
-  ssh ${server} sudo drush dl stage_file_proxy --root=/var/www/html/${docroot}.ra/docroot
+  ssh ${server} sudo drush7 dl stage_file_proxy --root=/var/www/html/${docroot}.ra/docroot
 }
 
 # Removes the stage_file_proxy module the RA environment.
@@ -1027,10 +1028,10 @@ function ra-enable-file-proxy {
     fi
     sites+=(${conf_path})
     echo "Setting up stage_file_proxy for $conf_path multisite..."
-    aht $1.ra drush vset stage_file_proxy_origin "http://$domain" -l ${domain}
-    aht $1.ra drush vset stage_file_proxy_origin_dir "$conf_path/files" -l ${domain}
-    aht $1.ra drush vset stage_file_proxy_use_imagecache_root TRUE -l ${domain}
-    aht $1.ra drush en stage_file_proxy -y -l ${domain}
+    aht $1.ra drush7 vset stage_file_proxy_origin "http://$domain" -l ${domain}
+    aht $1.ra drush7 vset stage_file_proxy_origin_dir "$conf_path/files" -l ${domain}
+    aht $1.ra drush7 vset stage_file_proxy_use_imagecache_root TRUE -l ${domain}
+    aht $1.ra drush7 en stage_file_proxy -y -l ${domain}
     echo ""
   done
 
@@ -1038,10 +1039,10 @@ function ra-enable-file-proxy {
   #  Drush will just point to the default site, so we may have ended up with a bogus file proxy
   #  after the loop execution.
   domain=$(echo "$domains" | tail -1)
-  aht $1.ra drush vset stage_file_proxy_origin "http://$domain" -l default
-  aht $1.ra drush vset stage_file_proxy_origin_dir "sites/default/files" -l default
-  aht $1.ra drush vset stage_file_proxy_use_imagecache_root TRUE -l default
-  aht $1.ra drush en stage_file_proxy -y -l default
+  aht $1.ra drush7 vset stage_file_proxy_origin "http://$domain" -l default
+  aht $1.ra drush7 vset stage_file_proxy_origin_dir "sites/default/files" -l default
+  aht $1.ra drush7 vset stage_file_proxy_use_imagecache_root TRUE -l default
+  aht $1.ra drush7 en stage_file_proxy -y -l default
 }
 
 # Transfer all databases from one environment to another, or a range of databases
