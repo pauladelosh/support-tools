@@ -200,9 +200,10 @@ for site in `aht ${DOCROOT} application:sites | grep -v \> | tr -d "\r"`; do
   echo "$current_audit" | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo;
 done
 echo -e "\033[1;33;148m[ Available Drupal Core Updates ]\033[39m"; tput sgr0
-if echo "$audit" | grep -q -w drupal
-  then echo "$audit" | grep -w drupal | sort | uniq
-  else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
+if ( echo "$audit" | grep -q -w drupal ); then
+  echo "$audit" | grep -w drupal | sort | uniq
+else
+  echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
 echo
 echo -e "\033[1;33;148m[ Available Security Updates ]\033[39m"; tput sgr0
@@ -220,7 +221,7 @@ echo
 echo -e "\033[1;33;148m[ Available Proactive Updates ]\033[39m"; tput sgr0
 # Modified the conditional per RA-1265.
 if ( echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -q -v "Installed version not supported|SECURITY UPDATE available" ) || ( echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep -q "Installed version not supported"); then
-  echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | sort | uniq
+  echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | egrep "Update available" | sort | uniq
   echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep "Installed version not supported" | sort | uniq
 else
   echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
@@ -245,9 +246,10 @@ echo "$audit" | egrep '\-dev|\-unstable|\-alpha|\-beta|\-rc' | egrep -v -w "'$RA
 fi
 echo
 echo -e "\033[1;33;148m[ All Available Updates ]\033[39m"; tput sgr0
-if echo "$audit" | egrep -q "Update available|SECURITY UPDATE available"
-  then echo "$audit" | egrep "Update available|SECURITY UPDATE available" | sort | uniq
-  else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
+if ( echo "$audit" | egrep -q "Update available|SECURITY UPDATE available" ); then
+  echo "$audit" | egrep "Update available|SECURITY UPDATE available" | sort | uniq
+else
+  echo -e "\033[0;32;148mnone\033[39m"; tput sgr0;
 fi
 # Adding per RA-257
 if [[ ${RA_AUDIT_UPDCMD} == "true" ]]; then
