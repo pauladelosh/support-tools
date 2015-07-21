@@ -185,10 +185,10 @@ fi
 
 echo "Count of top paths that caused a 5XX error on $hostname:"
 echo "${COLOR_NONE}Today:${COLOR_RED}"
-ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($7,1,50) (length($7>50) ? "..." : "") }' |ahtcounttop
+ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($7,1,50) (length($7)>50 ? "..." : "") }' |ahtcounttop
 echo ""
 echo "${COLOR_NONE}Per hour:${COLOR_RED}"
-ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($4,2,15) "|" substr($7,1,50) (length($7>50) ? "..." : "") }' |ahtcounttop
+ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($4,2,15) "|" substr($7,1,50) (length($7)>50 ? "..." : "") }' |ahtcounttop
 ahtsep
 
 echo "Count of hits with 'page=...' arguments like Views, etc. by User-agent on $hostname:"
