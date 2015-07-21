@@ -315,20 +315,8 @@ devcloud=`echo $web |grep -c srv-`
 # livedev/not livedev
 # Detect FPM from the aht output.
 LIVEDEV_FLAG=`grep -c -- "LIVEDEV" $tmpout`
-# Detect all dedicated balancers
-#dedicated_bals=`cat $tmpout |egrep 'bal-[0-9]+ *dedicated *[1-9]' |awk '{ print $1 }'`
 
-# DEBUG STUFF HERE!
-#test_puppet_log_check
-#exit
-
-# Check if there are any important notes
-#if [ `grep -c "This subscription has important notes in CCI:"` -gt 0 ]
-#then
-#  echo "${COLOR_RED}IMPORTANT NOTES:"
-#  awk 'NR==1 { show=0 } show==1 { if (length($0)>6) print } /This subscription has important notes in CCI/ { show=1 }' $tmpout
-#  ahtsep
-#fi
+ahtsep
 
 # Run only single check
 if [ ${SINGLECHECK:-x} != 0 ]
@@ -347,13 +335,6 @@ then
     test_code_deploy
   fi
   test_nagios_info
-
-  # Add graphs to balancers if dedicated
-  #if [ "${dedicated_bals:-x}" != x -a 1 -eq 2 ]   #DISABLED!!
-  #then
-  #  test_balancer_graphs
-  #fi
-
   test_xfs_freeze
   test_php_memory_limit
   test_syslog_check

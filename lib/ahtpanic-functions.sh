@@ -772,9 +772,15 @@ function test_vars() {
 # Get last times for cache flushes
 function test_cacheflushes() {
   echo "Getting times of latest cache flushes in Drupal:"
-  ahtdrush vget cache_flush | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout
-  today=`date +'%h %_d|%h %_d %H'`
-  egrep --color=always "^|${today}" $tmpout
+  ahtdrush vget cache_flush > $tmpout
+  if [ `grep -c 'No matching variable found.' $tmpout` -eq 1 ]
+  then
+    echo "  Couldn't get cache_flush variable."
+  else
+    cat $tmpout | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout2
+    today=`date +'%h %_d|%h %_d %H'`
+    egrep --color=always "^|${today}" $tmpout2
+  fi
   ahtsep
 }
 
