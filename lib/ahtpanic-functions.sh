@@ -7,12 +7,23 @@ AHTCOMMAND="aht"
 
 # SSHs into an address in a way that won't generate (too many?) strict warnings
 function ahtssh() {
-  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config $@ |tr -d '\015'
+  option="-o LogLevel=quiet"
+  if [ $VERBOSE -eq 1 ]
+  then
+    option=""
+    echo "${COLOR_GRAY}-- ssh -t -o StrictHostKeyChecking=no $option -F $HOME/.ssh/ah_config $@ ${COLOR_NONE}" >/dev/stderr
+  fi
+  ssh -t -o StrictHostKeyChecking=no $option -F $HOME/.ssh/ah_config $@ |tr -d '\015'
 }
 
 function ahtssh2() {
-  #echo "SSHing to $@" >&2 #To stderr
-  ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config $@
+  option="-o LogLevel=quiet"
+  if [ $VERBOSE -eq 1 ]
+  then
+    option=""
+    echo "${COLOR_GRAY}-- ssh -t -o StrictHostKeyChecking=no $option -F $HOME/.ssh/ah_config $@ ${COLOR_NONE}" >/dev/stderr
+  fi
+  ssh -t -o StrictHostKeyChecking=no $option -F $HOME/.ssh/ah_config $@
 }
 
 # Create SSL tunnel to DB on local port 33066
@@ -83,7 +94,8 @@ function ahtsep() {
 function ahtfindlog() {
   for nom in $webs_raw
   do
-    here=`ahtssh $nom 'sudo find /var/log/sites/'$SITENAME'/logs/'"$nom/$1"' -size +1k 2>/dev/null'`
+    domainless=`echo $nom |cut -f1 -d.`
+    here=`ahtssh $nom 'sudo find /var/log/sites/'$sitefoldername'/logs/'"$domainless/$1"' -size +1k 2>/dev/null'`
     if [ "${here:-x}" != x ]
     then
       echo $nom:$here
@@ -165,17 +177,7 @@ function test_email_volume() {
 
 # Check that all webs have the same code deployed
 function test_code_deploy() {
-  site_argument=$site
-  if [ $env != 'prod' ]
-  then
-    if [ $env == 'test' ]
-    then
-      site_argument=${site}stg
-    else
-      site_argument=$site$env
-    fi
-  fi
-  folder="/var/www/html/$site_argument"
+  folder="/var/www/html/$sitefoldername"
   echo "Checking deployed code across every webserver in $folder"
   cat /dev/null >$tmpout
   for web in $webs
@@ -214,7 +216,7 @@ function test_show_panic_links() {
   ahtsep
 }
 
-# 
+#
 function test_nagios_info() {
   # Nagios urls
   echo "Nagios link:"
@@ -225,7 +227,7 @@ function test_nagios_info() {
   fi
   echo $url
   ahtsep
-  
+
   # Nagios downtime
   if [ $devcloud -eq 0 ]
   then
@@ -263,7 +265,7 @@ function test_balancer_graphs() {
   then
     stage='devcloud'
   fi
-  
+
   echo "Graph of HTTP requests, per type, last ${hours} hours, per active balancer:"
   for bal in $bals
   do
@@ -300,7 +302,7 @@ function test_php_memory_limit() {
 }
 
 # Check hosting release
-function test_hosting_release_version() {  
+function test_hosting_release_version() {
   echo "Checking hosting release version:"
   for web in $webs
   do
@@ -331,7 +333,7 @@ function test_varnish_stats() {
   ahtaht stats --start=-${days}days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
   ahtsep
 }
-  
+
 #PHP-CGI Check process limit settings
 function test_phpcgi_procs() {
   echo "Checking PHP-CGI proc limits/status:"
@@ -340,13 +342,13 @@ function test_phpcgi_procs() {
       #return (flag ? "'$COLOR_RED'" : "") value "'$COLOR_NONE'";
       return value (flag ? "⚠warn!" : "");
     }
-    BEGIN { 
+    BEGIN {
       user="'${site}'";
-      # Header 
+      # Header
       print "Server MaxProcsTotal ActiveTotal MaxProcs-" user " Active-" user " FreeMem TotalMem"
     }
     # Line with the server
-    /\[/ { 
+    /\[/ {
       server=substr($0, 2, length($0)-2);
       # Reset running counts.
       total_running=0;
@@ -355,11 +357,11 @@ function test_phpcgi_procs() {
     $1==user && $2>0 { docroot_running++; }
     /procs running/ { total_running=$1; }
     /MaxProcessCount/ { max_overall=$2; }
-    /DefaultMaxClass/ { 
+    /DefaultMaxClass/ {
       max_docroot=$2;
       # Get memory info from server.
       "ahtssh2 " server " free -m |egrep Mem" |getline;
-      total_mem=$2; 
+      total_mem=$2;
       free_mem=$3;
       # Print the line
       print server " " max_overall "  " total_running " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "MB " total_mem "MB";
@@ -374,10 +376,10 @@ function test_phpfpm_procs() {
     function alert(value, flag) {
       return value (flag ? "⚠warn!" : "");
     }
-    BEGIN { 
+    BEGIN {
       user="'${site}'";
       dotless_sitename="'${site}'" ("'$env'" != "prod" ? "'$env'" : "")
-      # Header 
+      # Header
       print "Server MaxProcs-'$site$env' Active-'$site$env' FreeMem TotalMem"
     }
     # For each server
@@ -395,7 +397,7 @@ function test_phpfpm_procs() {
       cmd |getline max_docroot;
       cmd |getline docroot_running;
       cmd |getline
-      total_mem=$2; 
+      total_mem=$2;
       free_mem=$3;
       close(cmd)
 
@@ -445,20 +447,11 @@ function test_php_session_gc() {
 #FPM number of errors
 function test_phpfpm_errors() {
   echo "Checking count of SIGSEGV errors in fpm-error.log across all webs:"
-  site_argument=${site}
-  if [ $env != 'prod' ]
-  then
-    if [ $env == 'test' ]
-    then
-      site_argument=${site}stg
-    else
-      site_argument=$site$env
-    fi
-  fi
   for web in $webs
   do
     echo -n "  $web: "
-    ahtssh2 $web "sudo grep -c SIGSEGV /var/log/sites/${SITENAME}/logs/${web}/fpm-error.log"
+    domainless=`echo $web |cut -f1 -d.`
+    ahtssh2 $web "sudo grep -c SIGSEGV /var/log/sites/${sitefoldername}/logs/${domainless}/fpm-error.log"
   done
   ahtsep
 }
@@ -498,7 +491,7 @@ function test_domain_sites_mapping() {
   for domain in `head -15 $tmpout`
   do
     echo " == Domain: $domain";
-    ahtaht drush st --uri=$domain | grep " path" | awk '{ print "  " $0 }'; 
+    ahtaht drush st --uri=$domain | grep " path" | awk '{ print "  " $0 }';
   done
   ahtsep
 }
@@ -512,17 +505,17 @@ cat <<EOF >$tmpout
 ini_set('display_errors', 0);
 error_reporting(0);
 list(\$v, ) = explode(".", VERSION);
-if (\$v == 6) { 
-echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n"; 
+if (\$v == 6) {
+echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";
 }
-else { 
+else {
 echo "Drupal " . VERSION . "\n";
 }
 EOF
   dest=/tmp/testpressflow_$$.php
   echo "  Copying $tmpout to $web:$dest ..."
   rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no -o LogLevel=quiet" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $tmpout $web:$dest
-  
+
   ahtdrush scr $dest >$tmpout2 2>/dev/null
   if [ `grep -c "Drupal 6" $tmpout2` -gt 0 ]
   then
@@ -588,7 +581,7 @@ function test_modules() {
   echo "Checking for any known offending modules that are enabled:"
   # Get list of all enabled modules
   ahtdrush pml --type=module --status=enabled --pipe >$tmpout
-  
+
   # Check for offending modules
   # TODO: Separate criticals from warnings
   egrep  "^(poormanscron|robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity|ip_geoloc|textsize|menu_minipanels)$" $tmpout >$tmpout2 2>/dev/null
@@ -604,7 +597,7 @@ function test_modules() {
     echo "  ${COLOR_GREEN}OK: No offending modules found.${COLOR_NONE}"
   fi
   ahtsep
-  
+
   # Check for how many modules enabled
   num=`grep -c . $tmpout`
   if [ $num -gt 200 ]
@@ -615,7 +608,7 @@ function test_modules() {
     echo "${COLOR_NONE}"
     ahtsep
   fi
-  
+
   # Check for modules that need security updates
   echo "Checking for modules that need security updates:"
   # If update module is enabled...
@@ -637,15 +630,15 @@ function test_cacheaudit() {
   #awk '{ print "  " $0 }' $tmpout |grep -v "Disabled" |egrep --color=always '^|page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)|DRUPAL_NO_CACHE'
   awk '
 NR==1 { highlight=0 }
-/page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)|DRUPAL_NO_CACHE/ { 
+/page_cache_maximum_age  *0| cache  *0|Enabled  *($|none)|DRUPAL_NO_CACHE/ {
   highlight=1
 }
 ## Just pipe the first portion of the cacheaudit output (first 10 lines)
-NR<=10 { 
+NR<=10 {
   print "  " $0;
 }
 /Enabled/ {
-  print (highlight ? "'$COLOR_RED'" : "") "  " $0 (highlight ? "'$COLOR_NONE'" : ""); 
+  print (highlight ? "'$COLOR_RED'" : "") "  " $0 (highlight ? "'$COLOR_NONE'" : "");
   highlight=0;
 }' $tmpout
   ahtsep
@@ -700,7 +693,7 @@ function test_ahtaudit() {
     echo "  ${COLOR_RED}ERROR: Drush not bootstrapping!${COLOR_NONE}"
     echo "You may want to try with a --uri argument using a valid URI."
     echo "Here are the sites on the docroot:"
-    ahtaht sites | awk '{ print "  " $0}'
+    ahtaht application:sites | awk '{ print "  " $0}'
     drushworks_flag=0
   else
     drushworks_flag=1
@@ -709,10 +702,10 @@ function test_ahtaudit() {
     echo "$COLOR_NONE"
     echo "* See canned suggestions at:
   https://support.acquia.com/doc/index.php/Performance_AHT_AUDIT_advise"
-  fi  
+  fi
   ahtsep
 }
-  
+
 # Check for duplicate module files
 function test_duplicatemodules() {
   # Get the really-real enabled projects first:
@@ -738,20 +731,20 @@ function test_duplicatemodules() {
           print ""
         }
       }
-      NR==1 { 
+      NR==1 {
         last=$NF;
         # Read in list of enabled projects and put it on enabled[] array.
-        while (getline path < "'$tmpout2'") { 
-          enabled[path]=path; 
+        while (getline path < "'$tmpout2'") {
+          enabled[path]=path;
         }
-      } 
+      }
       last!=$NF {
         output_stuff();
         enabled_file="";
         not_enabled_file="";
       }
       {
-        if (enabled[$0]) { 
+        if (enabled[$0]) {
           enabled_file=$0
         }
         else {
@@ -780,11 +773,17 @@ function test_vars() {
 function test_cacheflushes() {
   echo "Getting times of latest cache flushes in Drupal:"
   ahtdrush vget cache_flush | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout
-  today=`date +'%h %_d'`
+  today=`date +'%h %_d|%h %_d %H'`
   egrep --color=always "^|${today}" $tmpout
   ahtsep
 }
-  
+
+function test_phpla() {
+  echo "Looking at PHP queue (Q-time) and execution (P-time) times:"
+  ahtaht2 la --type=drupal-requests --by=ten-min
+  ahtsep
+}
+
 # Run ahtaudit script on access.log
 function test_logs() {
   logfilename=access.log
@@ -799,32 +798,22 @@ function test_logs() {
   fi
   tmpscript=/mnt/tmp/ahtaudit_script.$$.bash
   findlog=`ahtfindlog $logfilename breakonfirst`
-  if [ ${findlog:-x} != x ]
+  if [ "${findlog:-x}" != x ]
   then
     server=`echo $findlog |cut -f1 -d:`
     logfile=`echo $findlog |cut -f2 -d:`
     logfiledir=`dirname $logfile`
     echo "  $logfile is in $server."
     rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no -o LogLevel=quiet" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
-    site_argument=$site
-    if [ $env != 'prod' ]
-    then
-      if [ $env == 'test' ]
-      then
-        site_argument=${site}stg
-      else
-        site_argument=$site$env
-      fi
-    fi
     ahtsep
-    echo "sudo bash $tmpscript $logfiledir $site_argument" | ahtssh $server 
+    echo "sudo bash $tmpscript $logfiledir $sitefoldername" | ahtssh $server
   else
     echo "  ${COLOR_YELLOW}No $logfilename found!${COLOR_NONE}"
     echo ""
     ahtsep
   fi
 }
-  
+
 # Run ahtaudit script on drupal-watchdog.log
 function test_drupalwatchdog() {
   logfilename=drupal-watchdog.log
@@ -846,10 +835,10 @@ function test_drupalwatchdog() {
     echo "  $logfile is in $server."
     rsync --archive -e "ssh -F $HOME/.ssh/ah_config -o StrictHostKeyChecking=no -o LogLevel=quiet" --rsync-path="/usr/bin/sudo /usr/bin/rsync" $scriptname $server:$tmpscript
     ahtsep
-    echo "sudo bash $tmpscript $logfile" | ahtssh $server 
+    echo "sudo bash $tmpscript $logfile" | ahtssh $server
   else
     echo "  ${COLOR_YELLOW}No $logfilename found!${COLOR_NONE}"
     echo ""
+    ahtsep
   fi
 }
-
