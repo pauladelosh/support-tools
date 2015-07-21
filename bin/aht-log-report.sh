@@ -6,7 +6,7 @@
 # and php-errors.log are located
 
 # TODO: SEE tickets...
-#  15066-73369 
+#  15066-73369
 #  15066-73398
 # for some canned responses to go along with
 # the output below.
@@ -55,7 +55,7 @@ function ahttable() {
   fi
 }
 
-# Passthru (cat) files smaller than 5MB; 
+# Passthru (cat) files smaller than 5MB;
 # when larger, only pass thru the last $portion lines.
 function ahtcat() {
   size=`stat $1 --format=%s`
@@ -116,30 +116,33 @@ echo "Total byte sizes for logs on $hostname:"
 stat *.log --format="%s %n" | sort -nr |awk '{ printf("%.1fM\t%s\n",$1/1024/1024, $2 ($1+0 > 10000000 ? " '$COLOR_YELLOW'**WARNING**'$COLOR_NONE'" : "")) }' |ahttable "Size\tFilename"
 ahtsep
 
+echo "Running log check on "`pwd`"..."
+echo ""
+
 slowout=/tmp/slow.$$.txt
 cat /dev/null >$slowout
 echo "Per-hour requests and slow requests for $sitename on $hostname: (Note: Times are GMT+0)"
 ahtcat access.log |awk -F ' ' '
-NR==1 { 
+NR==1 {
   slowtime='$slowtime';
 }
-/hosting_site='$sitename' / { 
+/hosting_site='$sitename' / {
   pos=index($0, "request_time=");
-  if (pos>0) { 
-    dur=substr($0, pos + 13)/1000000; 
+  if (pos>0) {
+    dur=substr($0, pos + 13)/1000000;
     time=substr($4, 2, 14)":XX";
-    times[time]=time; 
-    numtot[time]++; 
-    durtot[time]+=dur; 
-    if (dur>slowtime) { 
-      slow[time]++; 
+    times[time]=time;
+    numtot[time]++;
+    durtot[time]+=dur;
+    if (dur>slowtime) {
+      slow[time]++;
       print >>"'$slowout'"
     }
     max[time] = (max[time] < dur) ? dur : max[time];
     stat=substr($9,1,1) "XX"
     stats[time stat]++
   }
-} 
+}
 END {
   print "Date/Time\t#Reqs\tAvg(s)\tMax(s)\t#>" slowtime "s\tHTTP:2XX\t3XX\t4XX\t5XX";
   for (t in times) {
@@ -152,7 +155,7 @@ END {
       # Determine color
       (stats[t "4XX"]/numtot[t]) > 0.05 ? "'${COLOR_RED}'" : "",
       stats[t "4XX"],
-      (stats[t "5XX"]) > 0 ? "'${COLOR_RED}'" : "", 
+      (stats[t "5XX"]) > 0 ? "'${COLOR_RED}'" : "",
       stats[t "5XX"])
   }
 }' |sort -n |ahttable
@@ -182,10 +185,10 @@ fi
 
 echo "Count of top paths that caused a 5XX error on $hostname:"
 echo "${COLOR_NONE}Today:${COLOR_RED}"
-ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print $7 }' |ahtcounttop
+ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($7,1,50) (length($7>50) ? "..." : "") }' |ahtcounttop
 echo ""
 echo "${COLOR_NONE}Per hour:${COLOR_RED}"
-ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($4,2,15) "|" substr($7,1,40) }' |ahtcounttop
+ahtcat access.log |awk -F' ' 'substr($9,1,2) == "50" { print substr($4,2,15) "|" substr($7,1,50) (length($7>50) ? "..." : "") }' |ahtcounttop
 ahtsep
 
 echo "Count of hits with 'page=...' arguments like Views, etc. by User-agent on $hostname:"
