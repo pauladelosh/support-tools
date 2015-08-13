@@ -6,12 +6,15 @@ Note: you should give it a --uri argument if auditing a multisite install.
 
 Usage:
     ahtpanic.sh @sitename.env
+    ahtpanic.sh http://[someurl]   (Will try to automatically detect the site)
     
 Examples:
 
-    ahtpanic.sh --skipbasic @eluniverso.prod  # Skips some basic checks and goes directly to the good stuff.
-    ahtpanic.sh --uri=www.eluniverso.com @eluniverso.prod  # Give it a URI for drush
-    ahtpanic.sh --mc @eluniverso.prod  # Forces managed cloud, use --dc for devcloud
+    ahtpanic.sh http://www.somesite.com/
+    ahtpanic.sh --skip-basic @somesite.prod  # Skips some basic checks and goes directly to the good stuff.
+    ahtpanic.sh --uri=www.somesite.com @somesite.prod  # Give it a URI for drush
+    ahtpanic.sh --mc @somesite.prod  # Forces managed cloud, use --dc for devcloud
+    ahtpanic.sh http://www.somesite.com/ --command=syslog_check  # Runs the single command 'syslog_check'
 
 Basically, calls aht lots of times, runs a few scripts and commands, and highlights
 any potential problems or warnings. For example:
