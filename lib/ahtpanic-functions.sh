@@ -316,12 +316,28 @@ function test_hosting_release_version() {
 function test_syslog_check() {
   echo "Checking for important /var/log/syslog messages on webs:"
   date_time=`date -u +'%h %_d %H:'`
+  date=`date -u +'%h %_d '`
   # webs_raw includes out-of-rotation webs
   for web in $webs_raw
   do
     echo "= $web =============";
     ahtssh2 $web "sudo tail -3000 /var/log/syslog" >$tmpout
-    grep -v "AH_SPLIT_BRAIN: Split brain detected: db=acquia" $tmpout | egrep 'Out of memory|Killed process [0-9]* \([^\)]*\)|AH_SPLIT_BRAIN|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*' |egrep --color "^|$date_time"
+    grep -v "AH_SPLIT_BRAIN: Split brain detected: db=acquia" $tmpout | egrep 'could not be unfrozen|Out of memory|Killed process [0-9]* \([^\)]*\)|AH_SERIOUS_|AH_SPLIT_BRAIN|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*' |egrep --color "^|$date_time|$date"
+  done
+  ahtsep
+}
+
+# Check puppet/other messages from syslog
+function test_daemonlog_check() {
+  echo "Checking for important /var/log/daemon.log messages on webs:"
+  date_time=`date -u +'%h %_d %H:'`
+  date=`date -u +'%h %_d '`
+  # webs_raw includes out-of-rotation webs
+  for web in $webs_raw
+  do
+    echo "= $web =============";
+    ahtssh2 $web "sudo tail -5000 /var/log/daemon.log" >$tmpout
+    egrep 'AH_SERIOUS_' $tmpout |egrep --color "^|$date_time|$date"
   done
   ahtsep
 }
@@ -773,9 +789,9 @@ function test_vars() {
 function test_cacheflushes() {
   echo "Getting times of latest cache flushes in Drupal:"
   ahtdrush vget cache_flush > $tmpout
-  if [ `grep -c 'No matching variable found.' $tmpout` -eq 1 ]
+  if [ `grep -c 'No matching variable found.'` -eq 1 ]
   then
-    echo "  Couldn't get cache_flush variable."
+    echo "  Couldn't find cache_flush variable."
   else
     cat $tmpout | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout2
     today=`date +'%h %_d|%h %_d %H'`

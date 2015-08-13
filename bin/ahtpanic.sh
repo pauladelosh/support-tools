@@ -27,6 +27,7 @@ DRUSH_FLAG=1
 LOGS_FLAG=1
 SINGLECHECK=0
 VERBOSE=0
+DRUSHCMD='drush7'
 
 function showhelp() {
   cat <<EOF
@@ -321,6 +322,15 @@ ahtsep
 # Run only single check
 if [ ${SINGLECHECK:-x} != 0 ]
 then
+  type -t test_${SINGLECHECK} >/dev/null 2>&1
+  if [ $? -eq 1 ]
+  then
+    echo "${COLOR_RED}ERROR: Command $SINGLECHECK doesn't exist."
+    echo "Available commands:"
+    grep -o "function test_[^ ]*" lib/ahtpanic-functions.sh |cut -f2- -d_ |cut -f1 -d'(' |sort |awk '{ printf("  %s",$0) } END { printf "\n" }'
+    ahtsep
+    exit 1
+  fi
   test_${SINGLECHECK}
   exit $?
 fi
@@ -338,6 +348,7 @@ then
   test_xfs_freeze
   test_php_memory_limit
   test_syslog_check
+  test_daemonlog_check
   test_hosting_release_version
 
   # Check process limit settings, number of skip spawns
