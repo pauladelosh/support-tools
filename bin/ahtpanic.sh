@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # ahtpanic.sh
 #
@@ -45,7 +46,8 @@ Examples:
   $0 --uri=www.mysite.com @mysite.prod  # Give it a URI for drush
   $0 --mc @mysite.prod  # Forces managed cloud, use --dc for devcloud
 
-Run single commands: (run with --only=COMMAND )
+Run single commands: (run with --only=COMMAND or --command=COMMAND)
+  Available commands:
 EOF
   grep -o "function test_[^ ]*" lib/ahtpanic-functions.sh |cut -f2- -d_ |cut -f1 -d'(' |sort |awk '{ printf("  %s",$0) } END { printf "\n" }'
 }

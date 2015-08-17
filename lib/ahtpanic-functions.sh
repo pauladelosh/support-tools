@@ -789,7 +789,7 @@ function test_vars() {
 function test_cacheflushes() {
   echo "Getting times of latest cache flushes in Drupal:"
   ahtdrush vget cache_flush > $tmpout
-  if [ `grep -c 'No matching variable found.'` -eq 1 ]
+  if [ `grep -c 'No matching variable found.' $tmpout` -eq 1 ]
   then
     echo "  Couldn't find cache_flush variable."
   else
