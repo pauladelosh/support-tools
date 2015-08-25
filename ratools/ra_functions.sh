@@ -1156,6 +1156,6 @@ function ra-copy-domains {
   echo "About to add the above domains to $target_env"
   read -p "Press enter to continue or CTRL+c to quit..."
   for domain in $(echo "$new_domains"); do
-    aht ${target_env} domains:list add ${domain}
+    aht ${target_env} domains:add ${domain}
   done
 }
