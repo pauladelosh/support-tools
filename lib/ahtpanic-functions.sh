@@ -239,7 +239,8 @@ function test_nagios_info() {
       cat $tmpout |sed -e "s/<br>/\n/g" |sed -e '1,2d' |grep '20.*$' >$tmpout2
       if [ `grep -c . $tmpout2` -gt 0 ]
       then
-        head -15 $tmpout2 |egrep --color=always "^|"`date +%Y-%m-%d`
+        today=`date -u +'%Y-%m-%d|%Y-%m-%d %H'`
+        head -15 $tmpout2 |egrep --color=always "^|$today"
         #if [ `grep -c . $tmpout2` -gt 15 ]
         #then
           echo "  ... Complete list at: ${nagios_url}"
@@ -484,7 +485,8 @@ function test_dns() {
 function test_tasks() {
   days=5
   echo "Last $days days' workflow messages:"
-  ahtaht tasks --days=$days --limit=50 --all |egrep --color=always -i "^|db-migrate|purge-domain|save.site_config_setting|php.ini|code-push|Prod|commit|elevate code|reboot|"`date +%Y-%m-%d` >$tmpout
+  today=`date -u +'%Y-%m-%d|%Y-%m-%d %H'`
+  ahtaht tasks --days=$days --limit=50 --all |egrep --color=always -i "^|db-migrate|purge-domain|save.site_config_setting|php.ini|code-push|Prod|commit|elevate code|reboot|$today" >$tmpout
   ahtcatnonempty $tmpout "${COLOR_GREEN}No messages found in last $days days."
   ahtsep
 }
