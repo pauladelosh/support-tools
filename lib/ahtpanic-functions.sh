@@ -812,7 +812,7 @@ function test_phpla() {
 function test_logs() {
   logfilename=access.log
   echo "Looking for and analyzing $logfilename..."
-  scriptname=$HELPER_SCRIPTS_PATH/bin/aht-log-report.sh
+  scriptname=$SCRIPT_FOLDER/bin/aht-log-report.sh
   if [ ! -r $scriptname ]
   then
     echo "  ${COLOR_YELLOW}Could not find $scriptname!"
@@ -842,7 +842,7 @@ function test_logs() {
 function test_drupalwatchdog() {
   logfilename=drupal-watchdog.log
   echo "Looking for and analyzing $logfilename..."
-  scriptname=$HELPER_SCRIPTS_PATH/bin/aht-drupal-requests-report.sh
+  scriptname=$SCRIPT_FOLDER/bin/aht-drupal-requests-report.sh
   if [ ! -r $scriptname ]
   then
     echo "  ${COLOR_YELLOW}Could not find $scriptname!"

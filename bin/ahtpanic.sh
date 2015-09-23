@@ -9,9 +9,11 @@
 # * Check that settings.php use $_ENV instead of $_SERVER for AH_ variables
 #   (so that they work with drush too)
 
+# Get the path to this script
+SCRIPT_FOLDER="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $SCRIPT_FOLDER
+
 # Constants
-# Folder where this and other supporting scripts are installed
-HELPER_SCRIPTS_PATH="."
 # See http://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
 COLOR_RED=$(tput setaf 1) #"\[\033[0;31m\]"
 COLOR_YELLOW=$(tput setaf 3) #"\[\033[0;33m\]"
@@ -66,14 +68,14 @@ then
   exit
 fi
 #Check the functions exist
-if [ ! -r "$HELPER_SCRIPTS_PATH/lib/ahtpanic-functions.sh" ]
+if [ ! -r "lib/ahtpanic-functions.sh" ]
 then
-  echo "${COLOR_YELLOW}WARNING! Could not find lib/ahtpanic-functions.sh at $HELPER_SCRIPTS_PATH"
-  echo "Make sure the HELPER_SCRIPTS_PATH is set correctly."
+  echo "${COLOR_YELLOW}WARNING! Could not find lib/ahtpanic-functions.sh"
+  echo "Make sure the script has been set correctly."
   ahtsep
 fi
 # Include helper functions
-. $HELPER_SCRIPTS_PATH/lib/ahtpanic-functions.sh
+. lib/ahtpanic-functions.sh
 
 # Show help on empty call.
 if [ "${1:-x}" = x ]
