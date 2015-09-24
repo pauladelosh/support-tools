@@ -290,26 +290,6 @@ then
   ahtsep
 fi
 
-# get internal site foldername (for /var/log/sites/[THIS] and /var/www/html/[THIS])
-#sitefoldername=$site
-#if [ $env != 'prod' ]
-#then
-#  if [ $env == 'test' ]
-#  then
-#    sitefoldername=${site}stg
-#  else
-#    if [ $env == '01_live' ]
-#    then
-#      sitefoldername=${site}_${env}
-#    else
-#      sitefoldername=${site}${env}
-#    fi
-#  fi
-#else
-#  # For devcloud, this should be something like 'sitename[randomstring]'
-#  # [01_live: emmis_01_live] [Repo Tag: tags/1.7.0.20150715] [PHP 5.3-fpm]
-#  sitefoldername=`egrep --color=none -o "^\[$env: [0-9a-z_]*" $tmpout |awk -F': ' '{ print $2}'`
-#fi
 sitefoldername=`egrep --color=none -o "^\[$env: [0-9a-z_]*" $tmpout |awk -F': ' '{ print $2}'`
 echo "Internal Sitename: $sitefoldername"
 
