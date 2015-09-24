@@ -262,7 +262,28 @@ else
   load_arg="--load"
 fi
 
-ahtaht s:i $load_arg |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)|c1.medium' >$tmpout
+# Attempt to get the site information
+# On failure, assume sitename exists on various stages and one needs to be picked.
+echo | aht --no-ansi $STAGE @$SITENAME s:i $load_arg 2>&1 |tr -d '\015' >$tmpout2
+if [ `grep -c "Could not find sitegroup" $tmpout2` -gt 0 ]
+then
+  echo "${COLOR_RED}Can't get basic site information.${COLOR_NONE}"
+  echo "  Possibly, the sitename exists in several stages."
+  echo ""
+  echo "  ${COLOR_YELLOW}Try adding --ace, --ac"
+  echo "   or call script with http://[domain] to automatically identify the stage.${COLOR_NONE}"
+  echo ""
+  echo "  Domains available:"
+  for nom in ace ac
+  do
+    echo "  ${COLOR_YELLOW}--$nom${COLOR_NONE}"
+    aht --$nom @$SITENAME domains:list |awk 'NR<=5 { print "    " $0 } END { if (NR>5) print "     .. found " NR " domains, only showing first 5." }'
+  done
+  exit 1
+fi
+
+# Highlight 'high' load averages
+cat $tmpout2 |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)|c1.medium' >$tmpout
 if [ ${SINGLECHECK:-x} = 0 ]
 then
   cat $tmpout
