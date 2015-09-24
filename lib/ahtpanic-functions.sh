@@ -30,7 +30,7 @@ function ahtssh2() {
 # Usage: ahtdbtunnel site.env
 function ahtdbtunnel() {
   echo "Getting DB connection string:"
-  $AHTCOMMAND @$@ drush $URI sql-connect
+  $AHTCOMMAND @$@ $DRUSHCMD $URI sql-connect
   echo "Running ssh tunnel to $@ on local port 33066..."
   db=`ahtactivedb $@`
   ahtssh -N -L 33066:localhost:3306 $db
@@ -119,7 +119,7 @@ function ahtaht2() {
 
 # Shorthand aht command used by ahtaudit command (below)
 function ahtdrush() {
-  aht $STAGE @$SITENAME drush $URI $@ |tr -d '\015'
+  aht $STAGE @$SITENAME $DRUSHCMD $URI $@ |tr -d '\015'
 }
 
 function ahtfiglet() {
@@ -493,7 +493,7 @@ function test_tasks() {
 
 function test_block_cache() {
   echo "Checking for problematic block cache (modules not explicitly defining block caching):"
-  aht $STAGE @$SITENAME drush $URI ev 'echo "Module|Block-delta|Cache|Info\n"; $m = module_implements("block_info"); foreach ($m as $module) { $b = module_invoke($module, "block_info"); foreach ($b as $id=>$block) { echo "$module|$id|" . (empty($block["cache"])?"undefined":$block["cache"]) . "|" . $block["info"] . "\n"; } }' |column -s'|' -t
+  aht $STAGE @$SITENAME $DRUSHCMD $URI ev 'echo "Module|Block-delta|Cache|Info\n"; $m = module_implements("block_info"); foreach ($m as $module) { $b = module_invoke($module, "block_info"); foreach ($b as $id=>$block) { echo "$module|$id|" . (empty($block["cache"])?"undefined":$block["cache"]) . "|" . $block["info"] . "\n"; } }' |column -s'|' -t
   ahtsep
 }
 
@@ -509,7 +509,7 @@ function test_domain_sites_mapping() {
   for domain in `head -15 $tmpout`
   do
     echo " == Domain: $domain";
-    ahtaht drush st --uri=$domain | grep " path" | awk '{ print "  " $0 }';
+    ahtaht $DRUSHCMD st --uri=$domain | grep " path" | awk '{ print "  " $0 }';
   done
   ahtsep
 }
@@ -570,7 +570,7 @@ function test_anonsession() {
       problem=1
       # Try to get anon. sessions from the DB table
       echo "    * ${COLOR_RED}10 most recent sessions set in {sessions} table:"
-      echo "SELECT uid,hostname,timestamp,FROM_UNIXTIME(timestamp),LEFT(session,80) FROM sessions WHERE uid = 0 ORDER BY timestamp DESC LIMIT 0,10;" |ahtaht drush --uri=$domain sql-cli |awk '{ print "      " $0 }'
+      echo "SELECT uid,hostname,timestamp,FROM_UNIXTIME(timestamp),LEFT(session,80) FROM sessions WHERE uid = 0 ORDER BY timestamp DESC LIMIT 0,10;" |ahtaht $DRUSHCMD --uri=$domain sql-cli |awk '{ print "      " $0 }'
       echo "${COLOR_NONE}"
     else
       # Check for redirection
