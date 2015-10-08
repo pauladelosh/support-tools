@@ -643,14 +643,8 @@ function test_modules() {
 
   # Check for modules that need security updates
   echo "Checking for modules that need security updates:"
-  # If update module is enabled...
-  if [ `grep -c update $tmpout` -eq 1 ]
-  then
-    ahtdrush upc --security-only --pipe --simulate |grep -v "wget"  >$tmpout 2>&1
-    ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No modules need security updates.${COLOR_NONE}" "$COLOR_RED"
-  else
-    echo "  ${COLOR_YELLOW}Update.module disabled, can't check status of security updates.${COLOR_NONE}"
-  fi
+  ahtdrush upc --security-only --pipe --simulate |grep -v "wget"  >$tmpout 2>&1
+  ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No modules need security updates.${COLOR_NONE}" "$COLOR_RED"
   ahtsep
 }
 
