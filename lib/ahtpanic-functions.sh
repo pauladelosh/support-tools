@@ -624,7 +624,7 @@ function test_modules() {
       color="$COLOR_RED"
     else
       # Use-with-caution modules
-      modules="cdn|context_show_regions|elysia_cron|fivestar|linkchecker|menu_minipanels|migrate|multicron|performance|plupload|poormanscron|quicktabs|supercron"
+      modules="adaptive_image|cdn|contact_importer|context_show_regions|elysia_cron|fivestar|honeypot|htmlpurifier|httprl|ldap|ligthbox2|linkchecker|menu_minipanels|migrate|multicron|performance|plupload|poormanscron|quicktabs|search404|supercron|tcpdf|workbench_moderation|wurfl|wysiwig_ckfinder"
       color="$COLOR_YELLOW"
     fi
     echo "  $type modules found:${color}"
@@ -637,6 +637,7 @@ function test_modules() {
       echo "    ${COLOR_GREEN}OK: None found.${COLOR_NONE}"
     fi
   done
+  echo ""
   echo "  See per-module details here:"
   echo "    https://docs.acquia.com/articles/module-incompatibilities-acquia-cloud"
   echo "    https://docs.acquia.com/articles/module-list-acquia-cloud-caution"
@@ -654,9 +655,9 @@ function test_modules() {
   fi
 
   # Check for modules that need security updates
-  echo "Checking for modules that need security updates:"
-  ahtdrush upc --security-only --pipe --simulate 2>/dev/null |grep -v "wget"  >$tmpout 2>&1
-  ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No modules need security updates.${COLOR_NONE}" "$COLOR_RED"
+  echo "Checking for modules that need updates/security updates:"
+  ahtdrush pm-updatestatus --format=table --fields=name,existing_version,candidate_version,status_msg >$tmpout 2>/dev/null
+  ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No modules need security updates.${COLOR_NONE}" "$COLOR_RED" |grep '^ ' |egrep --color "^|SECURITY UPDATE available|Installed version not supported"
   ahtsep
 }
 
