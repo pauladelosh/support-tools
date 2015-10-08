@@ -610,24 +610,36 @@ function test_anonsession() {
 
 # Various tests around modules
 function test_modules() {
-  echo "Checking for any known offending modules that are enabled:"
+  echo "Checking for any known problematic modules that are enabled:"
   # Get list of all enabled modules
-  ahtdrush pml --type=module --status=enabled --pipe >$tmpout
+  ahtdrush pml --type=module --status=enabled --pipe |sort >$tmpout
 
   # Check for offending modules
-  # TODO: Separate criticals from warnings
-  egrep  "^(poormanscron|robotstxt|dblog|quicktabs|civicrm|pubdlcnt|db_maintenance|role_memory_limit|fupload|plupload|boost|backup_migrate|ds|search404|hierarchical_select|mobile_tools|taxonomy_menu|recaptcha|performance|statistics|elysia_cron|supercron|multicron|varnish|cdn|fbconnect|migrate|cas|context_show_regions|imagefield_crop|session_api|role_memory_limit|filecache|session_api|radioactivity|ip_geoloc|textsize|menu_minipanels)$" $tmpout >$tmpout2 2>/dev/null
-  if [ `grep -c . $tmpout2` -gt 0 ]
-  then
-    echo $COLOR_RED
-    awk '{ print "  " $0 }' $tmpout2
-    echo "$COLOR_NONE"
-    echo "  See per-module details here:"
-    echo "    https://docs.acquia.com/articles/module-incompatibilities-acquia-cloud"
-    echo "    https://docs.google.com/a/acquia.com/spreadsheet/ccc?key=0Ash1ngKLN4uYdExPVzNFeV9QSm5WdjBWRDZKa09yUEE#gid=0"
-  else
-    echo "  ${COLOR_GREEN}OK: No offending modules found.${COLOR_NONE}"
-  fi
+  for type in Incompatible Use-with-caution
+  do
+    if [ $type = "Incompatible" ]
+    then
+      # Incompatible modules
+      modules="autoslave|backup_migrate|boost|cas|civicrm|db_maintenance|dblog|ds|fbconnect|filecache|filter_harmonizer|fupload|hierarchical_select|imagefield_crop|ip_geoloc|mobile_tools|pubdlcnt|radioactivity|recaptcha|robotstxt|role_memory_limit|search404|session_api|session_cache|serial|statistics|taxonomy_menu|textsize|varnish"
+      color="$COLOR_RED"
+    else
+      # Use-with-caution modules
+      modules="cdn|context_show_regions|elysia_cron|fivestar|linkchecker|menu_minipanels|migrate|multicron|performance|plupload|poormanscron|quicktabs|supercron"
+      color="$COLOR_YELLOW"
+    fi
+    echo "  $type modules found:${color}"
+    egrep  "^($modules)$" $tmpout >$tmpout2 2>/dev/null
+    if [ `grep -c . $tmpout2` -gt 0 ]
+    then
+      awk '{ print "    " $0 }' $tmpout2
+      echo "$COLOR_NONE"
+    else
+      echo "    ${COLOR_GREEN}OK: None found.${COLOR_NONE}"
+    fi
+  done
+  echo "  See per-module details here:"
+  echo "    https://docs.acquia.com/articles/module-incompatibilities-acquia-cloud"
+  echo "    https://docs.acquia.com/articles/module-list-acquia-cloud-caution"
   ahtsep
 
   # Check for how many modules enabled
@@ -643,7 +655,7 @@ function test_modules() {
 
   # Check for modules that need security updates
   echo "Checking for modules that need security updates:"
-  ahtdrush upc --security-only --pipe --simulate |grep -v "wget"  >$tmpout 2>&1
+  ahtdrush upc --security-only --pipe --simulate 2>/dev/null |grep -v "wget"  >$tmpout 2>&1
   ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No modules need security updates.${COLOR_NONE}" "$COLOR_RED"
   ahtsep
 }
