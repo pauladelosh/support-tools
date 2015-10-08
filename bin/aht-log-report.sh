@@ -169,6 +169,8 @@ then
     req=substr($6,2) "\t" $7
     dur=substr($0, index($0, "request_time=") + 13)/1000000;
     if (dur>max[req]) { max[req] = dur }
+    if (!start[req]) { start[req] = substr($4,14) }
+    last[req] = substr($4,14)
     cnt[req]++
     reqs[req]=req
     tot[req]+=dur
@@ -176,10 +178,10 @@ then
   END {
     for (r in reqs) {
       if (cnt[r] > 0) {
-        printf("%d\t%.2f\t%.2f\t%s\n", cnt[r], max[r], tot[r]/cnt[r], r);
+        printf("%d\t%.2f\t%.2f\t%s\t%s\t%s\n", cnt[r], max[r], tot[r]/cnt[r], start[r], last[r], r);
       }
     }
-  }' | sort -nr |head -10 | ahttable "Count\tMax(s)\tAvg(s)\tMethod\tURL"
+  }' | sort -nr |head -10 | ahttable "Count\tMax(s)\tAvg(s)\tStarted-at\tEnded-at\tMethod\tURL"
   ahtsep
 fi
 
