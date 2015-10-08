@@ -620,11 +620,11 @@ function test_modules() {
     if [ $type = "Incompatible" ]
     then
       # Incompatible modules
-      modules="autoslave|backup_migrate|boost|cas|civicrm|db_maintenance|dblog|ds|fbconnect|filecache|filter_harmonizer|fupload|hierarchical_select|imagefield_crop|ip_geoloc|mobile_tools|pubdlcnt|radioactivity|recaptcha|robotstxt|role_memory_limit|search404|session_api|session_cache|serial|statistics|taxonomy_menu|textsize|varnish"
+      modules="autoslave|backup_migrate|boost|cas|civicrm|db_maintenance|fbconnect|filecache|filter_harmonizer|fupload|hierarchical_select|imagefield_crop|ip_geoloc|mobile_tools|pubdlcnt|recaptcha|role_memory_limit|session_api|session_cache|serial|textsize|varnish"
       color="$COLOR_RED"
     else
       # Use-with-caution modules
-      modules="adaptive_image|cdn|contact_importer|context_show_regions|elysia_cron|fivestar|honeypot|htmlpurifier|httprl|ldap|ligthbox2|linkchecker|menu_minipanels|migrate|multicron|performance|plupload|poormanscron|quicktabs|search404|supercron|tcpdf|workbench_moderation|wurfl|wysiwig_ckfinder"
+      modules="adaptive_image|cdn|contact_importer|context_show_regions|dblog|ds|elysia_cron|fivestar|honeypot|htmlpurifier|httprl|ldap|ligthbox2|linkchecker|menu_minipanels|migrate|multicron|performance|plupload|poormanscron|quicktabs|radioactivity|robotstxt|search404|statistics|supercron|taxonomy_menu|tcpdf|workbench_moderation|wurfl|wysiwig_ckfinder"
       color="$COLOR_YELLOW"
     fi
     echo "  $type modules found:${color}"
