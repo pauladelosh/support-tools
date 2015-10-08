@@ -233,7 +233,7 @@ function test_nagios_info() {
   then
     echo "Detected downtime from nagios:"
     nagios_url="https://perf-mon.acquia.com/site_downtime.php?stage=mc&sitename=${site}"
-    curl -s "${nagios_url}" >$tmpout
+    curl --max-time 10 -s "${nagios_url}" >$tmpout
     if [ `grep -c "401 Authorization Required" $tmpout` -eq 0 ]
     then
       cat $tmpout |sed -e "s/<br>/\n/g" |sed -e '1,2d' |grep '20.*$' >$tmpout2
@@ -340,6 +340,13 @@ function test_daemonlog_check() {
     ahtssh2 $web "sudo tail -5000 /var/log/daemon.log" >$tmpout
     egrep 'AH_SERIOUS_' $tmpout |egrep --color "^|$date_time|$date"
   done
+  ahtsep
+}
+
+# Check for
+function test_nginx_max_conn() {
+  echo "Checking for nging max_conn parameter in nginx:"
+  echo 'zgrep max_conn /etc/nginx/conf.d/*' |aht $STAGE @$SITENAME ssh --bal 2>/dev/null |grep $site | egrep --color '^|[1-5][0-9][0-9];$'
   ahtsep
 }
 
@@ -562,26 +569,33 @@ function test_anonsession() {
   do
     domain="http://${domain}/"
     #Get headers
-    curl $BASIC_AUTH_USERPASS -vv -o /dev/null $domain 2>&1 |grep -e "^[<>]" >$tmpout2
-    # Check if there's a Set-Cookie: ... SESS  somewhere
-    if [ `grep -c "< Set-Cookie: .*SESS" $tmpout2` -gt 0 ]
+    curl --max-time 5 $BASIC_AUTH_USERPASS -vv -o /dev/null $domain >$tmpout 2>&1
+    if [ $? -gt 0 ]
     then
-      echo "  ${COLOR_RED}$domain: Anonymous SESS cookie found!!${COLOR_NONE}"
-      problem=1
-      # Try to get anon. sessions from the DB table
-      echo "    * ${COLOR_RED}10 most recent sessions set in {sessions} table:"
-      echo "SELECT uid,hostname,timestamp,FROM_UNIXTIME(timestamp),LEFT(session,80) FROM sessions WHERE uid = 0 ORDER BY timestamp DESC LIMIT 0,10;" |ahtaht $DRUSHCMD --uri=$domain sql-cli |awk '{ print "      " $0 }'
-      echo "${COLOR_NONE}"
+      echo "  ${COLOR_YELLOW}$domain: timeout!${COLOR_NONE}"
     else
-      # Check for redirection
-      grep ". Location:" $tmpout2 > $tmpout
-      if [ `grep -c . $tmpout` -eq 1 ]
+      grep -e "^[<>]" $tmpout >$tmpout2
+      #TODO: Check for failure: "Operation timed out" in output.... or... $? -gt 0
+      # Check if there's a Set-Cookie: ... SESS  somewhere
+      if [ `grep -c "< Set-Cookie: .*SESS" $tmpout2` -gt 0 ]
       then
-        # Show redirect header
-        echo "  ${COLOR_YELLOW}$domain ==> Redirect: "`cat $tmpout`
+        echo "  ${COLOR_RED}$domain: Anonymous SESS cookie found!!${COLOR_NONE}"
+        problem=1
+        # Try to get anon. sessions from the DB table
+        echo "    * ${COLOR_RED}10 most recent sessions set in {sessions} table:"
+        echo "SELECT uid,hostname,timestamp,FROM_UNIXTIME(timestamp),LEFT(session,80) FROM sessions WHERE uid = 0 ORDER BY timestamp DESC LIMIT 0,10;" |ahtaht $DRUSHCMD --uri=$domain sql-cli |awk '{ print "      " $0 }'
+        echo "${COLOR_NONE}"
       else
-        # No redirect nor SESS cookie, say things are OK.
-        echo "  ${COLOR_GREEN}$domain: OK, no SESS cookie${COLOR_NONE}"
+        # Check for redirection
+        grep ". Location:" $tmpout2 > $tmpout
+        if [ `grep -c . $tmpout` -eq 1 ]
+        then
+          # Show redirect header
+          echo "  ${COLOR_YELLOW}$domain ==> Redirect: "`cat $tmpout`
+        else
+          # No redirect nor SESS cookie, say things are OK.
+          echo "  ${COLOR_GREEN}$domain: OK, no SESS cookie${COLOR_NONE}"
+        fi
       fi
     fi
   done
@@ -683,7 +697,7 @@ EOF
   ahtsep
 
   echo "Showing largest database tables:"
-  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9][0-9]*\.[0-9][0-9][MG]'
+  cat <<EOF |ahtdrush sql-cli >$tmpout
 SELECT CONCAT(table_schema, '.', table_name) as Table_name,
 CONCAT(ROUND(table_rows / 1000000, 2), 'M') rows,
 CONCAT(ROUND(data_length / ( 1024 * 1024 * 1024 ), 2), 'G') DATA,
@@ -694,12 +708,19 @@ FROM information_schema.TABLES
 ORDER BY data_length + index_length DESC
 LIMIT 10;
 EOF
+  cat $tmpout |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9][0-9]*\.[0-9][0-9][MG]'
   ahtsep
 
+  # Cache_form entries...
   echo "Showing largest cache_form entries from database:"
-  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^.*'
+  if [ `egrep -c '\.cache_form *[1-9]' $tmpout` -gt 0 ]
+  then
+    echo "  ${COLOR_YELOW}Skipping cache_form table report, because table has >1M items.${COLOR_NONE}";
+  else
+    cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^.*'
 SELECT concat(length(data)/1048576, "MB") AS Size, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY Size desc LIMIT 5;
 EOF
+  fi
   ahtsep
 }
 

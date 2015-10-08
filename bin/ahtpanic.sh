@@ -105,6 +105,9 @@ do
     --)
       break
       ;;
+    --d8)
+      DRUSHCMD="drush8"
+      ;;
     --user=*)
       BASIC_AUTH_USERPASS=$1
       ;;
@@ -371,6 +374,7 @@ then
   test_external_connections
   test_dns
   test_varnish_stats
+  test_nginx_max_conn
   test_tasks
   #test_email_volume
   test_anonsession
