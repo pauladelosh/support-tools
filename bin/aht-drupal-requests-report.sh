@@ -7,6 +7,7 @@ slowtime=5     #Slow request time in secs.
 days=5         #Days back to report for some reports.
 
 tmpout=/tmp/ahtlogreport.$$.tmp
+tmpout2=/tmp/ahtlogreport.$$.drupal-watchdog.tmp
 
 # See http://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
 TERM=xterm-color
@@ -38,7 +39,7 @@ function ahttable() {
   fi
 }
 
-# Passthru (cat) files smaller than 5MB; 
+# Passthru (cat) files smaller than 5MB;
 # when larger, only pass thru the last $portion lines.
 function ahtcat() {
   size=`stat $1 --format=%s`
@@ -79,9 +80,32 @@ fi
 logfilename=$1
 if [ ! -r $logfilename ]
 then
-  echo "WARNING: No $logfilename available!"
+  echo "${COLOR_YELLOW}WARNING: No $logfilename available!${COLOR_NONE}"
   ahtsep
 else
+  # If format is '; '-separated instead of |-separated, make a derivative file.
+  # NOTE: This other format needs reordering of the fields too!
+  if [ `head -20 $logfilename |awk -F'; ' 'NR==1 {n=0} { if (NR>n) n=NF; } END { print n }'` -gt 5 ]
+  then
+    echo "${COLOR_YELLOW}Found ;-separated drupal-watchdog.log format.${COLOR_NONE}"
+    awk -F'; ' '{
+      split($1, tmp, ":");
+      time_ip_sitegroup=tmp[1] ":" tmp[2] ":" tmp[3];
+      msg=substr(tmp[4],2);
+      siteurl=$2
+      timestamp=$3
+      type=$4
+      ip=$5
+      url=$6
+      userid=$8
+      # Output the reorganized log line
+      printf("%s: %s|%s|%s|%s", time_ip_sitegroup, siteurl, timestamp, type, ip)
+      printf("|%s||%s||%s\n", url, userid, msg)
+    }' $logfilename >$tmpout2
+    # Now use this other file for the rest of the script!
+    logfilename=$tmpout2
+  fi
+
   echo "Count of top Drupal-watchdog messages by type on $logfilename:"
   ahtcat $logfilename |cut -f3 -d"|"  |ahtcounttop >$tmpout
   cat $tmpout |egrep --color=always "^|^  *[1-9][0-9][0-9][0-9][0-9][0-9]* .*"
@@ -105,18 +129,18 @@ else
   ahtcat $logfilename |awk -F '|' '$3=="cron" { print $1 "|" $9 }' |sed -e 's/ request_id="[^"]*"//' |tail -10 |egrep -i --color=always "^|exception" >$tmpout
   ahtcatnonempty $tmpout "${COLOR_RED}No cron runs found.${COLOR_NONE}"
   ahtsep
-  
+
   echo "Modules enabled/disabled from last ${days} days on $logfilename:"
   logfiles=`ls -tr $logfilename*.gz $logfilename 2>/dev/null|tail -${days}`
   today_date=`date +'%h %d '`
   cat /dev/null >$tmpout
   for file in $logfiles
-  do 
+  do
     zgrep -e 'module .*abled' $file| cut -f1,9 -d'|' |sed -e 's/ request_id="[^"]*"//' |egrep -i --color=always "^|${today_date}|(dblog|statistics) module enabled|" >>$tmpout
   done
   ahtcatnonempty $tmpout "${COLOR_GREEN}No modules enabled/disabled in last 5 days.${COLOR_NONE}"
   ahtsep
-  
+
   # Get times for queue_wait from drupal-requests.log
   dir=`dirname $logfilename`
   if [ -r $dir/drupal-requests.log ]
@@ -124,7 +148,8 @@ else
     echo "Count of drupal-requests.log entries according to slow queue_wait times:"
     ahtcat $dir/drupal-requests.log |grep -o "queue_wait=[^ ]*" |ahtcounttop
   fi
-  
+
+  # Remove temp files.
   rm $tmpout
-  
+  rm $tmpout2
 fi
