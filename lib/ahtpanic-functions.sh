@@ -557,8 +557,8 @@ EOF
 function test_anonsession() {
   echo "Checking for anonymous user sessions:"
   problem=0
-  # Get valid domains (only those marked "OK" by aht domain-check)
-  ahtaht domains:check |grep "ok" |awk '{ print $1 }' >$tmpout
+  # Get valid domains (only those marked "OK" by aht domain-check + not-wildcarded)
+  ahtaht domains:check |grep "ok" |fgrep -v '*' |awk '{ print $1 }' >$tmpout
   count=`grep -c . $tmpout`
   if [ $count -gt 15 ]
   then
@@ -733,7 +733,7 @@ EOF
 
 function test_ahtaudit() {
   echo "Problems found from basic site audit:"
-  ahtaht audit >$tmpout
+  ahtaht audit $URI >$tmpout
   if [ `grep -c "Drush was not able to start" $tmpout` -gt 0 ]
   then
     echo "  ${COLOR_RED}ERROR: Drush not bootstrapping!${COLOR_NONE}"
