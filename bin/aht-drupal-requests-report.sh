@@ -141,15 +141,6 @@ else
   ahtcatnonempty $tmpout "${COLOR_GREEN}No modules enabled/disabled in last 5 days.${COLOR_NONE}"
   ahtsep
 
-  # Get times for queue_wait from drupal-requests.log
-  dir=`dirname $logfilename`
-  if [ -r $dir/drupal-requests.log ]
-  then
-    echo "Count of drupal-requests.log entries according to slow queue_wait times:"
-    ahtcat $dir/drupal-requests.log |grep -o "queue_wait=[^ ]*" |ahtcounttop
-  fi
-
   # Remove temp files.
-  rm $tmpout
-  rm $tmpout2
+  rm $tmpout $tmpout2 2>/dev/null
 fi
