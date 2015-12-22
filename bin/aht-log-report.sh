@@ -211,5 +211,10 @@ cut -f2- -d']' php-errors.log |sed -e 's/ request_id="[^"]*"//' -e 's/tried to a
 #ahtcatnonempty $tmpout "${COLOR_GREEN}No errors found." "${COLOR_RED}"
 ahtsep
 
+echo "Top paths causing 'Out of memory' errors today on $hostname:"
+num=1000; searchlog="php-errors.log"; destlog="access.log"; date=""; #date="-20151103.gz";
+zegrep `zgrep -F 'Allowed memory size of' ${searchlog}${date} |egrep -o 'request_id=.*' |cut -f2 -d'"' |grep 'v-' |head -$num |tr '\n' '|' | awk '{ print substr($0,1,length($0)-1) }'` ${destlog}${date} |head -$num |cut -f6-9 -d' ' |sort |uniq -c |sort -nr |head -10
+ahtsep
+
 # Cleanup
 rm $tmpout $slowout 2>/dev/null

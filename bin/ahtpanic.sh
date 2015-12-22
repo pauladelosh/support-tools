@@ -204,8 +204,8 @@ then
     echo "No @sitename.env given, trying to resolve stage and sitename from $uri..."
     aht --no-ansi --stages=all fd $uri |awk -F' ' '
     NR==1 {
-      names["Acquia Cloud Enterprise (Managed Cloud)"] = "ace"
-      names["Acquia Cloud (DevCloud)"] = "ac"
+      names["Acquia Cloud Enterprise"] = "ace"
+      names["Acquia Cloud"] = "ac"
       names["Network"] = "network"
       names["SMB Gardens"] = "smb"
       names["WMG Gardens"] = "wmg"
@@ -213,10 +213,8 @@ then
       names["Acquia Cloud Site Factory"] = "acsf"
     }
     /^\[/ { stage_txt=substr($0,2,length($0)-3); }
-    /^ / { print "STAGE=--stages=" names[stage_txt] "; SITENAME=@" $1 }
-    END {
-      foreach
-    }' >$tmpout
+    /^ / { print "STAGE=--stages=" names[stage_txt] "; SITENAME=@" $1 " # " stage_txt }
+    ' >$tmpout
     if [ $? -eq 0 ]
     then
       if [ `grep -c . $tmpout` -gt 1 ]

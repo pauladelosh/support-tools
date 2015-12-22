@@ -313,6 +313,17 @@ function test_hosting_release_version() {
   ahtsep
 }
 
+# How are the webs?
+function test_webs_cpu() {
+  echo "Checking CPU on webs:"
+  for web in $webs
+  do
+    echo "= $web =============";
+    ahtssh2 $web "sudo pidstat 2 2" | awk '{ print "  " $0 }' |egrep --color '^|[56789][0-9].[0-9][0-9]'
+  done
+  ahtsep
+}
+
 # Check puppet/other messages from syslog
 function test_syslog_check() {
   echo "Checking for important /var/log/syslog messages on webs:"
@@ -455,7 +466,13 @@ function test_external_connections() {
   for web in $webs
   do
     echo "= $web =============";
-    ahtssh2 $web 'sudo lsof |awk "NR==1 || /^php.*TCP / { print }" | egrep -v ":mysql|:11211" |column -t';
+    ahtssh2 $web 'sudo lsof |awk "NR==1 || /^php.*TCP / { print }" | egrep -v ":mysql|:11211" |column -t' > $tmpout;
+    if [ `grep -c . $tmpout` -gt 1 ]
+    then
+      awk '{ print "  " $0 }' $tmpout
+    else
+      echo "  ${COLOR_GREEN}None found.${COLOR_NONE}"
+    fi
   done
   ahtsep
 }
