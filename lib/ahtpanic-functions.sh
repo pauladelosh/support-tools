@@ -840,7 +840,7 @@ function test_cacheflushes() {
   then
     echo "  Couldn't find cache_flush variable."
   else
-    cat $tmpout | sort -k2n | xargs -iFOO sh -c 'echo -n "FOO : " ; date -d "@$(echo FOO | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout2
+    cat $tmpout | sort -k2n | xargs -I{} sh -c 'echo -n "{} : " ; date -d "@$(echo {} | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout2
     today=`date +'%h %_d|%h %_d %H'`
     egrep --color=always "^|${today}" $tmpout2
   fi
