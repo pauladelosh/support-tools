@@ -319,7 +319,7 @@ function test_webs_cpu() {
   for web in $webs
   do
     echo "= $web =============";
-    ahtssh2 $web "sudo pidstat 2 2" | awk '{ print "  " $0 }' |egrep --color '^|[56789][0-9].[0-9][0-9]'
+    ahtssh2 $web "sudo pidstat 2 2" | awk '{ print "  " $0 }' |egrep --color '^|[456789][0-9]\.[0-9][0-9]'
   done
   ahtsep
 }
@@ -349,7 +349,7 @@ function test_daemonlog_check() {
   do
     echo "= $web =============";
     ahtssh2 $web "sudo tail -5000 /var/log/daemon.log" >$tmpout
-    egrep 'AH_SERIOUS_' $tmpout |egrep --color "^|$date_time|$date"
+    fgrep 'AH_SERIOUS_' $tmpout |egrep --color "^|$date_time|$date"
   done
   ahtsep
 }
@@ -420,14 +420,15 @@ function test_phpfpm_procs() {
     # For each server
     {
       server=$0
-      cmd = "ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config " server " \"";
       # Get max fpm processes config
-      cmd = cmd "grep pm.max_children /var/www/site-fpm/'$SITENAME'/pool.d/*conf |cut -f2 -d=";
+      cmd = "grep pm.max_children /var/www/site-fpm/'$SITENAME'/pool.d/*conf |cut -f2 -d=";
       # Get number of processes running per docroot
       cmd = cmd " && ps -ef |grep -c [0-9].php-fpm:.pool." dotless_sitename;
       # Get memory info from server.
       cmd = cmd " && free -m |grep Mem"
-      cmd = cmd "\""
+      
+      # Enclose the command into a remote SSH command
+      cmd = "ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config " server " \"" cmd "\""
       #print cmd;
       cmd |getline max_docroot;
       cmd |getline docroot_running;
@@ -454,7 +455,7 @@ function test_phpcgi_skips() {
 
 #FPM number of skip spawns
 function test_phpfpm_skips() {
-  echo 'tail -5000 fpm-error.log | grep "you may need to increase pm.start_servers"' |ahtaht ssh logs |awk -F: '{ print $1 ":XX:XX" }' |sort |uniq -c  >$tmpout
+  echo 'tail -5000 fpm-error.log | egrep "you may need to increase pm.start_servers|server reached max_children setting"' |ahtaht ssh logs |awk -F: '{ print $1 ":XX:XX" }' |sort |uniq -c  >$tmpout
   echo "Skip-spawns for today:"
   ahtcatnonempty $tmpout "${COLOR_GREEN}OK: No skip spawns found.${COLOR_NONE}" "${COLOR_RED}"
   ahtsep
@@ -766,6 +767,12 @@ function test_ahtaudit() {
     echo "* See canned suggestions at:
   https://support.acquia.com/doc/index.php/Performance_AHT_AUDIT_advise"
   fi
+  ahtsep
+}
+
+function test_db_update_status() {
+  echo "Checking for pending DB updates:${COLOR_RED}"
+  ahtdrush updbst
   ahtsep
 }
 

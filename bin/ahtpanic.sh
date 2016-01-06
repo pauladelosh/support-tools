@@ -386,6 +386,7 @@ then
   # Run some more checks, but only if drush works.
   if [ $drushworks_flag -eq 1 ]
   then
+    test_db_update_status
     test_domain_sites_mapping
     test_pressflow
     test_modules
