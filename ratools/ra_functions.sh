@@ -276,7 +276,7 @@ elif echo $2 | grep -q "\-dev"
 else
   echo "module $1-$2 not found in cache; downloading..."
   mkdir -p ~/Sites/releases/modules/$1/$2
-  curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
+  curl "https://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz -C ~/Sites/releases/modules/$1/$2
   if [ -z `ls ~/Sites/releases/modules/$1/$2` ]
     then rm -rf ~/Sites/releases/modules/$1/$2; echo "ERROR: failed to download $1-$2!"
     else echo "$1-$2 downloaded on `date`" >> ~/Sites/releases/modules/cache.log
@@ -550,7 +550,7 @@ for modinfopath in `find . -name ${modname}.info`
                       then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
                       else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
                     fi
-                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    #curl "https://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
                     cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     svn add --force "$1"
                     if [ "$5" = "--security" ]
@@ -566,7 +566,7 @@ for modinfopath in `find . -name ${modname}.info`
                       then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
                       else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2 at $modpath. Ticket #$4."
                     fi
-                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    #curl "https://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
                     cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     svn add --force "$1"
                     if [ "$5" = "--security" ]
@@ -612,7 +612,7 @@ if [ "$5" = "--security" ]
   then svn commit -m "$RA_INITIALS@Acq: Module Security Update, cleanup, removing $1-$2. Ticket #$4."
   else svn commit -m "$RA_INITIALS@Acq: Module Update, cleanup, removing $1-$2. Ticket #$4."
 fi
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+curl "https://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
 if [ "$5" = "--security" ]
   then svn commit -m "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 from $2. Ticket #$4."
@@ -636,7 +636,7 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
     esac
   done
 fi
-curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
+curl "https://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acq: Module Install, adding $1-$2. Ticket #$3."
 }
@@ -660,7 +660,7 @@ if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
 fi
 svn rm "$1"
 svn commit -m "$RA_INITIALS@Acq: Module Revert, cleanup, removing $1-$2 module. Ticket #$4."
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+curl "https://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 svn add --force "$1"
 svn commit -m "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
@@ -851,7 +851,7 @@ for modinfopath in `find . -name ${modname}.info`
                     echo -e "\033[0;32;148m"module does not appear to be modified"\033[39m"; tput sgr0
                     git rm -rf "$1"
                     #keep below line for legacy purposes
-                    #curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+                    #curl "https://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
                     cp -R ~/Sites/releases/modules/$1/$3/$1 .
                     git add "$1"
                     if [ "$5" = "--security" ]
@@ -904,7 +904,7 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
   done
 fi
 git rm -rf "$1"
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+curl "https://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 if [ "$5" = "--security" ]
   then git commit -am "$RA_INITIALS@Acq: Module Security Update, updating $1-$3 from $2. Ticket #$4."
@@ -928,7 +928,7 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
     esac
   done
 fi
-curl "http://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
+curl "https://ftp.drupal.org/files/projects/$1-$2.tar.gz" | tar xz
 git add "$1"
 git commit -am "$RA_INITIALS@Acq: Module Install, adding $1-$2. Ticket #$3."
 }
@@ -951,7 +951,7 @@ if git status | grep branch | cut -f4 -d" " | grep -w master
   done
 fi
 git rm -rf "$1"
-curl "http://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
+curl "https://ftp.drupal.org/files/projects/$1-$3.tar.gz" | tar xz
 git add "$1"
 git commit -am "$RA_INITIALS@Acq: Module Revert, reverting to $1-$3 from $2. Ticket #$4."
 }
