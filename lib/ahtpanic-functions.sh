@@ -334,7 +334,7 @@ function test_syslog_check() {
   do
     echo "= $web =============";
     ahtssh2 $web "sudo tail -3000 /var/log/syslog" >$tmpout
-    grep -v "AH_SPLIT_BRAIN: Split brain detected: db=acquia" $tmpout | egrep 'not enough memory|could not be unfrozen|Out of memory|Killed process [0-9]* \([^\)]*\)|AH_SERIOUS_|AH_SPLIT_BRAIN|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*' |egrep --color "^|$date_time|$date"
+    grep -v "AH_SPLIT_BRAIN: Split brain detected: db=acquia" $tmpout | egrep 'not enough memory|could not be unfrozen|Out of memory|Killed process [0-9]* \([^\)]*\)|AH_SERIOUS_|AH_SPLIT_BRAIN|Applying configuration version|ah-callback: task [0-9]* triggering .*| deploying .*|Restarting .*' |egrep --color=always "^|$date_time|$date|not enough memory|could not be unfrozen|Out of memory|Killed process|handling overloaded server|sending 503" |tail -100
   done
   ahtsep
 }
