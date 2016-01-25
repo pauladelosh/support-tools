@@ -422,19 +422,19 @@ function test_phpfpm_procs() {
       server=$0
       # Get max fpm processes config
       cmd = "grep pm.max_children /var/www/site-fpm/'$SITENAME'/pool.d/*conf |cut -f2 -d=";
-      # Get number of processes running per docroot
-      cmd = cmd " && ps -ef |grep -c [0-9].php-fpm:.pool." dotless_sitename;
       # Get memory info from server.
       cmd = cmd " && free -m |grep Mem"
+      # Get number of processes running per docroot
+      cmd = cmd " && ps -ef |grep -c [0-9].php-fpm:.pool." dotless_sitename;
       
       # Enclose the command into a remote SSH command
       cmd = "ssh -t -o StrictHostKeyChecking=no -o LogLevel=quiet -F $HOME/.ssh/ah_config " server " \"" cmd "\""
       #print cmd;
       cmd |getline max_docroot;
-      cmd |getline docroot_running;
       cmd |getline
       total_mem=$2;
-      free_mem=$3;
+      free_mem=$4;
+      cmd |getline docroot_running;
       close(cmd)
 
       # Print the line
@@ -524,18 +524,25 @@ function test_block_cache() {
 
 function test_domain_sites_mapping() {
   echo "Showing domain -> site mapping:"
-  ahtaht domains:list |tr -d '\015' | sed -e 's/\*/XXX/g' >$tmpout
-  count=`grep -c . $tmpout`
-  if [ $count -gt 15 ]
+  if [ ${URI:-x} != x ]
   then
-    echo "${COLOR_YELLOW}  ** More than 15 domains found ($count); checking only first 15 **${COLOR_NONE}";
-  fi
-  # Cycle thru domains and check for session cookies.
-  for domain in `head -15 $tmpout`
-  do
+    # If a single domain given, use just that.
     echo " == Domain: $domain";
     ahtaht $DRUSHCMD st --uri=$domain | grep " path" | awk '{ print "  " $0 }';
-  done
+  else
+    ahtaht domains:list |tr -d '\015' | sed -e 's/\*/XXX/g' >$tmpout
+    count=`grep -c . $tmpout`
+    if [ $count -gt 15 ]
+    then
+      echo "${COLOR_YELLOW}  ** More than 15 domains found ($count); checking only first 15 **${COLOR_NONE}";
+    fi
+    # Cycle thru domains and check for session cookies.
+    for domain in `head -15 $tmpout`
+    do
+      echo " == Domain: $domain";
+      ahtaht $DRUSHCMD st --uri=$domain | grep " path" | awk '{ print "  " $0 }';
+    done
+  fi
   ahtsep
 }
 
@@ -575,8 +582,15 @@ EOF
 function test_anonsession() {
   echo "Checking for anonymous user sessions:"
   problem=0
-  # Get valid domains (only those marked "OK" by aht domain-check + not-wildcarded)
-  ahtaht domains:check |grep "ok" |fgrep -v '*' |awk '{ print $1 }' >$tmpout
+  if [ ${URI:-x} != x ]
+  then
+    # One domain only, put the domain into the list
+    echo $URI |cut -f3 -d/ >$tmpout
+  else
+    # Get valid domains (only those marked "OK" by aht domain-check + not-wildcarded)
+    ahtaht domains:check |grep "ok" |fgrep -v '*' |awk '{ print $1 }' >$tmpout
+  fi
+  
   count=`grep -c . $tmpout`
   if [ $count -gt 15 ]
   then
@@ -638,11 +652,11 @@ function test_modules() {
     if [ $type = "Incompatible" ]
     then
       # Incompatible modules
-      modules="autoslave|backup_migrate|boost|cas|civicrm|db_maintenance|fbconnect|filecache|filter_harmonizer|fupload|hierarchical_select|imagefield_crop|ip_geoloc|mobile_tools|pubdlcnt|recaptcha|role_memory_limit|session_api|session_cache|serial|textsize|varnish"
+      modules="autoslave|backup_migrate|bean_entitycache|boost|cas|civicrm|db_maintenance|fbconnect|filecache|filter_harmonizer|fupload|hierarchical_select|imagefield_crop|ip_geoloc|mobile_tools|pubdlcnt|recaptcha|role_memory_limit|session_api|session_cache|serial|textsize|varnish"
       color="$COLOR_RED"
     else
       # Use-with-caution modules
-      modules="adaptive_image|cdn|contact_importer|context_show_regions|dblog|ds|elysia_cron|fivestar|honeypot|htmlpurifier|httprl|ldap|ligthbox2|linkchecker|menu_minipanels|migrate|multicron|performance|plupload|poormanscron|quicktabs|radioactivity|robotstxt|search404|statistics|supercron|taxonomy_menu|tcpdf|workbench_moderation|wurfl|wysiwig_ckfinder"
+      modules="adaptive_image|bean|cdn|contact_importer|context_show_regions|dblog|ds|elysia_cron|fivestar|honeypot|htmlpurifier|httprl|ldap|ligthbox2|linkchecker|menu_minipanels|migrate|multicron|performance|plupload|poormanscron|quicktabs|radioactivity|robotstxt|search404|statistics|supercron|taxonomy_menu|tcpdf|workbench_moderation|wurfl|wysiwig_ckfinder"
       color="$COLOR_YELLOW"
     fi
     echo "  $type modules found:${color}"
