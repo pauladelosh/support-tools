@@ -33,25 +33,26 @@ VERBOSE=0
 DRUSHCMD='drush7'
 
 function showhelp() {
+  local cmd=$(basename $0)
   cat <<EOF
 This is a sniff-out-everything script that uncovers a lot of potential problems.
 Note: you should give it a --uri argument if auditing a multisite install.
 Usage:
-  $0 [--uri=URI] [--mc|--dc|--ace] [--skip-(basic|drush|logs)]
+  $cmd [--uri=URI] [--mc|--dc|--ace] [--skip-(basic|drush|logs)]
      [--user=BASICAUTHUSER:BASICAUTHPASSWORD]
      [--stages=(ace|prod|ac|devcloud|network|smb|acsf|wmg|umg|all)]
      @sitename.env
      [--only=COMMAND]
 
 Examples:
-  $0 --skip-basic @mysite.prod  # Skips some basic checks
-  $0 --uri=www.mysite.com @mysite.prod  # Give it a URI for drush
-  $0 --mc @mysite.prod  # Forces managed cloud, use --dc for devcloud
+  $cmd --skip-basic @mysite.prod  # Skips some basic checks
+  $cmd --uri=www.mysite.com @mysite.prod  # Give it a URI for drush
+  $cmd --mc @mysite.prod  # Forces managed cloud, use --dc for devcloud
 
 Run single commands: (run with --only=COMMAND or --command=COMMAND)
   Available commands:
 EOF
-  grep -o "function test_[^ ]*" lib/ahtpanic-functions.sh |cut -f2- -d_ |cut -f1 -d'(' |sort |awk '{ printf("  %s",$0) } END { printf "\n" }'
+  grep -o "function test_[^ ]*" ../lib/ahtpanic-functions.sh |cut -f2- -d_ |cut -f1 -d'(' |sort |awk '{ printf("  %s",$0) } END { printf "\n" }'
 }
 
 ####################################################
@@ -68,14 +69,14 @@ then
   exit
 fi
 #Check the functions exist
-if [ ! -r "lib/ahtpanic-functions.sh" ]
+if [ ! -r "../lib/ahtpanic-functions.sh" ]
 then
-  echo "${COLOR_YELLOW}WARNING! Could not find lib/ahtpanic-functions.sh"
+  echo "${COLOR_YELLOW}WARNING! Could not find ahtpanic-functions.sh"
   echo "Make sure the script has been set correctly."
   ahtsep
 fi
 # Include helper functions
-. lib/ahtpanic-functions.sh
+. ../lib/ahtpanic-functions.sh
 
 # Show help on empty call.
 if [ "${1:-x}" = x ]
@@ -333,7 +334,7 @@ then
   then
     echo "${COLOR_RED}ERROR: Command $SINGLECHECK doesn't exist."
     echo "Available commands:"
-    grep -o "function test_[^ ]*" lib/ahtpanic-functions.sh |cut -f2- -d_ |cut -f1 -d'(' |sort |awk '{ printf("  %s",$0) } END { printf "\n" }'
+    grep -o "function test_[^ ]*" ../lib/ahtpanic-functions.sh |cut -f2- -d_ |cut -f1 -d'(' |sort |awk '{ printf("  %s",$0) } END { printf "\n" }'
     ahtsep
     exit 1
   fi
