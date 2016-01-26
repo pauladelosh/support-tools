@@ -313,9 +313,9 @@ echo "Server_domain: $server_domain"
 
 # Get the webs. Note we ignore deds if we also have webs
 # ... without out-of-rotation webs
-webs=`egrep "srv-|web-|ded-|staging-" $tmpout |grep -v ' \*' |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
+webs=`egrep "srv-|web-|ded-|staging-" $tmpout2 |grep -v ' \*' |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
 # ... with out-of-rotation webs
-webs_raw=`egrep "srv-|web-|ded-|staging-" $tmpout |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
+webs_raw=`egrep "srv-|web-|ded-|staging-" $tmpout2 |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
 #echo "Webs: $webs_raw"
 
 # devcloud/not devcloud
