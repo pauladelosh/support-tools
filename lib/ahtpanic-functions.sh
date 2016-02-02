@@ -527,8 +527,8 @@ function test_domain_sites_mapping() {
   if [ ${URI:-x} != x ]
   then
     # If a single domain given, use just that.
-    echo " == Domain: $domain";
-    ahtaht $DRUSHCMD st --uri=$domain | grep " path" | awk '{ print "  " $0 }';
+    echo " == Domain for $URI";
+    ahtaht $DRUSHCMD st $URI | grep " path" | awk '{ print "  " $0 }';
   else
     ahtaht domains:list |tr -d '\015' | sed -e 's/\*/XXX/g' >$tmpout
     count=`grep -c . $tmpout`
@@ -585,21 +585,23 @@ function test_anonsession() {
   if [ ${URI:-x} != x ]
   then
     # One domain only, put the domain into the list
-    echo $URI |cut -f3 -d/ >$tmpout
+    echo $URI |cut -f2 -d= >$tmpout
   else
     # Get valid domains (only those marked "OK" by aht domain-check + not-wildcarded)
     ahtaht domains:check |grep "ok" |fgrep -v '*' |awk '{ print $1 }' >$tmpout
   fi
   
+  ## Add http:// to domains...
+  cat $tmpout | awk '{ if (substr($0,1,4) != "http") { print "http://" $0; print "https://" $0; } else { print } }' >$tmpout2
+
   count=`grep -c . $tmpout`
   if [ $count -gt 15 ]
   then
     echo "${COLOR_YELLOW}  ** More than 15 domains found ($count); checking only first 15 **${COLOR_NONE}";
   fi
   # Cycle thru domains and check for session cookies.
-  for domain in `head -15 $tmpout`
+  for domain in `head -15 $tmpout2`
   do
-    domain="http://${domain}/"
     #Get headers
     curl --max-time 5 $BASIC_AUTH_USERPASS -vv -o /dev/null $domain >$tmpout 2>&1
     if [ $? -gt 0 ]
@@ -861,9 +863,17 @@ function test_cacheflushes() {
   then
     echo "  Couldn't find cache_flush variable."
   else
-    cat $tmpout | sort -k2n | xargs -I{} sh -c 'echo -n "{} : " ; date -d "@$(echo {} | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout2
-    today=`date +'%h %_d|%h %_d %H'`
-    egrep --color=always "^|${today}" $tmpout2
+    which gawk >/dev/null
+    if [ $? -eq 0 ]
+    then
+      cat $tmpout | sort -k2n |tr -d '\015' |awk -F ':' '{ print $1 "\t" $2 "\t" strftime("%a %b %e %H:%M:%S %Z %Y", $2) " (=" systime()-$2 " seconds ago)"; }' |column -s $'\t' -t >$tmpout2
+      today=`date +'%h %_d|%h %_d %H'`
+      egrep --color=always "^|${today}|.*=[1-9](.|..|...) seconds ago" $tmpout2
+    else
+      cat $tmpout | sort -k2n | xargs -I{} sh -c 'echo -n "{} : " ; date -d "@$(echo {} | awk '\''{ print $2 }'\'')"' |sed -e 's/: /|/g' | column -t -s'|' | sed -e 's/^/  /' >$tmpout2
+      today=`date +'%h %_d|%h %_d %H'`
+      egrep --color=always "^|${today}" $tmpout2
+    fi
   fi
   ahtsep
 }
