@@ -207,7 +207,7 @@ then
     NR==1 {
       names["Acquia Cloud Enterprise"] = "ace"
       names["Acquia Cloud"] = "ac"
-      names["Network"] = "network"
+      names["Acquia Network"] = "network"
       names["SMB Gardens"] = "smb"
       names["WMG Gardens"] = "wmg"
       names["UMG Gardens"] = "umg"
@@ -305,6 +305,12 @@ fi
 
 # Get firstweb
 web=`ahtaht ssh hostname`
+if [ ${web:-x} = x ]
+then
+  echo "${COLOR_RED}Can't SSH into web: you are probably not part of the team, or don't have SSH permission."
+  echo "Exiting!${COLOR_NONE}"
+  exit 1
+fi
 echo "First web: $web"
 
 # Get the domain for the servers
