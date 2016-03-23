@@ -266,7 +266,7 @@ fi
 
 # Attempt to get the site information
 # On failure, assume sitename exists on various stages and one needs to be picked.
-echo | aht --no-ansi $STAGE @$SITENAME s:i $load_arg 2>&1 |tr -d '\015' >$tmpout2
+echo | aht --no-ansi $STAGE @$SITENAME sitegroup:info $load_arg 2>&1 |tr -d '\015' >$tmpout2
 if [ `grep -c "Could not find sitegroup" $tmpout2` -gt 0 ]
 then
   echo "${COLOR_RED}Can't get basic site information.${COLOR_NONE}"

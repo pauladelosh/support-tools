@@ -75,7 +75,7 @@ function ahtslowquerydigest() {
 
 # Get the name(s) of the active balancer(s)
 function ahtgetactivebals() {
-  ahtaht --show=bal |grep ' bal-' | awk '$3+0 > 0 { print $1 }'
+  ahtaht sitegroup:info --show=bal |grep ' bal-' | awk '$3+0 > 0 { print $1 }'
 }
 
 # Returns the name of the first web
@@ -298,7 +298,7 @@ function test_xfs_freeze() {
 # Get PHP memory limit
 function test_php_memory_limit() {
   echo "Checking memory limits/use:"
-  ahtaht ini-grep memory_limit |egrep --color=always "^|[2-9][0-9][0-9][0-9]*"
+  ahtaht php:ini-grep memory_limit |egrep --color=always "^|[2-9][0-9][0-9][0-9]*"
   ahtsep
 }
 
@@ -365,14 +365,14 @@ function test_nginx_max_conn() {
 function test_varnish_stats() {
   days=5
   echo "Varnish cached/uncached statistics for last $days days:"
-  ahtaht stats --start=-${days}days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
+  ahtaht hosting:stats --start=-${days}days --end=now --csv | awk -F',' 'BEGIN { OFS=","; uncached_ratio_bad=0.075 } NR==1 { print $0 } (NR>1 && $4>0) { if (($5/$4) > uncached_ratio_bad) { $5 = "'$COLOR_RED'" $5 "'$COLOR_NONE'"; } print $0 } END { if (NR==1) { print "No_data.";   } }' |column -t -s','
   ahtsep
 }
 
 #PHP-CGI Check process limit settings
 function test_phpcgi_procs() {
   echo "Checking PHP-CGI proc limits/status:"
-  ahtaht php-cgi --conf |grep -v defunct |awk '
+  ahtaht php:list-cgi-procs -cgi --conf |grep -v defunct |awk '
     function alert(value, flag) {
       #return (flag ? "'$COLOR_RED'" : "") value "'$COLOR_NONE'";
       return value (flag ? "⚠warn!" : "");
@@ -441,7 +441,7 @@ function test_phpfpm_procs() {
       print server " " max_docroot " " alert(docroot_running, docroot_running>=max_docroot) " " alert(free_mem, free_mem/total_mem <0.2) "MB " total_mem "MB";
     }' |column -t
   echo ""
-  ahtaht2 procs
+  ahtaht2 php:procs
   ahtsep
 }
 
@@ -501,7 +501,7 @@ function test_phpfpm_errors() {
 # Check DNS is pointing at Acquia.
 function test_dns() {
   echo "Checking domains against DNS:"
-  ahtaht dc |sort -k 3,3 |egrep --color=always "^|not pointing at Acquia|No DNS entry" >$tmpout
+  ahtaht domains:check |sort -k 3,3 |egrep --color=always "^|not pointing at Acquia|No DNS entry" >$tmpout
   ahtcatnonempty $tmpout "${COLOR_RED}No domains configured.${COLOR_NONE}"
   ahtsep
 }
@@ -511,7 +511,7 @@ function test_tasks() {
   days=5
   echo "Last $days days' workflow messages:"
   today=`date -u +'%Y-%m-%d|%Y-%m-%d %H'`
-  ahtaht tasks --days=$days --limit=50 --all |egrep --color=always -i "^|db-migrate|purge-domain|save.site_config_setting|php.ini|code-push|Prod|commit|elevate code|reboot|$today" >$tmpout
+  ahtaht task:list --days=$days --limit=50 --all |egrep --color=always -i "^|db-migrate|purge-domain|save.site_config_setting|php.ini|code-push|Prod|commit|elevate code|reboot|$today" >$tmpout
   ahtcatnonempty $tmpout "${COLOR_GREEN}No messages found in last $days days."
   ahtsep
 }
@@ -870,7 +870,7 @@ function test_cacheflushes() {
 
 function test_phpla() {
   echo "Looking at PHP queue (Q-time) and execution (P-time) times:"
-  ahtaht2 la --type=drupal-requests --by=ten-min
+  ahtaht2 log-analysis --type=drupal-requests --by=ten-min
   ahtsep
 }
 
