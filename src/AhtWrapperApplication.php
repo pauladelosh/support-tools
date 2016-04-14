@@ -34,6 +34,9 @@ final class AhtWrapperApplication extends Application
     /** @var string $originalCommand The executable which invoked this class */
     private $originalCommand = 'aht';
 
+    /** @var bool $doAutocomplete If true, will make an tab-completion request */
+    private $doAutocomplete = false;
+
     /** @var bool $doCache If true, will cache the request */
     private $doCache = false;
 
@@ -102,7 +105,16 @@ final class AhtWrapperApplication extends Application
                 );
             }
             $command = $this->buildSshCommand();
-            $this->executionContext->passthru($command, $returnCode);
+            if ($this->doAutocomplete) {
+                // We use exec here to strip the extra ^M off
+                $this->executionContext->exec($command, $output, $error, $returnCode);
+                foreach (preg_split('#[\r\n]+#', $output) as $completion) {
+                    echo "{$completion}\n";
+                }
+            }
+            if (!$this->doAutocomplete) {
+                $this->executionContext->passthru($command, $returnCode);
+            }
         } catch (\Exception $e) {
             if ($this->output instanceof ConsoleOutputInterface) {
                 $this->renderException($e, $this->output->getErrorOutput());
@@ -192,6 +204,8 @@ final class AhtWrapperApplication extends Application
                 unset($arguments[$arg_key]);
             } else if ($tmp_arg == '--autocomplete') {
                 $this->doCache = true;
+                $this->doAutocomplete = true;
+                $arguments[$arg_key] = 'meta:tab-completion';
             } else if (preg_match('|\s|', $tmp_arg)) {
                 $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
             } else if (strpos($tmp_arg, '&') !== false) {
@@ -297,6 +311,26 @@ final class AhtWrapperApplication extends Application
         // Add client-version to options
         if (preg_match('/^[a-z0-9.+-]+$/', $this->supportToolsVersion, $matches)) {
             $ahtOptions[] = "--client-tools-version={$matches[0]}";
+        }
+
+        if ($this->doAutocomplete) {
+            $contents = 'aht';
+            if (getenv('COMP_LINE')) {
+                $contents = getenv('COMP_LINE');
+            } elseif (getenv('CMDLINE_CONTENTS')) {
+                $contents = getenv('CMDLINE_CONTENTS');
+            }
+            $contents = urlencode($contents);
+            $ahtOptions[] = "--cmdline-contents=\"{$contents}\"";
+
+            $index = 4;
+            if (getenv('COMP_POINT')) {
+                $index = getenv('COMP_POINT');
+            } elseif (getenv('CMDLINE_CURSOR_INDEX')) {
+                $index = getenv('CMDLINE_CURSOR_INDEX');
+            }
+            $index = urlencode($index);
+            $ahtOptions[] = "--cmdline-cursor-index=\"{$index}\"";
         }
 
         return $ahtOptions;

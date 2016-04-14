@@ -100,7 +100,7 @@ function bastion { mywik2 "$@" ; }' >> $ah_profile_file
         echo "
 # set ahtools autocomplete
 if [[ "$(basename ${SHELL})" = "bash" ]]; then
-  complete -W '\$($DIR/bin/aht --autocomplete)' aht
+  source "$DIR/lib/autocomplete.bash"
 fi
 " >> $ah_profile_file
     fi
