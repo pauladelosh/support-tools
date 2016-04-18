@@ -230,7 +230,7 @@ fi
 if [[ ${RA_AUDIT_UPDCMD} == "true" ]]; then
 echo "=========="
 #egrep -w $RA_PROACTIVE_UPDATES /tmp/ra-audit-updates.tmp | egrep -v 'Installed-version-not-supported|SECURITY-UPDATE-available' | sort | uniq | sed -e "s/^/$RA_AUDIT_VCS-auto-mupdate /" -e "s/[^\ ]*$/$RA_AUDIT_TICKNUM/"
-echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available" | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM/"
+echo "$audit" | egrep -w ${RA_PROACTIVE_UPDATES} | egrep -v "Installed version not supported|SECURITY UPDATE available|Checking available update" | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM/"
 echo "$audit" | egrep -w ${RA_UNSUPPORTED_EXCEPTIONS} | egrep "Installed version not supported" | sort | uniq | awk '{print $1, $2, $3}' | sed -e "s/^\(.*\)/ra-auto-mupdate \1 $RA_AUDIT_TICKNUM/"
 fi
 echo
