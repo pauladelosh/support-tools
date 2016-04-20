@@ -79,65 +79,115 @@ function ra-up-logged { mkdir -p ~/ra-up_logs; drush8 ra-up prod:$1 $2 2>&1 | te
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
 
-# Help
-alias ra-help='ratools-help'
-function ratools-help {
-echo ""
-echo "Remote Administration Scripts Help:"
-echo ""
-echo "1.  RA Audit: ra-audit @<docroot>.<environment>"
-echo "  -c <ticket number> to generate update commands"
-echo "  -p <dc/mc/ac/ace> to specify hosting platform"
-echo "2.  Unless otherwise specified, commands can be run from docroot level of repo."
-echo "3.  Initialize Repo and Branch:"
-echo "  ra-init-repo @<docroot>.<environment> <source_tag> <branch_name>"
-echo "  ra-init-repo @<docroot>.<environment> <branch_name> (This will pull the source_tag from the environment)"
-echo "  example: ra-init-repo @radash.prod master acqUpd-20140307-23456"
-echo "4.  Update functions:"
-echo "  Quick check of site distribution, version and install profile: dvpcheck @<docroot>.<environment>"
-echo "  Core Update:"
-echo "    ra-cupdate <distribution> <source version> <target version> <ticket number>"
-echo "    Requires installation of patches (see: https://github.com/acquiacat/Drupal-Core-Git-Patches)"
-echo "    example: ra-cupdate drupal 7.24 7.26 23456"
-echo "  Automatic Module Update:"
-echo "    ra-auto-mupdate <module> <source version> <target version> <ticket number>"
-echo "    add --security to mark as a security update"
-echo "    Diff will be run against source_version with option to stop update"
-echo "    example: ra-auto-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security"
-echo "  Module Update:"
-echo "    ra-mupdate <module> <source version> <target version> <ticket number>"
-echo "    Must be run from within containing module folder"
-echo "    add --security to mark as a security update"
-echo "    example: ra-mupdate ctools 7.x-1.2 7.x-1.4 23456 --security"
-echo "  Add New Module:"
-echo "    ra-mupdate-add <module> <version> <ticket number>"
-echo "    example: ra-mupdate-add ctools 7.x-1.4 23456"
-echo "  Revert Module:"
-echo "    ra-mupdate-rev <module> <source version> <target version> <ticket number>"
-echo "    Must be run from within containing module folder"
-echo "    example: ra-mupdate-rev ctools 7.x-1.4 7.x-1.2 23456"
-echo "  Fix settings.php files for the Search Apocalypse: "
-echo "    ra-searchpocolypse <ticket number>"
-echo "    example: ra-searchpocolypse 12345"
-echo "5. RA environment related functions: "
-echo "  Copy domains to the RA environment: "
-echo "    ra-copy-domains @<docroot>.<environment> <optional sed command>"
-echo "    This command will copy all domains to RA with the prefix 'ra.'"
-echo "    If you would prefer a different naming scheme, add a sed command."
-echo "    example: ra-copy-domains @<docroot>.<environment>"
-echo "    example: ra-copy-domains @<docroot>.<environment> s/site.com/dev-ra.site.com/"
-echo "  Download the stage_file_proxy module on the RA environment: "
-echo "    ra-download-file-proxy @<docroot>"
-echo "    example: ra-download-file-proxy @radash"
-echo "  Enable and configure the stage_file_proxy module on the RA environment: "
-echo "    ra-enable-file-proxy @<docroot>"
-echo "    example: ra-enable-file-proxy @radash"
-echo "  Remove the stage_file_proxy module on the RA environment: "
-echo "    ra-remove-file-proxy @<docroot>"
-echo "    example: ra-remove-file-proxy @radash"
-echo ""
-}
+#Set fonts for Help.
+NORM=`tput sgr0`
+BOLD=`tput bold`
+REV=`tput smso`
 
+function ratools-help () {
+    printf "\n NOTE: Unless otherwise specified, commands should be run from docroot level of repo."
+
+while  :; do
+  case "$1" in
+    1 | ra-audit) printf '\n\n RA-AUDIT HELP:'
+    printf '\n\n Returns information about a site including a list of available core and contrib updates'
+    printf '\n\n USAGE: ra-audit @docroot.env <option>'
+    printf '\n -c <ticket number> to generate update commands'
+    printf '\n -p <dc/mc/ac/ace> to specify hosting platform'
+    printf '\n\n'
+    break ;;
+
+    2 | ra-init-repo) printf '\n\n RA-INIT-REPO HELP:'
+    printf '\n\n Checks out the repo for a customer site. Also creates and checks out a new branch.'
+    printf '\n Run this command in the directory where all of your client site code is located.'
+    printf '\n\n USAGE: ra-init-repo @docroot.env new_branch_name'
+    printf '\n OR: ra-init-repo @docroot.env source_tag_name new_branch_name'
+    printf '\n\n'
+    break ;;
+
+    3 | ra-cupdate) printf '\n\n RA-CUPDATE HELP:'
+    printf '\n\n Updates Drupal Core by applying patches located in ~/Sites/releases/version-patches directory.'
+    printf '\n Requires installation of patches (see: https://github.com/acquiacat/Drupal-Core-Git-Patches)'
+    printf '\n\n USAGE: ra-cupdate starting_distribution target_distribution starting_version target version ticket'
+    printf '\n\n'
+    break ;;
+
+    4 | ra-auto-mupdate) printf '\n\n RA-AUTO-MUPDATE HELP:'
+    printf '\n\n Locates all instances of a module in the repo and removes the old version replacing it with the target version.'
+    printf '\n Remove the \"--security\" flag for non-security updates.'
+    printf '\n\n USAGE: ra-auto-mupdate module starting_version target_version ticket --security'
+    printf '\n\n'
+    break ;;
+
+    5 | ra-mupdate) printf '\n\n RA-MUPDATE HELP:'
+    printf '\n Removes the old version of a module and replaces it with the target version.'
+    printf '\n Only finds modules in the same directory or subdirectories that the command is run in.'
+    printf '\n\n USAGE: ra-mupdate module starting_version target_version ticket'
+    printf '\n\n'
+    break ;;
+
+    6 | ra-mupdate-add) printf '\n\n RA-MUPDATE-ADD HELP:'
+    printf '\n Adds a module that was not previously installed in the directory or subdirectory that the command is run in.'
+    printf '\n\n USAGE: ra-mupdate-add module target_version ticket'
+    printf '\n\n'
+    break ;;
+
+    7 | ra-mupdate-rev) printf '\n\n RA-MUPDATE-REV HELP:'
+    printf '\n Installs a previous version of an existing module in the directory or subdirectory that the command is run in.'
+    printf '\n\n USAGE: ra-mupdate-rev module current_version target_version ticket'
+    printf '\n\n'
+    break ;;
+
+    8 | ra-searchpocolypse) printf '\n\n RA-SEARCHPOCOLYPSE HELP:'
+    printf '\n Updates search related settings in all multisite settings.php files in a client repo.'
+    printf '\n\n USAGE: ra-searchpocolypse ticket'
+    printf '\n\n'
+    break ;;
+
+    9 | ra-copy-domains) printf '\n\n RA-COPY-DOMAINS HELP:'
+    printf '\n Copies the domains from a specified environment and creates an RA environment equivalent.'
+    printf '\n Optional sed queries can be included to fine tune the resulting domains that are created for RA.'
+    printf '\n\n USAGE: ra-copy-domains @docroot.env'
+    printf '\n OR: ra-copy-domains @docroot.env s/find/replace/'
+    printf '\n\n'
+    break ;;
+
+    10 | ra-download-file-proxy) printf '\n\n RA-DOWNLOAD-FILE-PROXY HELP:'
+    printf '\n Downloads the stage_file_proxy module to a site that is deployed on the RA environment.'
+    printf '\n\n USAGE: ra-download-file-proxy @docroot'
+    printf '\n\n'
+    break ;;
+
+    11 | ra-enable-file-proxy) printf '\n\n RA-ENABLE-FILE-PROXY HELP:'
+    printf '\n Enables and configures the stage_file_proxy module to a site that is deployed on the RA environment.'
+    printf '\n\n USAGE: ra-enable-file-proxy @docroot'
+    printf '\n\n'
+    break ;;
+
+    12 | ra-remove-file-proxy) printf '\n\n RA-REMOVE-FILE-PROXY HELP:'
+    printf ' Removes the stage_file_proxy module from a site that is deployed on the RA environment.'
+    printf '\n\n USAGE: ra-remove-file-proxy @docroot'
+    break ;;
+
+    *) printf '\n\n USAGE:'
+       printf '\n ratools-help <option>'
+       printf '\n\n 1) ra-audit'
+       printf '\n 2) ra-init-repo'
+       printf '\n 3) ra-cupdate'
+       printf '\n 4) ra-auto-mupdate'
+       printf '\n 5) ra-mupdate'
+       printf '\n 6) ra-mupdate-add'
+       printf '\n 7) ra-mupdate-rev'
+       printf '\n 8) ra-searchpocolypse'
+       printf '\n 9) ra-copy-domains'
+       printf '\n 10) ra-download-file-proxy'
+       printf '\n 11) ra-enable-file-proxy'
+       printf '\n 12) ra-remove-file-proxy'
+       printf '\n\n'
+    break;;
+  esac
+done
+}
 # Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
 function dvpcheck { aht $1 drush8 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush8 vget install_profile; }
 
