@@ -178,9 +178,9 @@ function test_email_volume() {
 # Check that all webs have the same code deployed
 function test_code_deploy() {
   folder="/var/www/html/$sitefoldername"
-  echo "Checking deployed code across every webserver in $folder"
+  echo "Checking deployed code across every webserver (including out-of-rotation webs) in $folder"
   cat /dev/null >$tmpout
-  for web in $webs
+  for web in $webs_raw
   do
     echo "$web: " `ahtssh2 $web "find $folder -maxdepth 4 -type d |wc -l"` >>$tmpout
   done
@@ -738,18 +738,7 @@ EOF
   ahtsep
 
   echo "Showing largest database tables:"
-  cat <<EOF |ahtdrush sql-cli >$tmpout
-SELECT CONCAT(table_schema, '.', table_name) as Table_name,
-CONCAT(ROUND(table_rows / 1000000, 2), 'M') rows,
-CONCAT(ROUND(data_length / ( 1024 * 1024 * 1024 ), 2), 'G') DATA,
-CONCAT(ROUND(index_length / ( 1024 * 1024 * 1024 ), 2), 'G') idx,
-CONCAT(ROUND(( data_length + index_length ) / ( 1024 * 1024 * 1024 ), 2), 'G') total_size,
-ROUND(index_length / data_length, 2) idxfrac
-FROM information_schema.TABLES
-ORDER BY data_length + index_length DESC
-LIMIT 10;
-EOF
-  cat $tmpout |column -t |awk '{ print "  " $0 }' |egrep --color=always '^| [1-9][0-9]*\.[0-9][0-9][MG]'
+  ahtaht db:size --num-tables=10 |egrep --color=always '^| [1-9][0-9][0-9][0-9]*\.[0-9][0-9] MB|\| [0-9]{4,20} \|'
   ahtsep
 
   # Cache_form entries...
