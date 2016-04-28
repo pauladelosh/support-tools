@@ -1,0 +1,25 @@
+repos:
+    acquia/acquia-cli: {}
+    acquia/acquibot-plugins-support: {}
+    acquia/acquia-xml-rpc-client: {}
+    acquia/cso-system-integration: {}
+    acquia/ops-api-client-php: {}
+    acquia/support-cci-client: {}
+    acquia/support-cli: {}
+    acquia/support-docs: {}
+    acquia/support_keys: {}
+    acquia/support-strace-training: {}
+    acquia/Support-Tools: {}
+    acquia/zendesk-status-alerts: {}
+    acquia/acquibot: {}
+    acquia/support-dashboard: {}
+    acquia/support-drupal8-examples: {} # (discontinued?)
+    acquia/support-hubot: {} # (discontinued?)
+    acquia/support-jira-app-for-zendesk: {} # (discontinued?)
+    acquia/support-ticket-sla: {}
+    acquia/support-zendesk-conditional-fields-plugin: {}
+    acquia/support-zendesk-hide-comments: {}
+    acquia/support-zendesk-root-cause-plugin: {}
+    acquia/support-zendesk-tag-updater: {}
+    acquia/zendesk-suspended-agent-admin-search: {}
+    acquia/zendesk-toggl-time-tracker: {}

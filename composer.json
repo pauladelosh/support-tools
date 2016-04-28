@@ -16,6 +16,7 @@
         }
     },
     "require": {
-        "symfony/console": "~2.5"
+        "symfony/console": "~2.5",
+        "symfony/yaml": "^3.0"
     }
 }
