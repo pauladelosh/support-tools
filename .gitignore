@@ -4,3 +4,4 @@ ratools/rascans/csv/*
 .DS_Store
 */.idea
 /vendor/**/Tests
+code-review.yml
