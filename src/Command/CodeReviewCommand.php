@@ -195,7 +195,11 @@ class CodeReviewCommand extends Command
                 );
                 $labels = '';
                 foreach ($issue->labels as $label) {
-                    $labels .= sprintf("<comment>[%s]</comment>", $label->name);
+                    $style = [];
+                    foreach ($this->getLabelStyleProperties($label->color) as $key => $value) {
+                        $style[] = sprintf('%s=%s', $key, $value);
+                    }
+                    $labels .= sprintf("<%s> %s </> ", implode($style, ';'), $label->name);
                 }
                 if (!empty($labels)) {
                     $output->writeln(
@@ -289,5 +293,46 @@ class CodeReviewCommand extends Command
         }
 
         return $repos;
+    }
+
+    /**
+     * Return an array of style properties (foreground and background colors)
+     * to apply to console output. The provided hex value is matched to the
+     * available Symfony console default colors based on RGB values.
+     *
+     * @param string $hexColor The hex value for the label color.
+     *
+     * @return array The style properties.
+     */
+    private function getLabelStyleProperties($hexColor)
+    {
+        $consoleStyle = [];
+        $consoleColors = [
+            'black' => [0, 0, 0],
+            'red' => [255, 0, 0],
+            'green' => [0, 255, 0],
+            'yellow' => [255, 255, 0],
+            'blue' => [92, 92, 255],
+            'magenta' => [255, 0, 255],
+            'cyan' => [0, 255, 255],
+            'white' => [255, 255, 255],
+        ];
+
+        // Convert hex color value to RGB.
+        list($r, $g, $b) = array_map('hexdec', str_split($hexColor, 2));
+
+        // Compare the "distance" of the RGB values.
+        foreach ($consoleColors as $color => $rgb) {
+            $distance = sqrt(pow(($r - $rgb[0]), 2) + pow(($g - $rgb[1]), 2) + pow(($b - $rgb[2]), 2));
+            if (!isset($closest) || ($distance < $closest)) {
+                $closest = $distance;
+                $consoleStyle['bg'] = $color;
+            }
+        }
+
+        // Set foreground color for better contrast.
+        $consoleStyle['fg'] = (in_array($consoleStyle['bg'], ['yellow', 'green', 'white'])) ? 'black' : 'white';
+
+        return $consoleStyle;
     }
 }
