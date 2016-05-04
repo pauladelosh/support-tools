@@ -142,7 +142,7 @@ class CodeReviewCommand extends Command
 
         if (!$token) {
             $helper = $this->getHelper('question');
-            $question = new Question('What is your Github token?');
+            $question = new Question('What is your Github token? ');
             $token = $helper->ask($input, $output, $question);
             @mkdir($tokenDir);
             file_put_contents($tokenFile, $token);
