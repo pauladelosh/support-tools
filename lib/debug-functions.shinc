@@ -211,6 +211,17 @@ function catalogVars()
 }
 
 #
+#  Log the contents of the user's .ssh directory
+#
+function catalogConfig()
+{
+    shellLog "--CONFIG--"
+    shellLog "$(aht --no-ansi config --list 2>&1)"
+
+    return 0
+}
+
+#
 #  Returns a list of files under the given directory which are private keys
 #
 function listPrivateKeys()
