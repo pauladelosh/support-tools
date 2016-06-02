@@ -38,9 +38,11 @@ expect {
 }
 expect {
     "Enter passphrase: " {
-        send_user "Password incorrect.\n"
+        send_user "WiKID passphrase incorrect.\n"
         stty -echo
-        send_user "SSH Password: "
+        send_user "It appears your SSH password and WiKID passphrase are different; consider using mywik2.sh instead.\n"
+        stty -echo
+        send_user "WiKID passphrase: "
         set timeout -1
         expect_user -re "(.*)\n"
         send_user "\n"
