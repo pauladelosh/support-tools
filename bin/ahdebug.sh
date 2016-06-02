@@ -21,6 +21,7 @@ function debug_main()
         catalogPublicKeys
         catalogBastionFunction
         catalogShellSourcing
+        catalogConfig
     )
 
     for (( i=0; i<${#SCRIPT_TASKS[@]}; ++i )) do
