@@ -7,7 +7,6 @@ repos:
     acquia/support-cci-client: {}
     acquia/support-cli: {}
     acquia/support-docs: {}
-    acquia/support_keys: {}
     acquia/support-strace-training: {}
     acquia/Support-Tools: {}
     acquia/zendesk-status-alerts: {}
