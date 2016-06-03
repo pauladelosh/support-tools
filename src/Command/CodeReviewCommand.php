@@ -188,9 +188,10 @@ class CodeReviewCommand extends Command
                 }
                 $output->writeln(
                     sprintf(
-                        "<comment>% 4s - %s</comment>",
+                        "<comment>% 4s - %s</comment> (%s)",
                         $issue->number,
-                        $issue->title
+                        $issue->title,
+                        $issue->user->login
                     )
                 );
                 $labels = '';
