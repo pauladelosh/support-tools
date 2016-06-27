@@ -9,6 +9,7 @@ repos:
     acquia/support-docs: {}
     acquia/support-strace-training: {}
     acquia/Support-Tools: {}
+    acquia/supportcomm: {}
     acquia/zendesk-status-alerts: {}
     acquia/acquibot: {}
     acquia/support-dashboard: {}
