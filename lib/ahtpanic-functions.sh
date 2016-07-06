@@ -719,8 +719,15 @@ NR<=10 {
 
 # Check DB size
 function test_dbsize() {
-  echo "Showing DB data use:"
-  cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }'
+  echo "Showing largest database tables:"
+  echo "" |aht $STAGE @$SITENAME $URI db:size --num-tables=10 >$tmpout 2>/dev/null
+  if [ `grep -c "IMPORTANT: You are" $tmpout` -eq 0 ]
+  then
+    egrep --color=always '^| [1-9][0-9][0-9][0-9]*\.[0-9][0-9] MB|\| [0-9]{5,20} \|' $tmpout
+    ahtsep
+    
+    echo "Showing DB data use:"
+    cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }'
 SELECT IFNULL(B.engine,'Total') "Storage Engine",
 CONCAT(LPAD(REPLACE(FORMAT(B.DSize/POWER(1024,pw),3),',',''),17,' '),' ',
 SUBSTR(' KMGTP',pw+1,1),'B') "Data Size", CONCAT(LPAD(REPLACE(
@@ -735,23 +742,23 @@ information_schema.tables WHERE table_schema NOT IN
 engine IS NOT NULL GROUP BY engine WITH ROLLUP) B,
 (SELECT 3 pw) A ORDER BY TSize;
 EOF
-  ahtsep
-
-  echo "Showing largest database tables:"
-  ahtaht db:size --num-tables=10 |egrep --color=always '^| [1-9][0-9][0-9][0-9]*\.[0-9][0-9] MB|\| [0-9]{4,20} \|'
-  ahtsep
-
-  # Cache_form entries...
-  echo "Showing largest cache_form entries from database:"
-  if [ `egrep -c '\.cache_form *[1-9]' $tmpout` -gt 0 ]
-  then
-    echo "  ${COLOR_YELOW}Skipping cache_form table report, because table has >1M items.${COLOR_NONE}";
-  else
-    cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^.*'
+    ahtsep
+    
+      # Cache_form entries...
+    echo "Showing largest cache_form entries from database:"
+    if [ `egrep -c '\| cache_form .*\| [0-9]{5,20} *\|' $tmpout` -gt 0 ]
+    then
+      echo "  ${COLOR_YELOW}Skipping this report, because cache_form table has >10,000 items.${COLOR_NONE}";
+    else
+      cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^.*'
 SELECT concat(length(data)/1048576, "MB") AS Size, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY Size desc LIMIT 5;
 EOF
+    fi
+    ahtsep
+  else
+    echo "  ${COLOR_YELLOW}Skipping check because site has too many databases.${COLOR_NONE}"
+    ahtsep
   fi
-  ahtsep
 }
 
 function test_ahtaudit() {
