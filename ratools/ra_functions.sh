@@ -74,7 +74,7 @@
 RATOOLS_VERSION="Build 0011 (2015-07-07)"
 
 # Wrapper to log ra-up data to log file
-function ra-up-logged { mkdir -p ~/ra-up_logs; drush7 ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; }
+function ra-up-logged { mkdir -p ~/ra-up_logs; drush8 ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; }
 
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
@@ -139,7 +139,13 @@ echo ""
 }
 
 # Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-function dvpcheck { aht $1 drush7 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush7 vget install_profile; }
+function dvpcheck {
+	if [[  `aht $1 drush8 status --fields=drupal-version | sed -E 's/^.{21}//'` < "7.0.0" ]]; then
+	   aht $1 drush8 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush8 vget install_profile;
+	else
+	   aht $1 drush8 status --fields=drupal-version,install-profile
+	fi
+}
 
 # RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform)
 function ra-audit {
@@ -175,11 +181,15 @@ while getopts ":p:c:" opt; do
   esac
 done
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
-aht ${DOCROOT} drush7 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht ${DOCROOT} drush7 vget install_profile
+if [[  `aht ${DOCROOT} drush8 status --fields=drupal-version | sed -E 's/^.{21}//'` < "7.0.0" ]]; then
+   aht ${DOCROOT} drush8 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+   aht ${DOCROOT} drush8 vget install_profile
+else
+   aht ${DOCROOT} drush8 status --fields=drupal-version,install-profile
+fi
 echo
 echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
-aht ${DOCROOT} drush7 status
+aht ${DOCROOT} drush8 status
 echo
 echo -e "\033[1;33;148m[ Current Deployed Code ]\033[39m"; tput sgr0
 echo -n "dev:   "; aht `echo ${DOCROOT} | cut -f2 -d "'" | cut -f1 -d "."`.dev repo
@@ -194,7 +204,7 @@ echo -e "\033[1;33;148m[ Checking for Update Warnings/Errors ]\033[39m"; tput sg
 audit=""
 for site in `aht ${DOCROOT} application:sites | grep -v \> | tr -d "\r"`; do
   echo ${site}
-  current_audit=`aht ${DOCROOT} drush7 pm-updatestatus --format=csv '--list-separator= ' --fields=name,existing_version,candidate_version,status_msg --uri=${site}`
+  current_audit=`aht ${DOCROOT} drush8 pm-updatestatus --format=csv '--list-separator= ' --fields=name,existing_version,candidate_version,status_msg --uri=${site}`
   audit+="$current_audit"
   audit+=$'\n'
   echo "$current_audit" | if egrep 'warning|error'; then :; else echo -e "\033[0;32;148mnone\033[39m"; tput sgr0; fi; echo;
@@ -297,7 +307,7 @@ function ra-init-repo {
   else
   site=$1
   fi
-  if (yes 1 | aht ${site} site:info | grep -q Please); then
+  if (yes 1 | aht ${site} application:info | grep -q Please); then
   echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
     echo "Example: ra-init-repo --mc $site source_tag target_branch"
     return
@@ -962,7 +972,7 @@ function ra-disable-securepages {
     echo "# Usage: ra-disable-securepages @docroot.env"
     return
   fi
-  if [[ `aht $1 site:info` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1 application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
   fi
@@ -970,7 +980,7 @@ function ra-disable-securepages {
   # A loop of all sites is used instead of drush @sites, due to issues with that alias when
   #  using aht.
   for site in `aht $1 application:sites | grep -v \>`; do
-     aht $1 drush7 dis securepages -y -l "${site//[[:space:]]/}"
+     aht $1 drush8 dis securepages -y -l "${site//[[:space:]]/}"
   done
 }
 
@@ -980,7 +990,7 @@ function ra-download-file-proxy {
     echo "# Usage: ra-download-file-proxy @docroot"
     return
   fi
-  server_command=`aht $1.ra site:info`
+  server_command=`aht $1.ra application:info`
   if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
@@ -989,7 +999,7 @@ function ra-download-file-proxy {
   docroot=$(echo "$1" | sed 's/@//')
   echo "About to download stage_file_proxy on $server for $docroot.ra..."
   read -p "Press enter to continue or CTRL+c to quit "
-  ssh ${server} sudo drush7 dl stage_file_proxy --root=/var/www/html/${docroot}.ra/docroot
+  ssh ${server} sudo drush8 dl stage_file_proxy --root=/var/www/html/${docroot}.ra/docroot
 }
 
 # Removes the stage_file_proxy module the RA environment.
@@ -998,7 +1008,7 @@ function ra-remove-file-proxy {
     echo "# Usage: ra-remove-file-proxy @docroot"
     return
   fi
-  server_command=`aht $1.ra site:info`
+  server_command=`aht $1.ra application:info`
   if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
@@ -1015,7 +1025,7 @@ function ra-enable-file-proxy {
     echo "# Requires site to be in live-development"
     return
   fi
-  if [[ `aht $1.prod site:info` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1.prod application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
   fi
@@ -1023,17 +1033,17 @@ function ra-enable-file-proxy {
   sites=()
   domains=$(aht $1.prod domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
   for domain in $(echo "$domains"); do
-    conf_path=$(aht $1.prod drush ev 'print conf_path();' -l ${domain})
+    conf_path=$(aht $1.prod drush8 ev 'print conf_path();' -l ${domain})
     # either this isn't a working site, or we've already made an entry for this multisite
     if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" || "$conf_path" =~ "warning" ]]; then
       continue
     fi
     sites+=(${conf_path})
     echo "Setting up stage_file_proxy for $conf_path multisite..."
-    aht $1.ra drush7 vset stage_file_proxy_origin "http://$domain" -l ${domain}
-    aht $1.ra drush7 vset stage_file_proxy_origin_dir "$conf_path/files" -l ${domain}
-    aht $1.ra drush7 vset stage_file_proxy_use_imagecache_root TRUE -l ${domain}
-    aht $1.ra drush7 en stage_file_proxy -y -l ${domain}
+    aht $1.ra drush8 vset stage_file_proxy_origin "http://$domain" -l ${domain}
+    aht $1.ra drush8 vset stage_file_proxy_origin_dir "$conf_path/files" -l ${domain}
+    aht $1.ra drush8 vset stage_file_proxy_use_imagecache_root TRUE -l ${domain}
+    aht $1.ra drush8 en stage_file_proxy -y -l ${domain}
     echo ""
   done
 
@@ -1041,10 +1051,10 @@ function ra-enable-file-proxy {
   #  Drush will just point to the default site, so we may have ended up with a bogus file proxy
   #  after the loop execution.
   domain=$(echo "$domains" | tail -1)
-  aht $1.ra drush7 vset stage_file_proxy_origin "http://$domain" -l default
-  aht $1.ra drush7 vset stage_file_proxy_origin_dir "sites/default/files" -l default
-  aht $1.ra drush7 vset stage_file_proxy_use_imagecache_root TRUE -l default
-  aht $1.ra drush7 en stage_file_proxy -y -l default
+  aht $1.ra drush8 vset stage_file_proxy_origin "http://$domain" -l default
+  aht $1.ra drush8 vset stage_file_proxy_origin_dir "sites/default/files" -l default
+  aht $1.ra drush8 vset stage_file_proxy_use_imagecache_root TRUE -l default
+  aht $1.ra drush8 en stage_file_proxy -y -l default
 }
 
 # Transfer all databases from one environment to another, or a range of databases
@@ -1062,10 +1072,10 @@ function ra-transfer-databases {
     return
   fi
 
-  if [[ `aht $1.$2 site:info` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1.$2 application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment $1.$2"
     return
-  elif [[ `aht $1.$3 site:info` =~ "Could not find sitegroup" ]]; then
+  elif [[ `aht $1.$3 application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment $1.$3"
     return
   fi
