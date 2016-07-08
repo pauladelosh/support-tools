@@ -202,7 +202,7 @@ then
   else
     uri=`echo $URI |cut -f2 -d=`
     # Get a list of matching entries using aht find-domain, including stage and sitename
-    echo "No @sitename.env given, trying to resolve stage and sitename from $uri..."
+    echo "No @app.env given, trying to resolve realm and application name from $uri..."
     aht --no-ansi --stages=all fd $uri |awk -F' ' '
     NR==1 {
       names["Acquia Cloud Enterprise"] = "ace"
@@ -220,13 +220,13 @@ then
     then
       if [ `grep -c . $tmpout` -gt 1 ]
       then
-        echo "  Found more than one possible stage and sitename, using last one:"
+        echo "  Found more than one possible realm and application, using last one:"
         cat $tmpout
       fi
       . $tmpout
-      echo "  Using sitename $SITENAME, stage $STAGE"
+      echo "  Using application $SITENAME, realm $STAGE"
     else
-      echo "  Could not find site for URI $uri"
+      echo "  Could not find environment for URI $uri"
       exit 1
     fi
     ahtsep
@@ -256,24 +256,16 @@ SITENAME=`echo $SITENAME |cut -c2-`
 site=`echo $SITENAME |cut -f1 -d'.'`
 env=`echo $SITENAME |cut -f2 -d'.'`
 
-# Dump aht --inet output, highlight load avgs >= 1.00 AND c1.mediums
-if [ ${SINGLECHECK:-x} != 0 ]
+# Attempt to get the application information
+# On failure, assume application exists on multiple realms and one needs to be picked.
+echo | aht --no-ansi $STAGE @$SITENAME sitegroup:info 2>&1 |tr -d '\015' >$tmpout2
+if [ `grep -c "Could not find application named" $tmpout2` -gt 0 ]
 then
-  load_arg=""
-else
-  load_arg="--load"
-fi
-
-# Attempt to get the site information
-# On failure, assume sitename exists on various stages and one needs to be picked.
-echo | aht --no-ansi $STAGE @$SITENAME sitegroup:info $load_arg 2>&1 |tr -d '\015' >$tmpout2
-if [ `grep -c "Could not find sitegroup" $tmpout2` -gt 0 ]
-then
-  echo "${COLOR_RED}Can't get basic site information.${COLOR_NONE}"
-  echo "  Possibly, the sitename exists in several stages."
+  echo "${COLOR_RED}Can't get basic application information.${COLOR_NONE}"
+  echo "  Possibly, an application with that name exists on multiple realms."
   echo ""
   echo "  ${COLOR_YELLOW}Try adding --ace, --ac"
-  echo "   or call script with http://[domain] to automatically identify the stage.${COLOR_NONE}"
+  echo "   or call script with http://[domain] to automatically identify the realm.${COLOR_NONE}"
   echo ""
   echo "  Domains available:"
   for nom in ace ac
@@ -285,18 +277,17 @@ then
 fi
 
 # Highlight 'high' load averages
-cat $tmpout2 |egrep --color=always '^| [1-9]\.[0-9][0-9](,|$)| [1-9][0-9]\.[0-9][0-9](,|$)|c1.medium' >$tmpout
 if [ ${SINGLECHECK:-x} = 0 ]
 then
-  cat $tmpout
+  aht $STAGE @$SITENAME application:load
   ahtsep
 fi
 
-sitefoldername=`egrep --color=none -o "^\[$env: [0-9a-z_]*" $tmpout |awk -F': ' '{ print $2}'`
-echo "Internal Sitename: $sitefoldername"
+sitefoldername=`egrep --color=none -o "^\[$env: [0-9a-z_]*" $tmpout2 |awk -F': ' '{ print $2}'`
+echo "Environment Machine Name: $sitefoldername"
 
 # Detect FPM from the aht output.
-if [ `grep -c -- "-fpm" $tmpout` -gt 0 ]
+if [ `grep -c -- "-fpm" $tmpout2` -gt 0 ]
 then
   FPM_FLAG=1
 else
@@ -328,7 +319,7 @@ webs_raw=`egrep "srv-|web-|ded-|staging-" $tmpout2 |awk -F' ' 'NR==1 { show=1 } 
 devcloud=`echo $web |grep -c srv-`
 # livedev/not livedev
 # Detect FPM from the aht output.
-LIVEDEV_FLAG=`grep -c -- "LIVEDEV" $tmpout`
+LIVEDEV_FLAG=`grep -c -- "LIVEDEV" $tmpout2`
 
 ahtsep
 
