@@ -75,7 +75,7 @@ function ahtslowquerydigest() {
 
 # Get the name(s) of the active balancer(s)
 function ahtgetactivebals() {
-  ahtaht sitegroup:info --show=bal |grep ' bal-' | awk '$3+0 > 0 { print $1 }'
+  ahtaht application:info --type=bal |grep ' bal-' | awk '$3+0 > 0 { print $1 }'
 }
 
 # Returns the name of the first web
