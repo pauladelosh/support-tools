@@ -258,7 +258,7 @@ env=`echo $SITENAME |cut -f2 -d'.'`
 
 # Attempt to get the application information
 # On failure, assume application exists on multiple realms and one needs to be picked.
-echo | aht --no-ansi $STAGE @$SITENAME sitegroup:info 2>&1 |tr -d '\015' >$tmpout2
+echo | aht --no-ansi $STAGE @$SITENAME application:info 2>&1 |tr -d '\015' >$tmpout2
 if [ `grep -c "Could not find application named" $tmpout2` -gt 0 ]
 then
   echo "${COLOR_RED}Can't get basic application information.${COLOR_NONE}"
@@ -310,9 +310,9 @@ echo "Server_domain: $server_domain"
 
 # Get the webs. Note we ignore deds if we also have webs
 # ... without out-of-rotation webs
-webs=`egrep "srv-|web-|ded-|staging-" $tmpout2 |grep -v ' \*' |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
+webs=`egrep "srv-|web-|ded-|staging-|managed-" $tmpout2 |egrep -v ' (\*|†)' |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
 # ... with out-of-rotation webs
-webs_raw=`egrep "srv-|web-|ded-|staging-" $tmpout2 |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
+webs_raw=`egrep "srv-|web-|ded-|staging-|managed-" $tmpout2 |awk -F' ' 'NR==1 { show=1 } /web-/ { foundweb=1 } /ded-/ { if (foundweb==1) show=0 } show==1 { print $1 ".'$server_domain'" }'`
 #echo "Webs: $webs_raw"
 
 # devcloud/not devcloud
