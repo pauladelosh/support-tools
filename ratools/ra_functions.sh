@@ -608,6 +608,7 @@ if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
 if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
 if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return; fi
 if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && return; fi
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   then while true; do
@@ -906,6 +907,7 @@ if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
 if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
 if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return; fi
 if ls | grep -w $1; then echo "found $1"; else echo "$1 not found: exiting" && return; fi
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
