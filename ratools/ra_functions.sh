@@ -518,6 +518,7 @@ if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
 if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
 if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return; fi
 if svn info | grep URL | cut -f2 -d" " | xargs basename | grep -w trunk
   then while true; do
     read -p "WARNING: you are currently in trunk. Continue? (y/n) " yn
@@ -537,7 +538,7 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "vote_up_down" ]; then modname=vud
   elif [ $1 = "user_relationships" ]; then modname=user_relationship_blocks
   elif [ $1 = "ubercart" ]; then modname=uc_cart
-  elif [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return
+  # elif [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return
   else modname=$1
 fi
 for modinfopath in `find . -name ${modname}.info`
@@ -823,6 +824,7 @@ if [ -z "$1" ]; then echo "ERROR: missing module name; exiting" && return; fi
 if [ -z "$2" ]; then echo "ERROR: missing source version; exiting" && return; fi
 if [ -z "$3" ]; then echo "ERROR: missing target version; exiting" && return; fi
 if [ -z "$4" ]; then echo "ERROR: missing ticket number; exiting" && return; fi
+if [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return; fi
 if git status | grep branch | cut -f4 -d" " | grep -w master
   then while true; do
     read -p "WARNING: you are currently in master. Continue? (y/n) " yn
@@ -842,7 +844,7 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "vote_up_down" ]; then modname=vud
   elif [ $1 = "user_relationships" ]; then modname=user_relationship_blocks
   elif [ $1 = "ubercart" ]; then modname=uc_cart
-  elif [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return
+  # elif [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return
   else modname=$1
 fi
 for modinfopath in `find . -name ${modname}.info`
@@ -853,7 +855,6 @@ for modinfopath in `find . -name ${modname}.info`
       else modpath=`dirname $(dirname ${modinfopath})`
     fi
     if grep "version = \"$2\"" ${modinfopath} > /dev/null
-      echo $modpath/$1
       then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
           case ${yn} in
               [Yy]* ) cd ${modpath}
