@@ -73,6 +73,9 @@
 # DON'T FORGET TO UPDATE THIS WHEN PUSHING TO MASTER!!
 RATOOLS_VERSION="Build 0011 (2015-07-07)"
 
+# Wrapper to log ra-up data to log file
+function ra-up-logged { mkdir -p ~/ra-up_logs; drush8 ra-up prod:$1 $2 2>&1 | tee ~/ra-up_logs/$1_`date +"%Y-%m-%d_%s"`.log; }
+
 # Output date and build of current toolset
 alias ra-version='echo $RATOOLS_VERSION'
 
@@ -185,7 +188,13 @@ function ratools-help () {
 }
 
 # Quick check of site distribution, version and install profile (dvpcheck @<docroot>.<environment>)
-function dvpcheck { aht $1 drush8 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush8 vget install_profile; }
+function dvpcheck {
+	if [[  `aht $1 drush8 status --fields=drupal-version | sed -E 's/^.{21}//'` < "7.0.0" ]]; then
+	   aht $1 drush8 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'; aht $1 drush8 vget install_profile;
+	else
+	   aht $1 drush8 status --fields=drupal-version,install-profile
+	fi
+}
 
 # RA Update Audit (ra-audit @<docroot>.<environment> (add -c <ticket number> to generate update commands, -p <dc/mc/ac/ace> to specify hosting platform)
 function ra-audit {
@@ -221,8 +230,12 @@ while getopts ":p:c:" opt; do
   esac
 done
 echo -e "\033[1;33;148m[ Distribution, Version and Install Profile Check ]\033[39m"; tput sgr0
-aht ${DOCROOT} drush8 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
-aht ${DOCROOT} drush8 vget install_profile
+if [[  `aht ${DOCROOT} drush8 status --fields=drupal-version | sed -E 's/^.{21}//'` < "7.0.0" ]]; then
+   aht ${DOCROOT} drush8 php-eval 'echo (function_exists("drupal_page_cache_header_external") ? "Pressflow" : "Drupal") . " " . VERSION . "\n";'
+   aht ${DOCROOT} drush8 vget install_profile
+else
+   aht ${DOCROOT} drush8 status --fields=drupal-version,install-profile
+fi
 echo
 echo -e "\033[1;33;148m[ Drush Status (default site) ]\033[39m"; tput sgr0
 aht ${DOCROOT} drush8 status
@@ -343,7 +356,7 @@ function ra-init-repo {
   else
   site=$1
   fi
-  if (yes 1 | aht ${site} site:info | grep -q Please); then
+  if (yes 1 | aht ${site} application:info | grep -q Please); then
   echo "The site $site exists on more than one Acquia instance. Please use a --mc or --dc flag to select the correct instance for this site. "
     echo "Example: ra-init-repo --mc $site source_tag target_branch"
     return
@@ -1008,7 +1021,7 @@ function ra-disable-securepages {
     echo "# Usage: ra-disable-securepages @docroot.env"
     return
   fi
-  if [[ `aht $1 site:info` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1 application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
   fi
@@ -1026,7 +1039,7 @@ function ra-download-file-proxy {
     echo "# Usage: ra-download-file-proxy @docroot"
     return
   fi
-  server_command=`aht $1.ra site:info`
+  server_command=`aht $1.ra application:info`
   if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
@@ -1044,7 +1057,7 @@ function ra-remove-file-proxy {
     echo "# Usage: ra-remove-file-proxy @docroot"
     return
   fi
-  server_command=`aht $1.ra site:info`
+  server_command=`aht $1.ra application:info`
   if [[ "$server_command" =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
@@ -1061,7 +1074,7 @@ function ra-enable-file-proxy {
     echo "# Requires site to be in live-development"
     return
   fi
-  if [[ `aht $1.prod site:info` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1.prod application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment."
     return
   fi
@@ -1069,7 +1082,7 @@ function ra-enable-file-proxy {
   sites=()
   domains=$(aht $1.prod domains:list | sed -e 's/[[:space:]]//' -e '/^$/d' | tr -d '\r')
   for domain in $(echo "$domains"); do
-    conf_path=$(aht $1.prod drush ev 'print conf_path();' -l ${domain})
+    conf_path=$(aht $1.prod drush8 ev 'print conf_path();' -l ${domain})
     # either this isn't a working site, or we've already made an entry for this multisite
     if [[ "$conf_path" =~ "error" ||  "${sites[@]}" =~ "$conf_path" || "$conf_path" =~ "warning" ]]; then
       continue
@@ -1108,10 +1121,10 @@ function ra-transfer-databases {
     return
   fi
 
-  if [[ `aht $1.$2 site:info` =~ "Could not find sitegroup" ]]; then
+  if [[ `aht $1.$2 application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment $1.$2"
     return
-  elif [[ `aht $1.$3 site:info` =~ "Could not find sitegroup" ]]; then
+  elif [[ `aht $1.$3 application:info` =~ "Could not find sitegroup" ]]; then
     echo "Could not find sitegroup or environment $1.$3"
     return
   fi
