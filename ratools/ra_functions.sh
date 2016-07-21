@@ -537,6 +537,7 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "vote_up_down" ]; then modname=vud
   elif [ $1 = "user_relationships" ]; then modname=user_relationship_blocks
   elif [ $1 = "ubercart" ]; then modname=uc_cart
+  elif [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return
   else modname=$1
 fi
 for modinfopath in `find . -name ${modname}.info`
@@ -841,6 +842,7 @@ if [ $1 = "acquia_connector" ]; then modname=acquia_agent
   elif [ $1 = "vote_up_down" ]; then modname=vud
   elif [ $1 = "user_relationships" ]; then modname=user_relationship_blocks
   elif [ $1 = "ubercart" ]; then modname=uc_cart
+  elif [ -e $modpath/$1/.drush-lock-update ]; then echo "ERROR: module is locked; exiting" && return
   else modname=$1
 fi
 for modinfopath in `find . -name ${modname}.info`
@@ -851,6 +853,7 @@ for modinfopath in `find . -name ${modname}.info`
       else modpath=`dirname $(dirname ${modinfopath})`
     fi
     if grep "version = \"$2\"" ${modinfopath} > /dev/null
+      echo $modpath/$1
       then while true; do read -p "Update $1-$2 at $modpath to $1-$3? (y/n) " yn
           case ${yn} in
               [Yy]* ) cd ${modpath}
