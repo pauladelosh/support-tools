@@ -721,7 +721,8 @@ NR<=10 {
 function test_dbsize() {
   echo "Showing largest database tables:"
   echo "" |aht $STAGE @$SITENAME $URI db:size --num-tables=10 >$tmpout 2>/dev/null
-  if [ `grep -c "IMPORTANT: You are" $tmpout` -eq 0 ]
+  # Ensure aht db:size ran; if so, consider it safe to run the next step.
+  if [ `grep -c "Index-to-data ratio" $tmpout` -eq 1 ]
   then
     egrep --color=always '^| [1-9][0-9][0-9][0-9]*\.[0-9][0-9] MB|\| [0-9]{5,20} \|' $tmpout
     ahtsep
@@ -745,18 +746,18 @@ EOF
     ahtsep
     
       # Cache_form entries...
-    echo "Showing largest cache_form entries from database:"
-    if [ `egrep -c '\| cache_form .*\| [0-9]{5,20} *\|' $tmpout` -gt 0 ]
+    if [ `egrep -c '\| cache_form .*\| [0-9]{0,4} *\|' $tmpout` -eq 1 ]
     then
-      echo "  ${COLOR_YELOW}Skipping this report, because cache_form table has >10,000 items.${COLOR_NONE}";
-    else
+      echo "Showing largest cache_form entries from database:"
       cat <<EOF |ahtdrush sql-cli |column -t |awk '{ print "  " $0 }' |egrep --color=always '^.*'
 SELECT concat(length(data)/1048576, "MB") AS Size, cid FROM cache_form WHERE length(data) > 1048576 ORDER BY Size desc LIMIT 5;
 EOF
+    else
+      echo "  ${COLOR_YELOW}Skipping cache_form report, because cache_form table has >10,000 items.${COLOR_NONE}";
     fi
     ahtsep
   else
-    echo "  ${COLOR_YELLOW}Skipping check because site has too many databases.${COLOR_NONE}"
+    echo "  ${COLOR_YELLOW}Skipping checks because site has too many databases.${COLOR_NONE}"
     ahtsep
   fi
 }
