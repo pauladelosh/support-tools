@@ -27,8 +27,9 @@ elif [ -e ~/.profile ]
   then
     profile_file=~/.profile
 else
-    touch ~/.profile
-    profile_file=~/.profile
+    touch ~/.bash_profile
+    profile_file=~/.bash_profile
+    echo "empty ~/.bash_profile created"
 fi
 
 install_bash=''
