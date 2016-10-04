@@ -15,7 +15,7 @@ switch [llength $argv] {
 }
 
 stty -echo
-send_user "This script assumes your Bastion SSH Password and WiKID Password are set the same. If they are not you need to change your .bash_profile/.profile to use mywik2 instead of mywik.\n\n"
+send_user "This script assumes your Bastion SSH Password and WiKID Password are set the same. If they are not you need to change your ~/.ah_profile to use mywik2 instead of mywik.\n\n"
 send_user "Bastion SSH Password: "
 set timeout -1
 expect_user -re "(.*)\n"
