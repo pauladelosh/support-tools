@@ -268,13 +268,14 @@ final class AhtWrapperApplication extends Application
 
     private function buildSshCommand()
     {
+        $combinedArgv = array_merge($this->getAhtOptions(), $this->arguments);
+
         $command = sprintf(
-            "ssh %s %s /vol/ebs1/ahsupport/%s/ahtools %s %s",
+            "ssh %s %s /vol/ebs1/ahsupport/%s/ahtools --encoded-argv=%s",
             implode(' ', $this->getSshOptions()),
             $this->bastionName,
             $this->ahtPath,
-            implode(' ', $this->getAhtOptions()),
-            implode(' ', $this->arguments)
+            base64_encode(json_encode($combinedArgv))
         );
         $this->debugMsg("<info>wrapper command:</info> {$command}");
 
