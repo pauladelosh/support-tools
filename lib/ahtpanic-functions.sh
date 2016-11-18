@@ -778,7 +778,7 @@ function test_ahtaudit() {
     cat $tmpout |grep '\[error\]' |tr -d '\015' |sed 's:\x1B\[[0-9;]*[mK]::g' |sed 's/\[error\]//g' |sed 's/[ \t]*$//' |awk '{ print "  " $0 }'
     echo "$COLOR_NONE"
     echo "* See canned suggestions at:
-  https://support.acquia.com/doc/index.php/Performance_AHT_AUDIT_advise"
+  https://confluence.acquia.com/display/support/aht+audit+customer-facing+advice"
   fi
   ahtsep
 }
