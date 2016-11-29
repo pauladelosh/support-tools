@@ -206,11 +206,6 @@ final class AhtWrapperApplication extends Application
                 $this->doCache = true;
                 $this->doAutocomplete = true;
                 $arguments[$arg_key] = 'meta:tab-completion';
-            } else if (preg_match('|\s|', $tmp_arg)) {
-                $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
-            } else if (strpos($tmp_arg, '&') !== false) {
-                // Handle valid arguments that contain ampersands (e.g. URLs).
-                $tmp_arg = escapeshellarg(escapeshellarg($tmp_arg));
             }
             if (!$sawNonOption && in_array($tmp_arg, ['-vvv', '--debug'])) {
                 $this->debugMode = true;
