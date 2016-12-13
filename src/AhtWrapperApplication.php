@@ -306,7 +306,14 @@ final class AhtWrapperApplication extends Application
 
         // Add client-version to options
         if (preg_match('/^[a-z0-9.+-]+$/', $this->supportToolsVersion, $matches)) {
-            $ahtOptions[] = "--client-tools-version={$matches[0]}";
+            $clientToolsVersion = $matches[0];
+            if ($ppid = posix_getppid()) {
+                $pscript = exec("ps -o args -p {$ppid} | tail -n1 | awk '{print $2}'");
+                if ($pscript && $invoker = basename($pscript)) {
+                    $clientToolsVersion  = "{$clientToolsVersion}_{$invoker}";
+                }
+            }
+            $ahtOptions[] = "--client-tools-version={$clientToolsVersion}";
         }
 
         if ($this->doAutocomplete) {
