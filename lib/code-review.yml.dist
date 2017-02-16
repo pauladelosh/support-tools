@@ -21,14 +21,8 @@ repos:
     acquia/acquibot: {}
     acquia/support-dashboard: {}
     acquia/support-data-interface: {}
-    acquia/support-drupal8-examples: {} # (discontinued?)
-    acquia/support-hubot: {} # (discontinued?)
-    acquia/support-jira-app-for-zendesk: {} # (discontinued?)
     acquia/support-platform-cloud-data-model: {}
     acquia/support-ticket-sla: {}
-    acquia/support-zendesk-conditional-fields-plugin: {}
-    acquia/support-zendesk-hide-comments: {}
-    acquia/support-zendesk-root-cause-plugin: {}
     acquia/support-zendesk-tag-updater: {}
     acquia/zendesk-suspended-agent-admin-search: {}
     acquia/zendesk-toggl-time-tracker: {}
