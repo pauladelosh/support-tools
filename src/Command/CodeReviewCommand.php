@@ -35,6 +35,13 @@ class CodeReviewCommand extends Command
             InputOption::VALUE_NONE,
             'Also show repos which have Github issues filed against them.'
         );
+        $this->addOption(
+            'recent',
+            null,
+            InputOption::VALUE_OPTIONAL,
+            'Filter out issues that have not been updated in the last two weeks. '
+                . 'Can optionally take a value parsable by strtotime().'
+        );
     }
 
     /**
@@ -52,6 +59,18 @@ class CodeReviewCommand extends Command
         );
 
         $this->loadConfig();
+
+        // If empty --recent option is provided, default to last 2 weeks.
+        if ($input->getParameterOption('--recent') !== false) {
+            if (empty($input->getOption('recent'))) {
+                $input->setOption('recent', '-2 weeks');
+            }
+            elseif (strtotime($input->getOption('recent')) === false) {
+                throw new \InvalidArgumentException(
+                    'The value of the --recent option must be parsable by strtotime().'
+                );
+            }
+        }
     }
 
     /**
@@ -157,7 +176,7 @@ class CodeReviewCommand extends Command
     {
         $repos = $this->getRepos();
 
-        $this->displayPullRequests($repos, $output);
+        $this->displayPullRequests($repos, $output, strtotime($input->getOption('recent')));
 
         if ($input->getOption('show-outdated')) {
             $this->displayOutdatedRepos($repos, $output);
@@ -172,14 +191,20 @@ class CodeReviewCommand extends Command
      * Displays open pull requests.
      *
      * @param array $repos
+     * @param OutputInterface $output
+     * @param int|null $recent
      */
-    protected function displayPullRequests(array $repos, OutputInterface $output)
+    protected function displayPullRequests(array $repos, OutputInterface $output, $recent = null)
     {
+        /** @var Repo $repo */
         foreach ($repos as $repo) {
             $hasPrs = false;
             $issues = $repo->getOpenIssues();
             foreach ($issues as $issue) {
                 if (!isset($issue->pull_request)) {
+                    continue;
+                }
+                if ($recent && strtotime($issue->updated_at) < $recent) {
                     continue;
                 }
                 if (!$hasPrs) {
