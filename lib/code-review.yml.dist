@@ -14,6 +14,7 @@ repos:
     acquia/support-cci-client: {}
     acquia/support-cli: {}
     acquia/support-docs: {}
+    acquia/support-oncall: {}
     acquia/support-strace-training: {}
     acquia/Support-Tools: {}
     acquia/supportcomm: {}
