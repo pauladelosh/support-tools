@@ -11,6 +11,7 @@ repos:
     acquia/ra-tools: {}
     acquia/ra-up: {}
     acquia/radash: {}
+    acquia/radash-api: {}
     acquia/support-cci-client: {}
     acquia/support-cli: {}
     acquia/support-docs: {}
