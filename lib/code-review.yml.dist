@@ -1,11 +1,16 @@
 repos:
-    acquia/acquia-customer-communication-app: {}
-    acquia/acquia-customer-communication-api: {}
     acquia/acquia-cli: {}
-    acquia/acquibot-plugins-support: {}
+    acquia/acquia-customer-communication-api: {}
+    acquia/acquia-customer-communication-app: {}
     acquia/acquia-ra-composer: {}
     acquia/acquia-xml-rpc-client: {}
+    acquia/acquibot: {}
+    acquia/acquibot-plugins-support: {}
+    acquia/bz-atlas: {}
+    acquia/bz-pleiades: {}
     acquia/cso-system-integration: {}
+    acquia/mrt: {}
+    acquia/network-cci: {}
     acquia/ops-api-client-php: {}
     acquia/ra-datapulls: {}
     acquia/ra-rascans: {}
@@ -16,18 +21,21 @@ repos:
     acquia/radash-api: {}
     acquia/support-cci-client: {}
     acquia/support-cli: {}
-    acquia/support-docs: {}
-    acquia/support-oncall: {}
-    acquia/support-strace-training: {}
-    acquia/Support-Tools: {}
-    acquia/supportcomm: {}
-    acquia/zendesk-status-alerts: {}
-    acquia/acquibot: {}
     acquia/support-common: {}
     acquia/support-dashboard: {}
     acquia/support-data-interface: {}
+    acquia/support-docs: {}
+    acquia/support-oncall: {}
     acquia/support-platform-cloud-data-model: {}
+    acquia/support-strace-training: {}
     acquia/support-ticket-sla: {}
+    acquia/Support-Tools: {}
     acquia/support-zendesk-tag-updater: {}
+    acquia/supportcomm: {}
+    acquia/zendesk-account-tickets-app: {}
+    acquia/zendesk-additional-information-app: {}
+    acquia/zendesk-sandbox: {}
+    acquia/zendesk-status-alerts: {}
     acquia/zendesk-suspended-agent-admin-search: {}
     acquia/zendesk-toggl-time-tracker: {}
+
