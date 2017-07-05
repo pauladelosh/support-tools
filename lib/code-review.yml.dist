@@ -1,4 +1,6 @@
 repos:
+    acquia/acquia-customer-communication-app: {}
+    acquia/acquia-customer-communication-api: {}
     acquia/acquia-cli: {}
     acquia/acquibot-plugins-support: {}
     acquia/acquia-ra-composer: {}
@@ -21,6 +23,7 @@ repos:
     acquia/supportcomm: {}
     acquia/zendesk-status-alerts: {}
     acquia/acquibot: {}
+    acquia/support-common: {}
     acquia/support-dashboard: {}
     acquia/support-data-interface: {}
     acquia/support-platform-cloud-data-model: {}
