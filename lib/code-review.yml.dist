@@ -28,7 +28,6 @@ repos:
     acquia/support-oncall: {}
     acquia/support-platform-cloud-data-model: {}
     acquia/support-strace-training: {}
-    acquia/support-ticket-sla: {}
     acquia/Support-Tools: {}
     acquia/support-zendesk-tag-updater: {}
     acquia/supportcomm: {}
