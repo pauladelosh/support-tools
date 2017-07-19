@@ -3,6 +3,7 @@
 namespace Acquia\Support\ToolsWrapper\Command;
 
 use Acquia\Support\ToolsWrapper\Github\GithubApiClient;
+use Acquia\Support\ToolsWrapper\Github\PullRequest;
 use Acquia\Support\ToolsWrapper\Github\Repo;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,6 +14,11 @@ use Symfony\Component\Yaml\Parser;
 
 class CodeReviewCommand extends Command
 {
+    /**
+     * @var GithubApiClient $apiClient
+     */
+    private $apiClient;
+
     private $config = [];
 
     private $githubAuthContext;
@@ -57,6 +63,7 @@ class CodeReviewCommand extends Command
             $this->getGithubUsername($input, $output),
             $this->getGithubToken($input, $output)
         );
+        $this->apiClient = new GithubApiClient($this->githubAuthContext);
 
         $this->loadConfig();
 
@@ -235,14 +242,27 @@ class CodeReviewCommand extends Command
                         )
                     );
                 }
+
+                // Display a list of reviews and statuses.
+                if ($prReviews = $this->getPullRequestReviews($repo->getName(), $issue->number)) {
+                    // The author of the issue should not be listed as a reviewer.
+                    unset($prReviews[$issue->user->id]);
+                    if ($reviews = $this->formatPullRequestReviews($prReviews)) {
+                        $output->writeln(
+                            sprintf(
+                                "       Reviewers: %s",
+                                $reviews
+                            )
+                        );
+                    }
+                }
+
                 $output->writeln(
                     sprintf(
                         "       %s\n",
                         $issue->pull_request->html_url
                     )
                 );
-
-                //print_r($issue);
             }
         }
     }
@@ -312,13 +332,89 @@ class CodeReviewCommand extends Command
      */
     protected function getRepos()
     {
-        $apiClient = new GithubApiClient($this->githubAuthContext);
         $repos = [];
         foreach (array_keys($this->config['repos']) as $repoName) {
-            $repos[$repoName] = new Repo($repoName, $apiClient);
+            $repos[$repoName] = new Repo($repoName, $this->apiClient);
         }
 
         return $repos;
+    }
+
+    /**
+     * Return an array containing the most recent review status for each
+     * user who has provided feedback for the PR. Note that comments that
+     * are added after a review are ignored.
+     *
+     * @param string $repoName
+     * @param int $pullNumber
+     *
+     * @return array
+     */
+    protected function getPullRequestReviews($repoName, $pullNumber)
+    {
+        $reviewStatus = [];
+        $state = [
+            'REQUESTED' => 0,
+            'COMMENTED' => 1,
+            'APPROVED' => 2,
+            'CHANGES_REQUESTED' => 2,
+        ];
+
+        // First get a list of the requested reviewers.
+        $pullRequest = new PullRequest($repoName, $pullNumber, $this->apiClient);
+        foreach ($pullRequest->getRequestedReviewers() as $reviewer) {
+            $reviewStatus[$reviewer->id] = [
+                'login' => $reviewer->login,
+                'state' => 'REQUESTED',
+                'submitted_at' => null,
+            ];
+        }
+
+        // Next set the current review status for all unique reviewers.
+        foreach ($pullRequest->getReviews() as $review) {
+            $newUser = (!isset($reviewStatus[$review->user->id]));
+            if ($newUser || ($review->submitted_at > $reviewStatus[$review->user->id]['submitted_at'])) {
+                if ($newUser || ($state[$review->state] >= $state[$reviewStatus[$review->user->id]['state']])) {
+                    $reviewStatus[$review->user->id] = [
+                      'login' => $review->user->login,
+                      'state' => $review->state,
+                      'submitted_at' => $review->submitted_at,
+                    ];
+                }
+            }
+        }
+
+        return $reviewStatus;
+    }
+
+    /**
+     * Return a formatted string of pull request reviewers and corresponding
+     * status icons.
+     *
+     * @param array $reviews
+     *   An array of reviews for a pull request.
+     *
+     * @return string
+     */
+    protected function formatPullRequestReviews(array $reviews)
+    {
+        $output = implode(' ', array_map(
+            function ($review) {
+                $status = '<fg=yellow>●</>';
+                if ($review['state'] == 'COMMENTED') {
+                    $status = '💬';
+                }
+                elseif ($review['state'] == 'CHANGES_REQUESTED') {
+                    $status = '<fg=red>✘</>';
+                }
+                elseif ($review['state'] == 'APPROVED') {
+                    $status = '<fg=green>✔</>';
+                }
+                return "{$review['login']} {$status}  ";
+            },
+            $reviews
+        ));
+        return $output;
     }
 
     /**
