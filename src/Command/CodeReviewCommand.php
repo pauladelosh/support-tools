@@ -358,6 +358,7 @@ class CodeReviewCommand extends Command
             'COMMENTED' => 1,
             'APPROVED' => 2,
             'CHANGES_REQUESTED' => 2,
+            'DISMISSED' => 2,
         ];
 
         // First get a list of the requested reviewers.
@@ -376,9 +377,9 @@ class CodeReviewCommand extends Command
             if ($newUser || ($review->submitted_at > $reviewStatus[$review->user->id]['submitted_at'])) {
                 if ($newUser || ($state[$review->state] >= $state[$reviewStatus[$review->user->id]['state']])) {
                     $reviewStatus[$review->user->id] = [
-                      'login' => $review->user->login,
-                      'state' => $review->state,
-                      'submitted_at' => $review->submitted_at,
+                        'login' => $review->user->login,
+                        'state' => $review->state,
+                        'submitted_at' => $review->submitted_at,
                     ];
                 }
             }
@@ -398,23 +399,23 @@ class CodeReviewCommand extends Command
      */
     protected function formatPullRequestReviews(array $reviews)
     {
-        $output = implode(' ', array_map(
-            function ($review) {
-                $status = '<fg=yellow>●</>';
-                if ($review['state'] == 'COMMENTED') {
-                    $status = '💬';
-                }
-                elseif ($review['state'] == 'CHANGES_REQUESTED') {
-                    $status = '<fg=red>✘</>';
-                }
-                elseif ($review['state'] == 'APPROVED') {
-                    $status = '<fg=green>✔</>';
-                }
-                return "{$review['login']} {$status}  ";
-            },
-            $reviews
-        ));
-        return $output;
+        return implode(' ', array_map(function ($review) {
+            switch ($review['state']) {
+
+                case ('COMMENTED'):
+                    return "{$review['login']} 💬  ";
+
+                case ('CHANGES_REQUESTED'):
+                    return "{$review['login']} <fg=red>✘</>  ";
+
+                case ('APPROVED'):
+                    return "{$review['login']} <fg=green>✔</>  ";
+
+                default:
+                    return "{$review['login']} <fg=yellow>●</>  ";
+
+            }
+        }, $reviews));
     }
 
     /**
