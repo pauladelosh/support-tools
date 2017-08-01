@@ -304,11 +304,11 @@ class CodeReviewCommand extends Command
     {
         foreach ($reviews as $review) {
             if ($review['login'] == $this->githubUserName && $review['state'] == 'APPROVED') {
-                return TRUE;
+                return true;
             }
         }
 
-        return FALSE;
+        return false;
     }
 
     /**
@@ -444,7 +444,6 @@ class CodeReviewCommand extends Command
     {
         return implode(' ', array_map(function ($review) {
             switch ($review['state']) {
-
                 case ('COMMENTED'):
                     return "{$review['login']} 💬  ";
 
@@ -456,7 +455,6 @@ class CodeReviewCommand extends Command
 
                 default:
                     return "{$review['login']} <fg=yellow>●</>  ";
-
             }
         }, $reviews));
     }
