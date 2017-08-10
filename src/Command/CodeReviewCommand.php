@@ -24,6 +24,16 @@ class CodeReviewCommand extends Command
     private $githubAuthContext;
 
     /**
+     * @var string
+     */
+    private $githubUserName;
+
+    /**
+     * @var Repo[]
+     */
+    private $repos;
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -48,6 +58,12 @@ class CodeReviewCommand extends Command
             'Filter out issues that have not been updated in the last two weeks. '
                 . 'Can optionally take a value parsable by strtotime().'
         );
+        $this->addOption(
+            'pending',
+            null,
+            InputOption::VALUE_NONE,
+            'Filter out issues that you have approved.'
+        );
     }
 
     /**
@@ -59,8 +75,10 @@ class CodeReviewCommand extends Command
 
         ini_set('user_agent', "code-review");
 
+        $this->githubUserName = $this->getGithubUsername($input, $output);
+
         $this->setGithubAuthContext(
-            $this->getGithubUsername($input, $output),
+            $this->githubUserName,
             $this->getGithubToken($input, $output)
         );
         $this->apiClient = new GithubApiClient($this->githubAuthContext);
@@ -181,30 +199,34 @@ class CodeReviewCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $repos = $this->getRepos();
+        $this->repos = $this->getRepos();
 
-        $this->displayPullRequests($repos, $output, strtotime($input->getOption('recent')));
+        $this->displayPullRequests(
+            $output,
+            strtotime($input->getOption('recent')),
+            $input->getOption('pending')
+        );
 
         if ($input->getOption('show-outdated')) {
-            $this->displayOutdatedRepos($repos, $output);
+            $this->displayOutdatedRepos($output);
         }
 
         if ($input->getOption('show-issues')) {
-            $this->displayOutstandingIssues($repos, $output);
+            $this->displayOutstandingIssues($output);
         }
     }
 
     /**
      * Displays open pull requests.
      *
-     * @param array $repos
      * @param OutputInterface $output
      * @param int|null $recent
+     * @param bool $pending
      */
-    protected function displayPullRequests(array $repos, OutputInterface $output, $recent = null)
+    protected function displayPullRequests(OutputInterface $output, $recent = null, $pending = null)
     {
         /** @var Repo $repo */
-        foreach ($repos as $repo) {
+        foreach ($this->repos as $repo) {
             $hasPrs = false;
             $issues = $repo->getOpenIssues();
             foreach ($issues as $issue) {
@@ -212,6 +234,10 @@ class CodeReviewCommand extends Command
                     continue;
                 }
                 if ($recent && strtotime($issue->updated_at) < $recent) {
+                    continue;
+                }
+                $reviews = $this->getPullRequestReviews($repo->getName(), $issue->number);
+                if ($pending && $this->approvedByMe($reviews)) {
                     continue;
                 }
                 if (!$hasPrs) {
@@ -244,10 +270,10 @@ class CodeReviewCommand extends Command
                 }
 
                 // Display a list of reviews and statuses.
-                if ($prReviews = $this->getPullRequestReviews($repo->getName(), $issue->number)) {
+                if ($reviews) {
                     // The author of the issue should not be listed as a reviewer.
-                    unset($prReviews[$issue->user->id]);
-                    if ($reviews = $this->formatPullRequestReviews($prReviews)) {
+                    unset($reviews[$issue->user->id]);
+                    if ($reviews = $this->formatPullRequestReviews($reviews)) {
                         $output->writeln(
                             sprintf(
                                 "       Reviewers: %s",
@@ -268,17 +294,34 @@ class CodeReviewCommand extends Command
     }
 
     /**
+     * Determine if a pull request has been approved by me.
+     *
+     * @param array $reviews
+     *
+     * @return bool
+     */
+    protected function approvedByMe(array $reviews)
+    {
+        foreach ($reviews as $review) {
+            if ($review['login'] == $this->githubUserName && $review['state'] == 'APPROVED') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Displays outdated repos.
      *
-     * @param array $repos
      * @param OutputInterface $output
      */
-    protected function displayOutdatedRepos(array $repos, OutputInterface $output)
+    protected function displayOutdatedRepos(OutputInterface $output)
     {
         $outdatedRepos = [];
         $now = new \DateTime();
 
-        foreach ($repos as $repo) {
+        foreach ($this->repos as $repo) {
             $last = $repo->getLastCommitDate();
             $interval = $now->diff($last);
             if ($interval->days > 30) {
@@ -306,12 +349,12 @@ class CodeReviewCommand extends Command
     /**
      * Displays repos with Github issues.
      *
-     * @param array $repos
+     * @param OutputInterface $output
      */
-    protected function displayOutstandingIssues(array $repos, OutputInterface $output)
+    protected function displayOutstandingIssues(OutputInterface $output)
     {
         $output->writeln('');
-        foreach ($repos as $repo) {
+        foreach ($this->repos as $repo) {
             $issues = $repo->getOpenIssues();
             foreach ($issues as $issue) {
                 if (!isset($issue->pull_request)) {
@@ -358,6 +401,7 @@ class CodeReviewCommand extends Command
             'COMMENTED' => 1,
             'APPROVED' => 2,
             'CHANGES_REQUESTED' => 2,
+            'DISMISSED' => 2,
         ];
 
         // First get a list of the requested reviewers.
@@ -376,9 +420,9 @@ class CodeReviewCommand extends Command
             if ($newUser || ($review->submitted_at > $reviewStatus[$review->user->id]['submitted_at'])) {
                 if ($newUser || ($state[$review->state] >= $state[$reviewStatus[$review->user->id]['state']])) {
                     $reviewStatus[$review->user->id] = [
-                      'login' => $review->user->login,
-                      'state' => $review->state,
-                      'submitted_at' => $review->submitted_at,
+                        'login' => $review->user->login,
+                        'state' => $review->state,
+                        'submitted_at' => $review->submitted_at,
                     ];
                 }
             }
@@ -398,23 +442,21 @@ class CodeReviewCommand extends Command
      */
     protected function formatPullRequestReviews(array $reviews)
     {
-        $output = implode(' ', array_map(
-            function ($review) {
-                $status = '<fg=yellow>●</>';
-                if ($review['state'] == 'COMMENTED') {
-                    $status = '💬';
-                }
-                elseif ($review['state'] == 'CHANGES_REQUESTED') {
-                    $status = '<fg=red>✘</>';
-                }
-                elseif ($review['state'] == 'APPROVED') {
-                    $status = '<fg=green>✔</>';
-                }
-                return "{$review['login']} {$status}  ";
-            },
-            $reviews
-        ));
-        return $output;
+        return implode(' ', array_map(function ($review) {
+            switch ($review['state']) {
+                case ('COMMENTED'):
+                    return "{$review['login']} 💬  ";
+
+                case ('CHANGES_REQUESTED'):
+                    return "{$review['login']} <fg=red>✘</>  ";
+
+                case ('APPROVED'):
+                    return "{$review['login']} <fg=green>✔</>  ";
+
+                default:
+                    return "{$review['login']} <fg=yellow>●</>  ";
+            }
+        }, $reviews));
     }
 
     /**
