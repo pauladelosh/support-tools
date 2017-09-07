@@ -38,17 +38,21 @@ class GithubApiClient implements GithubApiInterface
      * @param string $uri
      *
      * @return array
+     *
+     * @throws \RuntimeException
      */
     public function apiRequest($uri)
     {
-        $repoInfo = json_decode(
-            file_get_contents(
-                $uri,
-                false,
-                $this->streamContext
-            )
+        $repoInfo = @file_get_contents(
+            $uri,
+            false,
+            $this->streamContext
         );
 
-        return $repoInfo;
+        if (empty($repoInfo)) {
+            throw new \RuntimeException(implode("\n", $http_response_header));
+        }
+
+        return json_decode($repoInfo);
     }
 }
