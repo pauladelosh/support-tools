@@ -9,6 +9,7 @@ repos:
     acquia/bz-atlas: {}
     acquia/bz-pleiades: {}
     acquia/cso-system-integration: {}
+    acquia/ls-talentlms-data: {}
     acquia/mrt: {}
     acquia/network-cci: {}
     acquia/ops-api-client-php: {}
