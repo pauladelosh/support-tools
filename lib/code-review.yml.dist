@@ -32,6 +32,7 @@ repos:
     acquia/Support-Tools: {}
     acquia/support-zendesk-tag-updater: {}
     acquia/supportcomm: {}
+    acquia/tamdash: {}
     acquia/zendesk-account-tickets-app: {}
     acquia/zendesk-additional-information-app: {}
     acquia/zendesk-sandbox: {}
