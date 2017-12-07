@@ -33,10 +33,6 @@ repos:
     acquia/support-zendesk-tag-updater: {}
     acquia/supportcomm: {}
     acquia/tamdash: {}
-    acquia/zendesk-account-tickets-app: {}
-    acquia/zendesk-additional-information-app: {}
+    acquia/zendesk-apps: {}
     acquia/zendesk-sandbox: {}
-    acquia/zendesk-status-alerts: {}
     acquia/zendesk-suspended-agent-admin-search: {}
-    acquia/zendesk-toggl-time-tracker: {}
-
