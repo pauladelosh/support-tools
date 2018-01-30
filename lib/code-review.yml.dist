@@ -8,9 +8,9 @@ repos:
     acquia/acquibot: {}
     acquia/acquibot-plugins-support: {}
     acquia/atlas-api: {}
-    acquia/bz-atlas: {}
     acquia/bz-pleiades: {}
     acquia/cso-system-integration: {}
+    acquia/ent-atlas: {}
     acquia/ls-talentlms-data: {}
     acquia/mrt: {}
     acquia/network-cci: {}
