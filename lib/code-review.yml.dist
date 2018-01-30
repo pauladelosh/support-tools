@@ -4,6 +4,7 @@ repos:
     acquia/acquia-external-communication-app: {}
     acquia/acquia-ra-composer: {}
     acquia/acquia-xml-rpc-client: {}
+    acquia/acquia-zendesk-integration-php: {}
     acquia/acquibot: {}
     acquia/acquibot-plugins-support: {}
     acquia/atlas-api: {}
