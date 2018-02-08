@@ -82,9 +82,7 @@ function connectBastion
 {
     local BASTION_HOST=$1
 
-    DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && cd ../lib && pwd )"
-    cd ~/.WiKID
-    $DIR/$( basename "${BASH_SOURCE[0]}" ).sh $BASTION_HOST
+    ssh -f -N -F $AH_SSH_CONFIG $BASTION_HOST
 }
 
 #
