@@ -406,7 +406,7 @@ class CodeReviewCommand extends Command
 
         // First get a list of the requested reviewers.
         $pullRequest = new PullRequest($repoName, $pullNumber, $this->apiClient);
-        foreach ($pullRequest->getRequestedReviewers() as $reviewer) {
+        foreach ($pullRequest->getRequestedReviewers()->users as $reviewer) {
             $reviewStatus[$reviewer->id] = [
                 'login' => $reviewer->login,
                 'state' => 'REQUESTED',
