@@ -5,12 +5,13 @@ repos:
     acquia/acquia-ra-composer: {}
     acquia/acquia-xml-rpc-client: {}
     acquia/acquia-zendesk-integration-php: {}
-    acquia/acquibot: {}
     acquia/acquibot-plugins-support: {}
+    acquia/acquibot: {}
     acquia/atlas-api: {}
-    acquia/ent-pleiades: {}
     acquia/cso-system-integration: {}
+    acquia/ent-acquia-sfdc-drupal: {}
     acquia/ent-atlas: {}
+    acquia/ent-pleiades: {}
     acquia/ls-talentlms-data: {}
     acquia/mrt: {}
     acquia/network-cci: {}
@@ -20,8 +21,8 @@ repos:
     acquia/ra-servertools: {}
     acquia/ra-tools: {}
     acquia/ra-up: {}
-    acquia/radash: {}
     acquia/radash-api: {}
+    acquia/radash: {}
     acquia/support-cci-client: {}
     acquia/support-cli: {}
     acquia/support-common: {}
@@ -38,3 +39,4 @@ repos:
     acquia/zendesk-apps: {}
     acquia/zendesk-sandbox: {}
     acquia/zendesk-suspended-agent-admin-search: {}
+
