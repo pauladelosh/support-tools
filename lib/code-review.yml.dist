@@ -9,6 +9,7 @@ repos:
     acquia/acquibot: {}
     acquia/atlas-api: {}
     acquia/cso-system-integration: {}
+    acquia/ent-acquia-sfdc-drupal: {}
     acquia/ent-atlas: {}
     acquia/ent-pleiades: {}
     acquia/ls-talentlms-data: {}
