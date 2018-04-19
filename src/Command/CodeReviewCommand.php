@@ -14,8 +14,23 @@ use Symfony\Component\Yaml\Parser;
 
 class CodeReviewCommand extends Command
 {
+
     /**
-     * @var GithubApiClient $apiClient
+     * @see: https://github.com/shinnn/github-username-regex/blob/0794566cc10e8c5a0e562823f8f8e99fa044e5f4/index.js#L1
+     */
+    const GITHUB_USERNAME_REGEX = '/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i';
+
+    const REVIEW_STATE = [
+        'REQUESTED'         => 0,
+        'COMMENTED'         => 1,
+        'APPROVED'          => 2,
+        'CHANGES_REQUESTED' => 2,
+        'DISMISSED'         => 2,
+    ];
+
+
+    /**
+     * @var \Acquia\Support\ToolsWrapper\Github\GithubApiClient $apiClient
      */
     private $apiClient;
 
@@ -29,7 +44,7 @@ class CodeReviewCommand extends Command
     private $githubUserName;
 
     /**
-     * @var Repo[]
+     * @var \Acquia\Support\ToolsWrapper\Github\Repo[]
      */
     private $repos;
 
@@ -64,13 +79,22 @@ class CodeReviewCommand extends Command
             InputOption::VALUE_NONE,
             'Filter out issues that you have approved.'
         );
+        $this->addOption(
+            'min-approvals',
+            null,
+            InputOption::VALUE_OPTIONAL,
+            'Filter out issues that have at least 3 approvals. '
+                . 'Can optionally take an integer.'
+        );
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
+    protected function initialize(
+        InputInterface $input,
+        OutputInterface $output
+    ) {
         parent::initialize($input, $output);
 
         ini_set('user_agent', "code-review");
@@ -96,6 +120,13 @@ class CodeReviewCommand extends Command
                 );
             }
         }
+
+        // If empty --min-approvals option is provided, default to 2.
+        if ($input->getParameterOption('--min-approvals') !== false) {
+            if (empty($input->getOption('min-approvals'))) {
+                $input->setOption('min-approvals', 3);
+            }
+        }
     }
 
     /**
@@ -108,7 +139,9 @@ class CodeReviewCommand extends Command
     {
         $contextOptions = [
             'http' => [
-                'header'  => "Authorization: Basic " . base64_encode("{$user}:{$token}"),
+                'header' => "Authorization: Basic " . base64_encode(
+                        "{$user}:{$token}"
+                    ),
             ],
         ];
         $this->githubAuthContext = stream_context_create($contextOptions);
@@ -133,31 +166,32 @@ class CodeReviewCommand extends Command
      *
      * Try to load this from the user's gitconfig; otherwise ask them for it.
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param \Symfony\Component\Console\Input\InputInterface $input
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
      *
      * @return string
      */
-    private function getGithubUsername(InputInterface $input, OutputInterface $output)
-    {
+    private function getGithubUsername(
+        InputInterface $input,
+        OutputInterface $output
+    ) {
         $user = exec('git config github.user');
         if (!$user) {
             $helper = $this->getHelper('question');
             $question = new Question('What is your Github username? ');
-            $question->setValidator(
-                function ($name) {
-                    if (!preg_match('#^[a-zA-Z0-9]([a-zA-Z0-9-]+[a-zA-Z0-9])?$#', $name)) {
-                        throw new \InvalidArgumentException(
-                            sprintf(
-                                "%s, %s",
-                                "Login may only contain alphanumeric characters or single hyphens",
-                                "and cannot begin or end with a hyphen"
-                            )
-                        );
-                    };
-                    return $name;
-                }
-            );
+            $validator = function ($name) {
+                if (!preg_match(self::GITHUB_USERNAME_REGEX, $name)) {
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            "%s, %s",
+                            "Login may only contain a maximum of 39 alphanumeric characters or single hyphens",
+                            "and cannot begin or end with a hyphen"
+                        )
+                    );
+                };
+                return $name;
+            };
+            $question->setValidator($validator);
             $user = $helper->ask($input, $output, $question);
             exec(sprintf('git config --global github.user %s', $user));
         }
@@ -169,15 +203,17 @@ class CodeReviewCommand extends Command
      *
      * Try to load the token from a config file; otherwise ask them for it.
      *
-     * @param InputInterface $input
-     * @param OutputInterface $output
+     * @param \Symfony\Component\Console\Input\InputInterface $input
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
      *
      * @return string
      */
-    private function getGithubToken(InputInterface $input, OutputInterface $output)
-    {
+    private function getGithubToken(
+        InputInterface $input,
+        OutputInterface $output
+    ) {
         $token = null;
-        $tokenDir =  getenv('HOME') . '/.config'; // Same dir as hub gem token.
+        $tokenDir = getenv('HOME') . '/.config'; // Same dir as hub gem token.
         $tokenFile = $tokenDir . '/code-review';
 
         if (file_exists($tokenFile)) {
@@ -204,7 +240,8 @@ class CodeReviewCommand extends Command
         $this->displayPullRequests(
             $output,
             strtotime($input->getOption('recent')),
-            $input->getOption('pending')
+            $input->getOption('pending'),
+            $input->getOption('min-approvals')
         );
 
         if ($input->getOption('show-outdated')) {
@@ -217,15 +254,45 @@ class CodeReviewCommand extends Command
     }
 
     /**
+     * @param $reviews
+     * @param $minApprovals
+     *
+     * @return bool
+     */
+    protected function hasMinApprovals($reviews, $minApprovals)
+    {
+        if (is_null($minApprovals)) {
+            return false;
+        }
+
+        $approvals = 0;
+        foreach ($reviews as $review) {
+            if ($review['state'] == 'APPROVED') {
+                $approvals++;
+            }
+            if ($approvals == $minApprovals) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Displays open pull requests.
      *
-     * @param OutputInterface $output
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
      * @param int|null $recent
      * @param bool $pending
+     * @param int|null $minApprovals
      */
-    protected function displayPullRequests(OutputInterface $output, $recent = null, $pending = null)
-    {
-        /** @var Repo $repo */
+    protected function displayPullRequests(
+        OutputInterface $output,
+        $recent = null,
+        $pending = null,
+        $minApprovals = null
+    ) {
+        /** @var \Acquia\Support\ToolsWrapper\Github\Repo $repo */
         foreach ($this->repos as $repo) {
             $hasPrs = false;
             $issues = $repo->getOpenIssues();
@@ -236,12 +303,20 @@ class CodeReviewCommand extends Command
                 if ($recent && strtotime($issue->updated_at) < $recent) {
                     continue;
                 }
-                $reviews = $this->getPullRequestReviews($repo->getName(), $issue->number);
+                $reviews = $this->getPullRequestReviews(
+                    $repo->getName(),
+                    $issue->number
+                );
                 if ($pending && $this->approvedByMe($reviews)) {
                     continue;
                 }
+                if ($this->hasMinApprovals($reviews, $minApprovals)) {
+                    continue;
+                }
                 if (!$hasPrs) {
-                    $output->writeln(sprintf("<info>%s:</info>", $repo->getName()));
+                    $output->writeln(
+                        sprintf("<info>%s:</info>", $repo->getName())
+                    );
                     $hasPrs = true;
                 }
                 $output->writeln(
@@ -255,10 +330,16 @@ class CodeReviewCommand extends Command
                 $labels = '';
                 foreach ($issue->labels as $label) {
                     $style = [];
-                    foreach ($this->getLabelStyleProperties($label->color) as $key => $value) {
+                    foreach ($this->getLabelStyleProperties(
+                        $label->color
+                    ) as $key => $value) {
                         $style[] = sprintf('%s=%s', $key, $value);
                     }
-                    $labels .= sprintf("<%s> %s </> ", implode($style, ';'), $label->name);
+                    $labels .= sprintf(
+                        "<%s> %s </> ",
+                        implode($style, ';'),
+                        $label->name
+                    );
                 }
                 if (!empty($labels)) {
                     $output->writeln(
@@ -314,7 +395,7 @@ class CodeReviewCommand extends Command
     /**
      * Displays outdated repos.
      *
-     * @param OutputInterface $output
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
      */
     protected function displayOutdatedRepos(OutputInterface $output)
     {
@@ -334,6 +415,7 @@ class CodeReviewCommand extends Command
 
         ksort($outdatedRepos);
         foreach ($outdatedRepos as $daysSinceLastUpdate => $outdatedRepoGroup) {
+            /** @var \Acquia\Support\ToolsWrapper\Github\Repo $repo */
             foreach ($outdatedRepoGroup as $repo) {
                 $output->writeln(
                     sprintf(
@@ -349,7 +431,7 @@ class CodeReviewCommand extends Command
     /**
      * Displays repos with Github issues.
      *
-     * @param OutputInterface $output
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
      */
     protected function displayOutstandingIssues(OutputInterface $output)
     {
@@ -396,36 +478,34 @@ class CodeReviewCommand extends Command
     protected function getPullRequestReviews($repoName, $pullNumber)
     {
         $reviewStatus = [];
-        $state = [
-            'REQUESTED' => 0,
-            'COMMENTED' => 1,
-            'APPROVED' => 2,
-            'CHANGES_REQUESTED' => 2,
-            'DISMISSED' => 2,
-        ];
 
         // First get a list of the requested reviewers.
-        $pullRequest = new PullRequest($repoName, $pullNumber, $this->apiClient);
+        $pullRequest = new PullRequest(
+            $repoName, $pullNumber, $this->apiClient
+        );
         foreach ($pullRequest->getRequestedReviewers()->users as $reviewer) {
             $reviewStatus[$reviewer->id] = [
-                'login' => $reviewer->login,
-                'state' => 'REQUESTED',
+                'login'        => $reviewer->login,
+                'state'        => 'REQUESTED',
                 'submitted_at' => null,
             ];
         }
 
         // Next set the current review status for all unique reviewers.
         foreach ($pullRequest->getReviews() as $review) {
-            $newUser = (!isset($reviewStatus[$review->user->id]));
-            if ($newUser || ($review->submitted_at > $reviewStatus[$review->user->id]['submitted_at'])) {
-                if ($newUser || ($state[$review->state] >= $state[$reviewStatus[$review->user->id]['state']])) {
-                    $reviewStatus[$review->user->id] = [
-                        'login' => $review->user->login,
-                        'state' => $review->state,
-                        'submitted_at' => $review->submitted_at,
-                    ];
+            if (isset($reviewStatus[$review->user->id])) {
+                if ($review->submitted_at <= $reviewStatus[$review->user->id]['submitted_at']) {
+                    continue;
+                }
+                if (self::REVIEW_STATE[$review->state] < self::REVIEW_STATE[$reviewStatus[$review->user->id]['state']]) {
+                    continue;
                 }
             }
+            $reviewStatus[$review->user->id] = [
+                'login'        => $review->user->login,
+                'state'        => $review->state,
+                'submitted_at' => $review->submitted_at,
+            ];
         }
 
         return $reviewStatus;
@@ -442,21 +522,27 @@ class CodeReviewCommand extends Command
      */
     protected function formatPullRequestReviews(array $reviews)
     {
-        return implode(' ', array_map(function ($review) {
-            switch ($review['state']) {
-                case ('COMMENTED'):
-                    return "{$review['login']} 💬  ";
+        return implode(
+            ' ',
+            array_map(
+                function ($review) {
+                    switch ($review['state']) {
+                        case ('COMMENTED'):
+                            return "{$review['login']} 💬  ";
 
-                case ('CHANGES_REQUESTED'):
-                    return "{$review['login']} <fg=red>✘</>  ";
+                        case ('CHANGES_REQUESTED'):
+                            return "{$review['login']} <fg=red>✘</>  ";
 
-                case ('APPROVED'):
-                    return "{$review['login']} <fg=green>✔</>  ";
+                        case ('APPROVED'):
+                            return "{$review['login']} <fg=green>✔</>  ";
 
-                default:
-                    return "{$review['login']} <fg=yellow>●</>  ";
-            }
-        }, $reviews));
+                        default:
+                            return "{$review['login']} <fg=yellow>●</>  ";
+                    }
+                },
+                $reviews
+            )
+        );
     }
 
     /**
@@ -472,14 +558,14 @@ class CodeReviewCommand extends Command
     {
         $consoleStyle = [];
         $consoleColors = [
-            'black' => [0, 0, 0],
-            'red' => [255, 0, 0],
-            'green' => [0, 255, 0],
-            'yellow' => [255, 255, 0],
-            'blue' => [92, 92, 255],
+            'black'   => [0, 0, 0],
+            'red'     => [255, 0, 0],
+            'green'   => [0, 255, 0],
+            'yellow'  => [255, 255, 0],
+            'blue'    => [92, 92, 255],
             'magenta' => [255, 0, 255],
-            'cyan' => [0, 255, 255],
-            'white' => [255, 255, 255],
+            'cyan'    => [0, 255, 255],
+            'white'   => [255, 255, 255],
         ];
 
         // Convert hex color value to RGB.
@@ -487,7 +573,12 @@ class CodeReviewCommand extends Command
 
         // Compare the "distance" of the RGB values.
         foreach ($consoleColors as $color => $rgb) {
-            $distance = sqrt(pow(($r - $rgb[0]), 2) + pow(($g - $rgb[1]), 2) + pow(($b - $rgb[2]), 2));
+            $distance = sqrt(
+                pow(($r - $rgb[0]), 2) + pow(($g - $rgb[1]), 2) + pow(
+                    ($b - $rgb[2]),
+                    2
+                )
+            );
             if (!isset($closest) || ($distance < $closest)) {
                 $closest = $distance;
                 $consoleStyle['bg'] = $color;
@@ -495,7 +586,10 @@ class CodeReviewCommand extends Command
         }
 
         // Set foreground color for better contrast.
-        $consoleStyle['fg'] = (in_array($consoleStyle['bg'], ['yellow', 'green', 'white'])) ? 'black' : 'white';
+        $consoleStyle['fg'] = (in_array(
+            $consoleStyle['bg'],
+            ['yellow', 'green', 'white']
+        )) ? 'black' : 'white';
 
         return $consoleStyle;
     }

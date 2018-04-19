@@ -7,7 +7,7 @@ class GithubApiClient implements GithubApiInterface
     private $streamContext;
 
     /**
-     * Setup GithubApiClient
+     * GithubApiClient constructor.
      *
      * @param array $streamContext
      */
@@ -33,17 +33,12 @@ class GithubApiClient implements GithubApiInterface
     }
 
     /**
-     * Makes a GET request to the Github API
-     *
-     * @param string $uri
-     *
-     * @return array
-     *
-     * @throws \RuntimeException
+     * {@inheritdoc}
      */
-    public function apiRequest($uri)
+    public function apiRequest($uri, $limit = 1)
     {
-        $repoInfo = @file_get_contents(
+        $repoInfo = [];
+        $repoInfo[] = @file_get_contents(
             $uri,
             false,
             $this->streamContext
@@ -53,6 +48,41 @@ class GithubApiClient implements GithubApiInterface
             throw new \RuntimeException(implode("\n", $http_response_header));
         }
 
-        return json_decode($repoInfo);
+        $count = 0;
+        if ($limit !== 1) {
+            foreach ($http_response_header as $header) {
+                if (strpos($header, 'page=: ') !== FALSE) {
+                    preg_match('/(page=\d+)/', $header, $matches);
+                    $pages = count(array_unique($matches));
+                    $count = ($limit < 1) ? $pages : min($pages, $limit);
+                    break;
+                }
+            }
+        }
+
+        if ($count) {
+            for ($i = 2; $i <= $count + 1 ; $i++) {
+                $repoInfo[] = @file_get_contents(
+                    "{$uri}?page={$i}",
+                    false,
+                    $this->streamContext
+                );
+
+                if (empty($repoInfo[$i - 1])) {
+                    throw new \RuntimeException(implode("\n", $http_response_header));
+                }
+            }
+        }
+
+        $result = [];
+        foreach ($repoInfo as $page) {
+            $page = json_decode($page);
+            if (!is_array($page)) {
+                return $page;
+            }
+            $result = array_merge($result, $page);
+        }
+
+        return $result;
     }
 }

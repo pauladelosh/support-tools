@@ -21,4 +21,16 @@ interface GithubApiInterface
      * @return array
      */
     public function getIssues($repoName);
+
+    /**
+     * Makes a GET request to the Github API
+     *
+     * @param string $uri
+     * @param int $limit
+     *
+     * @return array
+     *
+     * @throws \RuntimeException
+     */
+    public function apiRequest($uri, $limit = 1);
 }
