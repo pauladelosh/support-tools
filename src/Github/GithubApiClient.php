@@ -51,9 +51,9 @@ class GithubApiClient implements GithubApiInterface
         $count = 0;
         if ($limit !== 1) {
             foreach ($http_response_header as $header) {
-                if (strpos($header, 'page=: ') !== FALSE) {
-                    preg_match('/(page=\d+)/', $header, $matches);
-                    $pages = count(array_unique($matches));
+                if (strpos($header, 'page=') !== FALSE) {
+                    preg_match('/page=(\d+)>; rel="last"/', $header, $matches);
+                    $pages = intval($matches[1]);
                     $count = ($limit < 1) ? $pages : min($pages, $limit);
                     break;
                 }
