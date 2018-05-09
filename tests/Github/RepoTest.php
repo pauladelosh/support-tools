@@ -15,7 +15,7 @@ class RepoTest extends \PHPUnit_Framework_TestCase
     {
         $testTime = time();
 
-        $apiClient = $this->getMock('Acquia\Support\ToolsWrapper\Github\GithubApiInterface');
+        $apiClient = $this->createMock('Acquia\Support\ToolsWrapper\Github\GithubApiInterface');
 
         // Stub GithubApiInterface::getIssues method
         $apiClient->expects($this->once())

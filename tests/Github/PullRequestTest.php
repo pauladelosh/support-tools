@@ -14,7 +14,7 @@ class PullRequestTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetReviews()
     {
-        $apiClient = $this->getMock('Acquia\Support\ToolsWrapper\Github\GithubApiClient');
+        $apiClient = $this->createMock('Acquia\Support\ToolsWrapper\Github\GithubApiClient');
         $apiClient->expects($this->once())
             ->method('apiRequest')
             ->with('https://api.github.com/repos/foo/bar/pulls/1234/reviews')
@@ -28,7 +28,7 @@ class PullRequestTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetComments()
     {
-        $apiClient = $this->getMock('Acquia\Support\ToolsWrapper\Github\GithubApiClient');
+        $apiClient = $this->createMock('Acquia\Support\ToolsWrapper\Github\GithubApiClient');
         $apiClient->expects($this->once())
             ->method('apiRequest')
             ->with('https://api.github.com/repos/foo/bar/pulls/1234/comments')
@@ -42,7 +42,7 @@ class PullRequestTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetRequestedReviewers()
     {
-        $apiClient = $this->getMock('Acquia\Support\ToolsWrapper\Github\GithubApiClient');
+        $apiClient = $this->createMock('Acquia\Support\ToolsWrapper\Github\GithubApiClient');
         $apiClient->expects($this->once())
             ->method('apiRequest')
             ->with('https://api.github.com/repos/foo/bar/pulls/1234/requested_reviewers')

@@ -34,11 +34,15 @@ class AhtWrapperApplicationTest extends \PHPUnit_Framework_TestCase
             ->method('exec')
             ->will($this->returnValue(0));
 
+        $arguments = [
+            '--client-tools-version=dev_build.sh',
+        ];
+
         $executionObserver->expects($this->once())
             ->method('passthru')
             ->with(
                 $this->equalTo(
-                    'ssh -tq bastion /vol/ebs1/ahsupport/aht/prod/ahtools --client-tools-version=dev '
+                    'ssh -tq bastion /vol/ebs1/ahsupport/aht/prod/ahtools --encoded-argv=' . base64_encode(json_encode($arguments))
                 )
             );
 
@@ -90,11 +94,16 @@ class AhtWrapperApplicationTest extends \PHPUnit_Framework_TestCase
             ->method('exec')
             ->will($this->returnValue(0));
 
+        $arguments = [
+            "--client-ssh-config={$path}",
+            "--client-tools-version=dev_build.sh",
+        ];
+
         $executionObserver->expects($this->once())
             ->method('passthru')
             ->with(
                 $this->equalTo(
-                    "ssh -tq -F {$path} bastion /vol/ebs1/ahsupport/aht/prod/ahtools --client-ssh-config={$path} --client-tools-version=dev "
+                    "ssh -tq -F {$path} bastion /vol/ebs1/ahsupport/aht/prod/ahtools --encoded-argv=" . base64_encode(json_encode($arguments))
                 )
             );
 
