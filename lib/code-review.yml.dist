@@ -36,6 +36,7 @@ repos:
     acquia/support-zendesk-tag-updater: {}
     acquia/supportcomm: {}
     acquia/tamdash: {}
+    acquia/traefik: {}
     acquia/zendesk-apps: {}
     acquia/zendesk-sandbox: {}
     acquia/zendesk-suspended-agent-admin-search: {}
